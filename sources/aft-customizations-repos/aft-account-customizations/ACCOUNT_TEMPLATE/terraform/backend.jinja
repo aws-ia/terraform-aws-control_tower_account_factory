@@ -1,0 +1,26 @@
+## Auto generated backend.tf ##
+## Updated on: {{ timestamp }} ##
+
+{% if tf_distribution_type == "oss" -%}
+terraform {
+  required_version = ">= 0.15.0"
+  backend "s3" {
+    region         = "{{ region }}"
+    bucket         = "{{ bucket }}"
+    key            = "{{ key }}"
+    dynamodb_table = "{{ dynamodb_table }}"
+    encrypt        = "true"
+    kms_key_id     = "{{ kms_key_id }}"
+    role_arn       = "{{ aft_admin_role_arn }}"
+  }
+}
+{% else -%}
+terraform {
+    backend "remote" {
+        organization = "{{ terraform_org_name }}"
+        workspaces {
+        name = "{{ terraform_workspace_name }}"
+        }
+    }
+}
+{% endif %}

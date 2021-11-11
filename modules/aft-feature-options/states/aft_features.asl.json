@@ -1,0 +1,62 @@
+{
+    "StartAt": "Delete Default VPCs",
+    "States": {
+      "Delete Default VPCs": {
+        "Next": "Enroll Enterprise Support",
+        "Type": "Task",
+        "Resource": "${ aft_delete_default_vpc_function_arn}",
+        "ResultPath": "$.targets",
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "Next": "Notify Failure"
+          }
+        ]
+      },
+      "Enroll Enterprise Support": {
+        "Next": "Enable CloudTrail",
+        "Type": "Task",
+        "Resource": "${ aft_enroll_support_function_arn}",
+        "ResultPath": "$.targets",
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "Next": "Notify Failure"
+          }
+        ]
+      },
+      "Enable CloudTrail": {
+        "Next": "Notify Success",
+        "Type": "Task",
+        "Resource": "${ aft_enable_cloudtrail_function_arn}",
+        "ResultPath": "$.targets",
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "Next": "Notify Failure"
+          }
+        ]
+      },
+        "Notify Success": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::sns:publish",
+            "Parameters": {
+              "TopicArn": "${aft_notification_arn}",
+              "Message.$": "$"
+            },
+            "End": true
+          },
+          "Notify Failure": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::sns:publish",
+            "Parameters": {
+              "TopicArn": "${aft_failure_notification_arn}",
+              "Message.$": "$.Cause"
+            },
+            "Next": "Failed"
+          },
+          "Failed": {
+            "Type": "Fail"
+          }
+    }
+}

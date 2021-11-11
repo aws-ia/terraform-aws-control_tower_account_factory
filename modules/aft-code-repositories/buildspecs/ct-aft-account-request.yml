@@ -1,0 +1,77 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - DEFAULT_PATH=$(pwd)
+      - TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+      - AWS_MODULE_SOURCE=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-url" --query "Parameter.Value" --output text)
+      - AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-git-ref" --query "Parameter.Value" --output text)
+      - ssh_key=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption | jq --raw-output ".Parameter.Value")
+      - TF_VERSION=$(aws ssm get-parameter --name "/aft/config/terraform/version" --query "Parameter.Value" --output text)
+      - TF_DISTRIBUTION=$(aws ssm get-parameter --name "/aft/config/terraform/distribution" --query "Parameter.Value" --output text)
+      - CT_MGMT_REGION=$(aws ssm get-parameter --name "/aft/config/ct-management-region" --query "Parameter.Value" --output text)
+      - AFT_MGMT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+      - AFT_EXEC_ROLE_ARN=arn:aws:iam::$AFT_MGMT_ACCOUNT:role/AWSAFTExecution
+      - AFT_ADMIN_ROLE_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-administrator-role-name | jq --raw-output ".Parameter.Value")
+      - AFT_ADMIN_ROLE_ARN=arn:aws:iam::$AFT_MGMT_ACCOUNT:role/$AFT_ADMIN_ROLE_NAME
+      - ROLE_SESSION_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-session-name | jq --raw-output ".Parameter.Value")
+      - mkdir -p ~/.ssh
+      - echo "Host *" >> ~/.ssh/config
+      - echo "StrictHostKeyChecking no" >> ~/.ssh/config
+      - echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+      - echo "$ssh_key" > ~/.ssh/ssh_key
+      - echo -e "\n\n" >>  ~/.ssh/ssh_key
+      - chmod 600 ~/.ssh/ssh_key
+      - eval "$(ssh-agent -s)"
+      - ssh-add ~/.ssh/ssh_key
+      - git config --global credential.helper '!aws codecommit credential-helper $@'
+      - git config --global credential.UseHttpPath true
+      - git clone -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework
+      - python3 -m venv ./venv
+      - source ./venv/bin/activate
+      - pip install jinja2-cli==0.7.0 Jinja2==3.0.1 MarkupSafe==2.0.1 boto3==1.18.56 requests==2.26.0
+      - |
+        if [ $TF_DISTRIBUTION = "oss" ]; then
+          TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
+          TF_KMS_KEY_ID=$(aws ssm get-parameter --name "/aft/config/oss-backend/kms-key-id" --query "Parameter.Value" --output text)
+          TF_DDB_TABLE=$(aws ssm get-parameter --name "/aft/config/oss-backend/table-id" --query "Parameter.Value" --output text)
+          TF_S3_BUCKET=$(aws ssm get-parameter --name "/aft/config/oss-backend/bucket-id" --query "Parameter.Value" --output text)
+          TF_S3_KEY=account-request/terraform.tfstate
+          cd /tmp
+          echo "Installing Terraform"
+          curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+          unzip -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
+          terraform --version
+          cd $DEFAULT_PATH/terraform
+          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN >> ./$(basename $f .jinja).tf; done
+          for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
+          JSON=$(aws sts assume-role --role-arn ${AFT_ADMIN_ROLE_ARN} --role-session-name ${ROLE_SESSION_NAME})
+          #Make newly assumed role default session
+          export AWS_ACCESS_KEY_ID=$(echo ${JSON} | jq --raw-output ".Credentials[\"AccessKeyId\"]")
+          export AWS_SECRET_ACCESS_KEY=$(echo ${JSON} | jq --raw-output ".Credentials[\"SecretAccessKey\"]")
+          export AWS_SESSION_TOKEN=$(echo ${JSON} | jq --raw-output ".Credentials[\"SessionToken\"]")
+          terraform init
+        else
+          TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
+          TF_TOKEN=$(aws ssm get-parameter --name "/aft/config/terraform/token" --with-decryption --query "Parameter.Value" --output text)
+          TF_ENDPOINT=$(aws ssm get-parameter --name "/aft/config/terraform/api-endpoint" --query "Parameter.Value" --output text)
+          TF_WORKSPACE_NAME="ct-aft-account-request"
+          TF_CONFIG_PATH="./temp_configuration_file.tar.gz"
+          cd $DEFAULT_PATH/terraform
+          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D provider_region=$CT_MGMT_REGION -D tf_distribution_type=$TF_DISTRIBUTION -D terraform_org_name=$TF_ORG -D terraform_workspace_name=$TF_WORKSPACE_NAME -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN >> ./$(basename $f .jinja).tf; done
+          for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
+          cd $DEFAULT_PATH
+          tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
+          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH
+        fi
+
+  build:
+    commands:
+      - |
+        if [ $TF_DISTRIBUTION = "oss" ]; then
+          terraform apply --auto-approve
+        fi
+  post_build:
+    commands:
+      - echo "Post-Build"

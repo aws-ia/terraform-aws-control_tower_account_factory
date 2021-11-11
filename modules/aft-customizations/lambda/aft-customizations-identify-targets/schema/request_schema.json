@@ -1,0 +1,79 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://example.com/object1626364391.json",
+    "title": "Root",
+    "type": "object",
+    "required": [
+        "include"
+    ],
+    "properties": {
+        "include": {
+            "$id": "#root/include",
+            "title": "Include",
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "default": [],
+            "items":{
+                "$id": "#root/include/items",
+                "title": "Items",
+                "type": "object",
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "$id": "#root/include/items/type",
+                        "title": "Type",
+                        "type": ["string", "object"],
+                        "default": "",
+                        "pattern": "^.*$"
+                    }
+                }
+            }
+
+        },
+        "exclude": {
+            "$id": "#root/exclude",
+            "title": "Exclude",
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "default": [],
+            "items":{
+                "$id": "#root/exclude/items",
+                "title": "Items",
+                "type": "object",
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "$id": "#root/exclude/items/type",
+                        "title": "Type",
+                        "type": "string",
+                        "default": "",
+                        "pattern": "^.*$"
+                    },
+                    "target_value": {
+                        "$id": "#root/exclude/items/target_value",
+                        "title": "Target_value",
+                        "type": "array",
+                        "default": [],
+                        "items":{
+                            "$id": "#root/exclude/items/target_value/items",
+                            "title": "Items",
+                            "type": ["string", "object"],
+                            "default": "",
+                            "pattern": "^.*$"
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+}

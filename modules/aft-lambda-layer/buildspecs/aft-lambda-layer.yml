@@ -1,0 +1,37 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - aws events disable-rule --name $EVENT_RULE_NAME
+  install:
+    runtime-versions:
+      python: $PYTHON_VERSION
+    commands:
+      - DEFAULT_PATH=$(pwd)
+      - AWS_MODULE_SOURCE=$(aws ssm get-parameter --name $SSM_AWS_MODULE_SOURCE --query "Parameter.Value" --output text)
+      - AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name $SSM_AWS_MODULE_GIT_REF --query "Parameter.Value" --output text)
+      - ssh_key=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption | jq --raw-output ".Parameter.Value")
+      - mkdir -p ~/.ssh
+      - echo "Host *" >> ~/.ssh/config
+      - echo "StrictHostKeyChecking no" >> ~/.ssh/config
+      - echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+      - echo "$ssh_key" > ~/.ssh/ssh_key
+      - echo -e "\n\n" >>  ~/.ssh/ssh_key
+      - chmod 600 ~/.ssh/ssh_key
+      - eval "$(ssh-agent -s)"
+      - ssh-add ~/.ssh/ssh_key
+      - git config --global credential.helper '!aws codecommit credential-helper $@'
+      - git config --global credential.UseHttpPath true
+      - git clone -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework
+      - python3 -m pip install virtualenv
+      - python3 -m venv .venv
+      - . .venv/bin/activate
+      - python3 -m pip install -r ./aws-aft-core-framework/sources/aft-lambda-layer/requirements.txt
+  build:
+    commands:
+      - mkdir -p python
+      - ls
+      - mv -v ./.venv/lib/ ./python/
+      - zip -r layer.zip python
+      - aws s3 cp layer.zip s3://${BUCKET_NAME}/layer.zip

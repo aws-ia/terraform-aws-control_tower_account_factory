@@ -1,0 +1,15 @@
+## Auto generated providers.tf ##
+## Updated on: {{ timestamp }} ##
+
+provider "aws" {
+  region = "{{ region }}"
+
+  shared_credentials_file = "~/.aws/credentials"
+  profile                 = "aft-management"
+
+  default_tags {
+    tags = {
+      managed_by                  = "AFT"
+    }
+  }
+}

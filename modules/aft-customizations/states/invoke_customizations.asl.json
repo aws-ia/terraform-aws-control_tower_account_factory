@@ -1,0 +1,89 @@
+{
+  "StartAt": "Identify Targets",
+  "States": {
+    "Identify Targets": {
+      "Next": "Get Pipeline Executions",
+      "Type": "Task",
+      "Resource": "${identify_targets_function_arn}",
+      "ResultPath": "$.targets",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "Notify Failure"
+        }
+      ]
+    },
+    "Get Pipeline Executions": {
+      "Next": "Pending Pipeline Executions?",
+      "Type": "Task",
+      "Resource": "${get_pipeline_executions_function_arn}",
+      "ResultPath": "$.running_executions",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "Notify Failure"
+        }
+      ]
+    },
+    "Pending Pipeline Executions?": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.targets.number_pending_accounts",
+          "NumericEquals": 0,
+          "Next": "Notify Success"
+        }
+      ],
+      "Default": "Below Maximum Execution Threshold?"
+    },
+    "Below Maximum Execution Threshold?": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.running_executions.running_pipelines",
+          "NumericLessThan": 5,
+          "Next": "Execute Pipelines"
+        }
+      ],
+      "Default": "Wait on Pipeline Executions"
+    },
+    "Execute Pipelines": {
+      "Next": "Wait on Pipeline Executions",
+      "Type": "Task",
+      "Resource": "${execute_pipeline_function_arn}",
+      "ResultPath": "$.targets",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "Notify Failure"
+        }
+      ]
+    },
+    "Wait on Pipeline Executions": {
+      "Type": "Wait",
+      "Seconds": 30,
+      "Next": "Get Pipeline Executions"
+    },
+    "Notify Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${aft_notification_arn}",
+        "Message.$": "$"
+      },
+      "End": true
+    },
+    "Notify Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${aft_failure_notification_arn}",
+        "Message.$": "$.Cause"
+      },
+      "Next": "Failed"
+    },
+    "Failed": {
+      "Type": "Fail"
+    }
+  }
+}
