@@ -72,6 +72,8 @@ def build_invoke_event(session, ct_management_session, event, event_type):
             # convert ddb strings into proper data type for json validation
             account_tags = json.loads(ddb_record["account_tags"])
             invoke_event["account_request"]["account_tags"] = account_tags
+            invoke_event["account_provisioning"] = {}
+            invoke_event["account_provisioning"]["run_create_pipeline"] = "true"
             logger.info("Invoking SFN with Event - ")
             logger.info(json.dumps(invoke_event))
             return invoke_event
@@ -81,6 +83,8 @@ def build_invoke_event(session, ct_management_session, event, event_type):
             # convert ddb strings into proper data type for json validation
             account_tags = json.loads(event["account_request"]["account_tags"])
             invoke_event["account_request"]["account_tags"] = account_tags
+            invoke_event["account_provisioning"] = {}
+            invoke_event["account_provisioning"]["run_create_pipeline"] = "true"
             logger.info("Invoking SFN with Event - ")
             logger.info(json.dumps(invoke_event))
             return invoke_event

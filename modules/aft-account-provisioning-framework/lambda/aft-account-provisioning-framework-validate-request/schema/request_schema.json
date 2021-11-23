@@ -66,6 +66,9 @@
         },
         "test_event": {
             "type": "boolean"
+        },
+        "account_provisioning": {
+            "type": "object"
         }
     },
     "required": [ "account_request", "control_tower_event" ]

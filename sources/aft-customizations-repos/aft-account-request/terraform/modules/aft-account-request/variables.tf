@@ -41,7 +41,7 @@ variable "custom_fields" {
 
 variable "account_customizations_name" {
   type        = string
-  default     = null
+  default     = ""
   description = "The name of the account customizations to apply"
 }
 

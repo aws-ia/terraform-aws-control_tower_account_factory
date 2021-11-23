@@ -46,18 +46,6 @@ resource "aws_dynamodb_table" "aft_request_metadata" {
     kms_key_arn = aws_kms_key.aft.arn
   }
 }
-resource "aws_backup_vault" "aft_controltower_request_request_metadata_vault" {
-  name        = "aft-controltower-events-request-metadata-vault"
-  kms_key_arn = aws_kms_key.aft.arn
-}
-resource "aws_backup_plan" "aft_controltower_request_request_metadata_plan" {
-  name = "aft-controltower-request-request-metadata-plan"
-  rule {
-    rule_name         = "aft_controltower_request_request_metadata_rule"
-    target_vault_name = aws_backup_vault.aft_controltower_request_request_metadata_vault.name
-    schedule          = "cron(0 * * * ? *)" # Every hour
-  }
-}
 
 # Table that stores the configuration details for the account vending machine
 resource "aws_dynamodb_table" "aft_request" {
@@ -80,18 +68,6 @@ resource "aws_dynamodb_table" "aft_request" {
   server_side_encryption {
     enabled     = true
     kms_key_arn = aws_kms_key.aft.arn
-  }
-}
-resource "aws_backup_vault" "aft_controltower_request_vault" {
-  name        = "aft-controltower-events-request-vault"
-  kms_key_arn = aws_kms_key.aft.arn
-}
-resource "aws_backup_plan" "aft_controltower_request_plan" {
-  name = "aft-controltower-request-plan"
-  rule {
-    rule_name         = "aft_controltower_request_rule"
-    target_vault_name = aws_backup_vault.aft_controltower_request_vault.name
-    schedule          = "cron(0 * * * ? *)" # Every hour
   }
 }
 
@@ -124,18 +100,6 @@ resource "aws_dynamodb_table" "aft_request_audit" {
     kms_key_arn = aws_kms_key.aft.arn
   }
 }
-resource "aws_backup_vault" "aft_controltower_request_audit_backup_vault" {
-  name        = "aft-controltower-events-request-audit-vault"
-  kms_key_arn = aws_kms_key.aft.arn
-}
-resource "aws_backup_plan" "aft_controltower_request_audit_plan" {
-  name = "aft-controltower-request-audit-plan"
-  rule {
-    rule_name         = "aft_controltower_request_audit_rule"
-    target_vault_name = aws_backup_vault.aft_controltower_request_audit_backup_vault.name
-    schedule          = "cron(0 * * * ? *)" # Every hour
-  }
-}
 
 # Table that stores the audit history for the account
 resource "aws_dynamodb_table" "aft_controltower_events" {
@@ -164,17 +128,5 @@ resource "aws_dynamodb_table" "aft_controltower_events" {
   server_side_encryption {
     enabled     = true
     kms_key_arn = aws_kms_key.aft.arn
-  }
-}
-resource "aws_backup_vault" "aft_controltower_events_backup_vault" {
-  name        = "aft-controltower-events-backup-vault"
-  kms_key_arn = aws_kms_key.aft.arn
-}
-resource "aws_backup_plan" "aft_controltower_events_backup_plan" {
-  name = "aft-controltower-events-backup-plan"
-  rule {
-    rule_name         = "aft_controltower_events_backup_rule"
-    target_vault_name = aws_backup_vault.aft_controltower_events_backup_vault.name
-    schedule          = "cron(0 * * * ? *)" # Every hour
   }
 }

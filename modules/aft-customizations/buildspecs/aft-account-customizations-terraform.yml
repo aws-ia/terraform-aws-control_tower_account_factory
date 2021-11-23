@@ -7,7 +7,6 @@ phases:
       - TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
       - AWS_MODULE_SOURCE=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-url" --query "Parameter.Value" --output text)
       - AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-git-ref" --query "Parameter.Value" --output text)
-      - ssh_key=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption | jq --raw-output ".Parameter.Value")
       - TF_VERSION=$(aws ssm get-parameter --name "/aft/config/terraform/version" --query "Parameter.Value" --output text)
       - TF_DISTRIBUTION=$(aws ssm get-parameter --name "/aft/config/terraform/distribution" --query "Parameter.Value" --output text)
       - CT_MGMT_REGION=$(aws ssm get-parameter --name "/aft/config/ct-management-region" --query "Parameter.Value" --output text)
@@ -17,15 +16,20 @@ phases:
       - AFT_ADMIN_ROLE_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-administrator-role-name | jq --raw-output ".Parameter.Value")
       - AFT_ADMIN_ROLE_ARN=arn:aws:iam::$AFT_MGMT_ACCOUNT:role/$AFT_ADMIN_ROLE_NAME
       - ROLE_SESSION_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-session-name | jq --raw-output ".Parameter.Value")
-      - mkdir -p ~/.ssh
-      - echo "Host *" >> ~/.ssh/config
-      - echo "StrictHostKeyChecking no" >> ~/.ssh/config
-      - echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
-      - echo "$ssh_key" > ~/.ssh/ssh_key
-      - echo -e "\n\n" >>  ~/.ssh/ssh_key
-      - chmod 600 ~/.ssh/ssh_key
-      - eval "$(ssh-agent -s)"
-      - ssh-add ~/.ssh/ssh_key
+      - |
+        ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption || echo "None")
+        if [[ $ssh_key_parameter != "None" ]]; then
+          ssh_key=$(jq --raw-output ".Parameter.Value" <<< $ssh_key_parameter)
+          mkdir -p ~/.ssh
+          echo "Host *" >> ~/.ssh/config
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+          echo "$ssh_key" > ~/.ssh/ssh_key
+          echo -e "\n\n" >>  ~/.ssh/ssh_key
+          chmod 600 ~/.ssh/ssh_key
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/ssh_key
+        fi
       - git config --global credential.helper '!aws codecommit credential-helper $@'
       - git config --global credential.UseHttpPath true
       - git clone -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework

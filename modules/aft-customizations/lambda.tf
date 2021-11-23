@@ -92,3 +92,34 @@ resource "aws_cloudwatch_log_group" "aft_get_pipeline_executions" {
   name              = "/aws/lambda/${aws_lambda_function.aft_customizations_get_pipeline_executions.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
 }
+
+######## customizations_invoke_account_provisioning ########
+data "archive_file" "aft_customizations_invoke_account_provisioning" {
+  type        = "zip"
+  source_dir  = "${path.module}/lambda/aft-customizations-invoke-account-provisioning-framework"
+  output_path = "${path.module}/lambda/aft-customizations-invoke-account-provisioning-framework.zip"
+}
+
+resource "aws_lambda_function" "aft_customizations_invoke_account_provisioning" {
+  filename      = "${path.module}/lambda/aft-customizations-invoke-account-provisioning-framework.zip"
+  function_name = "aft-customizations-invoke-account-provisioning"
+  description   = "Invokes the account-provisioning SFN."
+  role          = aws_iam_role.aft_customizations_invoke_account_provisioning_lambda.arn
+  handler       = "lambda_function.lambda_handler"
+
+  source_code_hash = data.archive_file.aft_customizations_invoke_account_provisioning.output_base64sha256
+
+  runtime = "python3.8"
+  timeout = "300"
+  layers  = [var.aft_common_layer_arn]
+
+  vpc_config {
+    subnet_ids         = var.aft_vpc_private_subnets
+    security_group_ids = var.aft_vpc_default_sg
+  }
+}
+
+resource "aws_cloudwatch_log_group" "aft_customizations_invoke_account_provisioning" {
+  name              = "/aws/lambda/${aws_lambda_function.aft_customizations_invoke_account_provisioning.function_name}"
+  retention_in_days = var.cloudwatch_log_group_retention
+}

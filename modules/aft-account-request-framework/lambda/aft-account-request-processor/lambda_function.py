@@ -7,12 +7,12 @@ from aft_common import aft_utils as utils
 
 logger = utils.get_logger()
 
+
 def new_ct_request_is_valid(session, request):
     try:
         logger.info("Validating new CT Account Request")
         org_account_emails = utils.get_org_account_emails(session)
         org_account_names = utils.get_org_account_names(session)
-        org_ou_names = utils.get_org_ou_names(session)
 
         ct_parameters = request["control_tower_parameters"]
 
@@ -24,12 +24,7 @@ def new_ct_request_is_valid(session, request):
                 logger.info(
                     "Requested account_name is valid: " + ct_parameters["AccountName"]
                 )
-                if ct_parameters["ManagedOrganizationalUnit"] in org_ou_names:
-                    logger.info(f"Requested ManagedOrganizationalUnit is valid: {ct_parameters['ManagedOrganizationalUnit']}")
-                    return True
-                else:
-                    logger.info(f"Requested ManagedOrganizationalUnit is NOT valid: {ct_parameters['ManagedOrganizationalUnit']}")
-                    return False
+                return True
             else:
                 logger.info(
                     "Requested AccountName is NOT valid: " + ct_parameters["AccountName"]
@@ -53,8 +48,6 @@ def modify_ct_request_is_valid(session, request):
     try:
         logger.info("Validating modify CT Account Request")
 
-        org_ou_names = utils.get_org_ou_names(session)
-
         old_ct_parameters = request["old_control_tower_parameters"]
         new_ct_parameters = request["control_tower_parameters"]
 
@@ -63,12 +56,6 @@ def modify_ct_request_is_valid(session, request):
                 if old_ct_parameters[i] != new_ct_parameters[i]:
                     logger.info(i + " cannot be modified")
                     return False
-
-        if new_ct_parameters["ManagedOrganizationalUnit"] not in org_ou_names:
-            logger.info(
-                new_ct_parameters["ManagedOrganizationalUnit"] + " is not a valid OU"
-            )
-            return False
 
         logger.info("Modify CT Account Request is Valid")
         return True
@@ -83,9 +70,15 @@ def modify_ct_request_is_valid(session, request):
         raise
 
 
+def add_header(request, **kwargs):
+    request.headers.add_header('User-Agent', 'account-factory-terraform-' + aft_version)
+
+
 def create_new_account(session, ct_management_session, request):
     try:
         client = ct_management_session.client("servicecatalog")
+        event_system = client.meta.events
+        event_system.register_first('before-sign.*.*', add_header)
         provisioning_parameters = []
 
         for k, v in request["control_tower_parameters"].items():
@@ -120,7 +113,8 @@ def create_new_account(session, ct_management_session, request):
 def modify_existing_account(session, ct_management_session, request):
     try:
         client = ct_management_session.client('servicecatalog')
-
+        event_system = client.meta.events
+        event_system.register_first('before-sign.*.*', add_header)
         provisioning_parameters = []
         for k, v in request['control_tower_parameters'].items():
             provisioning_parameters.append({"Key": k, "Value": v})
@@ -148,7 +142,8 @@ def modify_existing_account(session, ct_management_session, request):
                 target_product_id = p['Id']
                 target_provisioning_artifact_id = p['ProvisioningArtifactId']
 
-                logger.info("Modifying existing account leveraging parameters: " + str(provisioning_parameters) + " with provisioned product ID " + target_product_id)
+                logger.info("Modifying existing account leveraging parameters: " + str(
+                    provisioning_parameters) + " with provisioned product ID " + target_product_id)
                 response = client.update_provisioned_product(
                     ProvisionedProductId=target_product_id,
                     ProductId=utils.get_ct_product_id(session, ct_management_session),
@@ -179,9 +174,11 @@ def lambda_handler(event, context):
     try:
         logger.info("Lambda_handler Event")
         logger.info(event)
+        global aft_version
 
         session = boto3.session.Session()
         ct_management_session = utils.get_ct_management_session(session)
+        aft_version = utils.get_ssm_parameter_value(session, "/aft/config/aft/version")
 
         if utils.product_provisioning_in_progress(
                 ct_management_session,

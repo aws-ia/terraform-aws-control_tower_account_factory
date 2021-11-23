@@ -6,16 +6,20 @@ phases:
       - DEFAULT_PATH=$(pwd)
       - AWS_MODULE_SOURCE=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-url" --query "Parameter.Value" --output text)
       - AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-git-ref" --query "Parameter.Value" --output text)
-      - ssh_key=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption | jq --raw-output ".Parameter.Value")
-      - mkdir -p ~/.ssh
-      - echo "Host *" >> ~/.ssh/config
-      - echo "StrictHostKeyChecking no" >> ~/.ssh/config
-      - echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
-      - echo "$ssh_key" > ~/.ssh/ssh_key
-      - echo -e "\n\n" >>  ~/.ssh/ssh_key
-      - chmod 600 ~/.ssh/ssh_key
-      - eval "$(ssh-agent -s)"
-      - ssh-add ~/.ssh/ssh_key
+      - |
+        ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption || echo "None")
+        if [[ $ssh_key_parameter != "None" ]]; then
+          ssh_key=$(jq --raw-output ".Parameter.Value" <<< $ssh_key_parameter)
+          mkdir -p ~/.ssh
+          echo "Host *" >> ~/.ssh/config
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+          echo "$ssh_key" > ~/.ssh/ssh_key
+          echo -e "\n\n" >>  ~/.ssh/ssh_key
+          chmod 600 ~/.ssh/ssh_key
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/ssh_key
+        fi
       - git config --global credential.helper '!aws codecommit credential-helper $@'
       - git config --global credential.UseHttpPath true
       - git clone -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework

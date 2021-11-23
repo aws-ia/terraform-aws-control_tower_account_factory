@@ -96,6 +96,8 @@ module "aft_customizations" {
   aft_config_backend_bucket_id                      = module.aft_backend.bucket_id
   aft_config_backend_table_id                       = module.aft_backend.table_id
   aft_config_backend_kms_key_id                     = module.aft_backend.kms_key_id
+  invoke_account_provisioning_sfn_arn               = module.aft_account_provisioning_framework.state_machine_arn
+  account_request_table_name                        = module.aft_account_request_framework.request_table_name
   terraform_distribution                            = var.terraform_distribution
   cloudwatch_log_group_retention                    = var.cloudwatch_log_group_retention
   maximum_concurrent_customizations                 = var.maximum_concurrent_customizations

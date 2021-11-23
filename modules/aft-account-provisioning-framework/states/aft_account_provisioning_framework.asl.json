@@ -125,7 +125,7 @@
       }
     },
     "aft_account_provisioning_customizations": {
-      "Next": "aft_account_provisioning_framework_create_pipeline",
+      "Next": "run_create_pipeline?",
       "Type": "Task",
       "Resource": "arn:aws:states:::states:startExecution.sync:2",
       "Parameters": {
@@ -135,12 +135,23 @@
       "Catch": [
         {
           "ErrorEquals": ["States.ALL"],
-          "Next": "aft_account_provisioning_framework_create_pipeline"
+          "Next": "run_create_pipeline?"
         }
       ]
     },
+    "run_create_pipeline?": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.Input.account_provisioning.run_create_pipeline",
+          "StringEquals": "true",
+          "Next": "aft_account_provisioning_framework_create_pipeline"
+        }
+      ],
+      "Default": "aft_account_provisioning_framework_notify_success"
+    },
     "aft_account_provisioning_framework_create_pipeline": {
-      "Next": "run_customizations",
+      "Next": "aft_account_provisioning_framework_notify_success",
       "Type": "Task",
       "Resource": "arn:aws:states:::codebuild:startBuild.sync",
       "Parameters": {
@@ -165,22 +176,6 @@
           "Next": "aft_account_provisioning_framework_notify_error"
         }
       ]
-    },
-    "run_customizations": {
-      "Next": "aft_account_provisioning_framework_notify_success",
-      "Type": "Task",
-      "Resource": "arn:aws:states:::states:startExecution",
-      "Parameters": {
-        "StateMachineArn": "${customizations_trigger_state_machine_arn}",
-        "Input": {
-          "include": [
-            {
-              "type": "accounts",
-              "target_value.$": "States.Array($.Input.account_info.account.id)"
-            }
-          ]
-        }
-      }
     },
     "aft_account_provisioning_framework_notify_success": {
       "Type": "Task",

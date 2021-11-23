@@ -39,7 +39,10 @@ def get_account_info(payload, session, ct_management_session, logger):
     account_id = None
 
     if "account" in payload["control_tower_event"]:
-        account_id = payload['control_tower_event']['detail']['serviceEventDetails']['createManagedAccountStatus']['account']['accountId']
+        if payload["control_tower_event"]["detail"]["eventName"] == "CreateManagedAccount":
+            account_id = payload['control_tower_event']['detail']['serviceEventDetails']['createManagedAccountStatus']['account']['accountId']
+        elif payload["control_tower_event"]["detail"]["eventName"] == "UpdateManagedAccount":
+            account_id = payload['control_tower_event']['detail']['serviceEventDetails']['updateManagedAccountStatus']['account']['accountId']
         if account_id:
             logger.info(f"Account Id [{account_id}] found in control_tower_event")
 

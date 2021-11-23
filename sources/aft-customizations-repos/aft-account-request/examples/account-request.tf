@@ -1,8 +1,6 @@
 module "sandbox_account_01" {
   source = "./modules/aft-account-request"
 
-  create_customizations = true
-
   control_tower_parameters = {
     AccountEmail              = "john.doe@amazon.com"
     AccountName               = "sandbox-account-01"

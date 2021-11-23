@@ -2,10 +2,22 @@
   "StartAt": "Identify Targets",
   "States": {
     "Identify Targets": {
-      "Next": "Get Pipeline Executions",
+      "Next": "Invoke Provisioning Framework",
       "Type": "Task",
       "Resource": "${identify_targets_function_arn}",
       "ResultPath": "$.targets",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "Notify Failure"
+        }
+      ]
+    },
+    "Invoke Provisioning Framework": {
+      "Next": "Get Pipeline Executions",
+      "Type": "Task",
+      "Resource": "${invoke_provisioning_framework_function_arn}",
+      "ResultPath": "$.invoke_framework",
       "Catch": [
         {
           "ErrorEquals": ["States.ALL"],

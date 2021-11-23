@@ -54,6 +54,10 @@ variable "aft_failure_sns_topic_arn" {
   type = string
 }
 
+variable "account_request_table_name" {
+  type = string
+}
+
 variable "request_metadata_table_name" {
   type = string
 }
@@ -84,4 +88,8 @@ variable "aft_vpc_default_sg" {
 
 variable "maximum_concurrent_customizations" {
   type = number
+}
+
+variable "invoke_account_provisioning_sfn_arn" {
+  type = string
 }
