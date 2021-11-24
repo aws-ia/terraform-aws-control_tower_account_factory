@@ -195,16 +195,23 @@ def lambda_handler(event, context):
             )
             if sqs_message is not None:
                 sqs_body = json.loads(sqs_message["Body"])
+                ct_request_is_valid = True
                 if sqs_body["operation"] == "INSERT":
-                    if new_ct_request_is_valid(ct_management_session, sqs_body):
+                    ct_request_is_valid = new_ct_request_is_valid(ct_management_session, sqs_body)
+                    if ct_request_is_valid:
                         response = create_new_account(session, ct_management_session, sqs_body)
                 elif sqs_body["operation"] == "MODIFY":
-                    if modify_ct_request_is_valid(ct_management_session, sqs_body):
+                    ct_request_is_valid = modify_ct_request_is_valid(ct_management_session, sqs_body)
+                    if ct_request_is_valid:
                         response = modify_existing_account(session, ct_management_session, sqs_body)
                 else:
                     logger.info("Unknown operation received in message")
 
                 utils.delete_sqs_message(session, sqs_message)
+                if not ct_request_is_valid:
+                    logger.exception("CT Request is not valid")
+                    assert ct_request_is_valid
+                    
                 return response
 
     except Exception as e:
