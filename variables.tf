@@ -296,7 +296,11 @@ variable "aft_vpc_cidr" {
   default     = "192.168.0.0/22"
   validation {
     condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.aft_vpc_cidr))
-    error_message = "Variable var: aft_vpc_cidr value must be a valid network CIDR, x.x.x.x/y."
+    error_message = "Variable var: aft_vpc_cidr value must be a valid IPv4 network CIDR, x.x.x.x/y."
+  }
+  validation {
+    condition     = can(cidrhost(var.aft_vpc_cidr, 0))
+    error_message = "Variable var: aft_vpc_cidr value must be a valid network CIDR block (example: 192.0.2.0/24)."
   }
 }
 
@@ -306,7 +310,11 @@ variable "aft_vpc_private_subnet_01_cidr" {
   default     = "192.168.0.0/24"
   validation {
     condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.aft_vpc_private_subnet_01_cidr))
-    error_message = "Variable var: aft_vpc_private_subnet_01_cidr value must be a valid network CIDR, x.x.x.x/y."
+    error_message = "Variable var: aft_vpc_private_subnet_01_cidr value must be a valid IPv4 network CIDR, x.x.x.x/y."
+  }
+  validation {
+    condition     = can(cidrhost(var.aft_vpc_private_subnet_01_cidr, 0))
+    error_message = "Variable var: aft_vpc_cidr value must be a valid network CIDR block (example: 192.0.2.0/24)."
   }
 }
 
@@ -316,7 +324,11 @@ variable "aft_vpc_private_subnet_02_cidr" {
   default     = "192.168.1.0/24"
   validation {
     condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.aft_vpc_private_subnet_02_cidr))
-    error_message = "Variable var: aft_vpc_private_subnet_02_cidr value must be a valid network CIDR, x.x.x.x/y."
+    error_message = "Variable var: aft_vpc_private_subnet_02_cidr value must be a valid IPv4 network CIDR, x.x.x.x/y."
+  }
+  validation {
+    condition     = can(cidrhost(var.aft_vpc_private_subnet_02_cidr, 0))
+    error_message = "Variable var: aft_vpc_cidr value must be a valid network CIDR block (example: 192.0.2.0/24)."
   }
 }
 
@@ -326,7 +338,11 @@ variable "aft_vpc_public_subnet_01_cidr" {
   default     = "192.168.2.0/25"
   validation {
     condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.aft_vpc_public_subnet_01_cidr))
-    error_message = "Variable var: aft_vpc_public_subnet_01_cidr value must be a valid network CIDR, x.x.x.x/y."
+    error_message = "Variable var: aft_vpc_public_subnet_01_cidr value must be a valid IPv4 network CIDR, x.x.x.x/y."
+  }
+  validation {
+    condition     = can(cidrhost(var.aft_vpc_public_subnet_01_cidr, 0))
+    error_message = "Variable var: aft_vpc_cidr value must be a valid network CIDR block (example: 192.0.2.0/24)."
   }
 }
 
@@ -336,6 +352,10 @@ variable "aft_vpc_public_subnet_02_cidr" {
   default     = "192.168.2.128/25"
   validation {
     condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.aft_vpc_public_subnet_02_cidr))
-    error_message = "Variable var: aft_vpc_public_subnet_02_cidr value must be a valid network CIDR, x.x.x.x/y."
+    error_message = "Variable var: aft_vpc_public_subnet_02_cidr value must be a valid IPv4 network CIDR, x.x.x.x/y."
+  }
+  validation {
+    condition     = can(cidrhost(var.aft_vpc_public_subnet_02_cidr, 0))
+    error_message = "Variable var: aft_vpc_cidr value must be a valid network CIDR block (example: 192.0.2.0/24)."
   }
 }
