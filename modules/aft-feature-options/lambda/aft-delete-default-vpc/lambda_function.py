@@ -3,6 +3,7 @@ import os
 import sys
 import boto3
 import botocore
+from botocore.exceptions import ClientError
 import aft_common.aft_utils as utils
 
 logger = utils.get_logger()
@@ -34,22 +35,30 @@ def get_aws_regions(client):
 def get_default_vpc(client):
     try:
         logger.info("Getting default VPC")
-        response = client.describe_vpcs(
-            Filters=[
-                {
-                    'Name': 'isDefault',
-                    'Values': [
-                        'true',
-                    ]
-                },
-            ]
-        )
+        try:
+            response = client.describe_vpcs(
+                Filters=[
+                    {
+                        'Name': 'isDefault',
+                        'Values': [
+                            'true',
+                        ]
+                    },
+                ]
+            )
 
-        for v in response['Vpcs']:
-            logger.info(v['VpcId'])
-            return v['VpcId']
-        logger.info("None")
-        return None
+            for v in response['Vpcs']:
+                logger.info(v['VpcId'])
+                return v['VpcId']
+            logger.info("None")
+            return None
+
+        except ClientError as e:
+            region = client.meta.region_name
+            error_code = e.response['Error']['Code']
+            if error_code == 'UnauthorizedOperation':
+                logger.info("UnauthorizedOperation encountered getting default VPC for " + region)
+            pass
 
     except Exception as e:
         message = {

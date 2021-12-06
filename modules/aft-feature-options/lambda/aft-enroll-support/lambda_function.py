@@ -7,10 +7,11 @@ import aft_common.aft_utils as utils
 
 logger = utils.get_logger()
 
+SUPPORT_API_REGION="us-east-1"
 
 def lookup_cases(session, account_id):
     try:
-        client = session.client('support', region_name='us-east-1')
+        client = session.client('support', region_name=SUPPORT_API_REGION)
         response = client.describe_cases(
             includeResolvedCases=True,
             language='en',
@@ -34,7 +35,7 @@ def lookup_cases(session, account_id):
 
 def generate_case(session, account_id):
     try:
-        support = session.client('support')
+        support = session.client('support', region_name=SUPPORT_API_REGION)
         support.create_case(
             issueType='customer-service',
             serviceCode='account-management',
