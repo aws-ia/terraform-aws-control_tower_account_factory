@@ -15,6 +15,7 @@ def persist_metadata(payload, account_info, session, logger):
 
     account_tags = payload["account_request"]["account_tags"]
     account_customizations_name = payload["account_request"]["account_customizations_name"]
+    account_custom_fields = json.loads(payload["account_request"]["custom_fields"])
     metadata_table_name = utils.get_ssm_parameter_value(
         session, utils.SSM_PARAM_AFT_DDB_META_TABLE
     )
@@ -27,6 +28,7 @@ def persist_metadata(payload, account_info, session, logger):
         "account_status": account_info["status"],
         "account_level_tags": account_tags,
         "account_customizations_name": account_customizations_name,
+        "account_custom_fields": account_custom_fields,
         "parent_ou": account_info["parent_id"],
         "vcs_information": {},
         "terraform_workspace": {},
