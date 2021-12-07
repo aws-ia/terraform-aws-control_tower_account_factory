@@ -339,3 +339,9 @@ variable "aft_vpc_public_subnet_02_cidr" {
     error_message = "Variable var: aft_vpc_public_subnet_02_cidr value must be a valid network CIDR, x.x.x.x/y."
   }
 }
+
+variable "aft_vpc_endpoints" {
+  type        = bool
+  description = "Settings to decide if VPC endpoints will be create for AFT VPC"
+  default     = true
+}
