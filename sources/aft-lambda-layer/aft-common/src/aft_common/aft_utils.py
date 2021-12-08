@@ -1,4 +1,5 @@
 import inspect
+import itertools
 import json
 import os
 import uuid
@@ -7,6 +8,7 @@ import boto3
 import botocore
 from boto3.dynamodb.types import TypeDeserializer
 from botocore.exceptions import ClientError
+from itertools import chain
 
 SSM_PARAM_AFT_DDB_META_TABLE = "/aft/resources/ddb/aft-request-metadata-table-name"
 SSM_PARAM_AFT_SESSION_NAME = "/aft/resources/iam/aft-session-name"
@@ -633,13 +635,19 @@ def invoke_lambda(session, function_name, payload):
         raise
 
 
+def _paginate_call(client=None, api_name: str = None, top_level_response_key: str = None, **pagination_input):
+    return list(chain.from_iterable(page.get(top_level_response_key, page) for page in client.get_paginator(api_name).paginate(**pagination_input)))
+
+
 def get_org_accounts(session):
     try:
         client = session.client("organizations")
         logger.info("Listing accounts for the org")
-        response = client.list_accounts()
+        response = _paginate_call(client=client,
+                                  api_name='list_accounts',
+                                  top_level_response_key='Accounts')
         logger.info(response)
-        return response["Accounts"]
+        return response
 
     except Exception as e:
         message = {
