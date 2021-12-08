@@ -642,6 +642,7 @@ def get_org_accounts(session):
         page_iterator = paginator.paginate()
         for page in page_iterator:
             accounts.extend(page['Accounts'])
+        logger.info(accounts)
         return accounts
 
     except Exception as e:
