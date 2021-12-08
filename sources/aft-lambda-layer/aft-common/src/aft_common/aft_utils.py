@@ -635,11 +635,14 @@ def invoke_lambda(session, function_name, payload):
 
 def get_org_accounts(session):
     try:
+        accounts = []
         client = session.client("organizations")
         logger.info("Listing accounts for the org")
-        response = client.list_accounts()
-        logger.info(response)
-        return response["Accounts"]
+        paginator = client.get_paginator('list_accounts')
+        page_iterator = paginator.paginate()
+        for page in page_iterator:
+            accounts.extend(page['Accounts'])
+        return accounts
 
     except Exception as e:
         message = {
