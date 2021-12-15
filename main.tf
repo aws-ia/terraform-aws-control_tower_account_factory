@@ -31,6 +31,7 @@ module "aft_account_request_framework" {
   aft_vpc_private_subnet_02_cidr              = var.aft_vpc_private_subnet_02_cidr
   aft_vpc_public_subnet_01_cidr               = var.aft_vpc_public_subnet_01_cidr
   aft_vpc_public_subnet_02_cidr               = var.aft_vpc_public_subnet_02_cidr
+  aft_vpc_endpoints                           = var.aft_vpc_endpoints
 }
 
 module "aft_backend" {

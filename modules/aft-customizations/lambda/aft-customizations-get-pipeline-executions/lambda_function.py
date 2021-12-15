@@ -11,18 +11,25 @@ CUSTOMIZATIONS_PIPELINE_PATTERN = "^\d\d\d\d\d\d\d\d\d\d\d\d-.*$"
 def list_pipelines(session):
     try:
         pattern = re.compile(CUSTOMIZATIONS_PIPELINE_PATTERN)
-        pipelines = []
+        matched_pipelines = []
         client = session.client('codepipeline')
         logger.info("Listing Pipelines - ")
+
         response = client.list_pipelines()
-        logger.info(response)
 
-        for p in response['pipelines']:
+        pipelines = response['pipelines']
+        while 'nextToken' in response:
+            response = client.list_pipelines(
+                nextToken=response['nextToken']
+            )
+            pipelines.extend(response['pipelines'])
+
+        for p in pipelines:
             if re.match(pattern, p['name']):
-                pipelines.append(p['name'])
+                matched_pipelines.append(p['name'])
 
-        logger.info("The following pipelines were matched: " + str(pipelines))
-        return pipelines
+        logger.info("The following pipelines were matched: " + str(matched_pipelines))
+        return matched_pipelines
 
     except Exception as e:
         message = {
@@ -41,16 +48,28 @@ def get_running_pipeline_count(session, names):
 
         for p in names:
             logger.info("Getting pipeline executions for " + p)
+
             response = client.list_pipeline_executions(
                 pipelineName=p
             )
-            logger.info(response)
-            latest_execution = sorted(response['pipelineExecutionSummaries'], key=lambda i: i['startTime'], reverse=True)[0]
-            logger.info ("Latest Execution: ")
+            pipeline_execution_summaries = response['pipelineExecutionSummaries']
+
+            while 'nextToken' in response:
+                response = client.list_pipeline_executions(
+                    pipelineName=p,
+                    nextToken=response['nextToken']
+                )
+                pipeline_execution_summaries.extend(response['pipelineExecutionSummaries'])
+
+            latest_execution = sorted(pipeline_execution_summaries, key=lambda i: i['startTime'], reverse=True)[0]
+            logger.info("Latest Execution: ")
             logger.info(latest_execution)
+
             if latest_execution['status'] == 'InProgress':
                 pipeline_counter += 1
+
         logger.info("The number of running pipelines is " + str(pipeline_counter))
+
         return pipeline_counter
 
     except Exception as e:

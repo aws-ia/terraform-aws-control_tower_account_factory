@@ -13,8 +13,17 @@ def get_pipeline_for_account(session, account):
         current_region = session.region_name
         client = session.client('codepipeline')
         logger.info("Getting pipeline name for " + account)
+
         response = client.list_pipelines()
-        for p in response['pipelines']:
+
+        pipelines = response['pipelines']
+        while 'nextToken' in response:
+            response = client.list_pipelines(
+                nextToken=response['nextToken']
+            )
+            pipelines.extend(response['pipelines'])
+
+        for p in pipelines:
             name = p['name']
             if name.startswith(account + "-"):
                 pipeline_arn = "arn:aws:codepipeline:" + current_region + ":" + current_account + ":" + name
@@ -40,11 +49,20 @@ def pipeline_is_running(session, name):
         client = session.client('codepipeline')
 
         logger.info("Getting pipeline executions for " + name)
+
         response = client.list_pipeline_executions(
             pipelineName=name
         )
-        logger.info(response)
-        latest_execution = sorted(response['pipelineExecutionSummaries'], key=lambda i: i['startTime'], reverse=True)[0]
+        pipeline_execution_summaries = response['pipelineExecutionSummaries']
+
+        while 'nextToken' in response:
+            response = client.list_pipeline_executions(
+                pipelineName=name,
+                nextToken=response['nextToken']
+            )
+            pipeline_execution_summaries.extend(response['pipelineExecutionSummaries'])
+
+        latest_execution = sorted(pipeline_execution_summaries, key=lambda i: i['startTime'], reverse=True)[0]
         logger.info("Latest Execution: ")
         logger.info(latest_execution)
         if latest_execution['status'] == 'InProgress':

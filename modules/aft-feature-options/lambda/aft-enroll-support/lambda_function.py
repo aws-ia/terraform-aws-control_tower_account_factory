@@ -7,7 +7,8 @@ import aft_common.aft_utils as utils
 
 logger = utils.get_logger()
 
-SUPPORT_API_REGION="us-east-1"
+SUPPORT_API_REGION = "us-east-1"
+
 
 def lookup_cases(session, account_id):
     try:
@@ -17,7 +18,18 @@ def lookup_cases(session, account_id):
             language='en',
             includeCommunications=False
         )
-        for c in response['cases']:
+
+        cases = response['cases']
+        while 'NextToken' in response:
+            response = client.describe_cases(
+                includeResolvedCases=True,
+                language='en',
+                includeCommunications=False,
+                NextToken=response['nextToken']
+            )
+            cases.extend(response['cases'])
+
+        for c in cases:
             if c['subject'] == "Add Account " + account_id + " to Enterprise Support":
                 return True
 

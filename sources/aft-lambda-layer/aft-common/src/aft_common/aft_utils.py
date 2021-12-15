@@ -1,5 +1,4 @@
 import inspect
-import itertools
 import json
 import os
 import uuid
@@ -8,7 +7,6 @@ import boto3
 import botocore
 from boto3.dynamodb.types import TypeDeserializer
 from botocore.exceptions import ClientError
-from itertools import chain
 
 SSM_PARAM_AFT_DDB_META_TABLE = "/aft/resources/ddb/aft-request-metadata-table-name"
 SSM_PARAM_AFT_SESSION_NAME = "/aft/resources/iam/aft-session-name"
@@ -102,80 +100,98 @@ def put_ddb_item(session, table_name, item):
 
 
 def get_account_by_email(ct_management_session, email):
-    logger.info("begin get_account_by_email")
-    accounts = list_accounts(ct_management_session)
-    account = [a for a in accounts if a["email"] == email]
-    if account is None:
-        raise Exception(f"Account not found for email {email}")
-    logger.info(account)
-    if len(account):
-        return account[0]
-    else:
-        return None
+    try:
+        logger.info("begin get_account_by_email")
+        accounts = list_accounts(ct_management_session)
+        account = [a for a in accounts if a["email"] == email]
+        if account is None:
+            raise Exception(f"Account not found for email {email}")
+        logger.info(account)
+        if len(account):
+            return account[0]
+        else:
+            return None
+
+    except Exception as e:
+        message = {
+            "FILE": __file__.split("/")[-1],
+            "METHOD": inspect.stack()[0][3],
+            "EXCEPTION": str(e),
+        }
+        logger.exception(message)
+        raise
 
 
 def list_accounts(ct_management_session):
     try:
         client = ct_management_session.client("organizations")
-        paginator = client.get_paginator("list_accounts")
-        marker = None
-        accounts = []
-        while True:
-            if marker:
-                response = paginator.paginate(
-                    PaginationConfig={
-                        "MaxItems": 123,
-                        "PageSize": 20,
-                        "StartingToken": marker,
-                    }
-                )
-            else:
-                response = paginator.paginate(
-                    PaginationConfig={"MaxItems": 123, "PageSize": 20}
-                )
+        response = client.list_accounts()
+        accounts = response['Accounts']
+        account_info=[]
+        while 'NextToken' in response:
+            response = client.list_accounts(
+                NextToken=response['NextToken']
+            )
+            accounts.extend(response['Accounts'])
 
-            for acc_array in response:
-                for acc in acc_array["Accounts"]:
-                    accounts.append(get_account(ct_management_session, acc))
-                try:
-                    marker = acc_array["NextToken"]
-                except KeyError:
-                    return accounts
-    except botocore.exceptions.ClientError as e:
-        raise e
+        for a in accounts:
+            account_info.append(get_account(ct_management_session, a))
+
+        return account_info
+
+    except Exception as e:
+        message = {
+            "FILE": __file__.split("/")[-1],
+            "METHOD": inspect.stack()[0][3],
+            "EXCEPTION": str(e),
+        }
+        logger.exception(message)
+        raise
 
 
 def get_account(ct_management_session, account):
-    logger.info(f"Getting details for {account['Id']}")
-    client = ct_management_session.client("organizations")
-    response = client.describe_account(AccountId=account["Id"])
-    account = response["Account"]
-    response = client.list_parents(ChildId=account["Id"])
-    parents = response["Parents"]
-    parent_id = parents[0]["Id"]
-    parent_type = parents[0]["Type"]
-    org_name = ""
-    if parent_type == "ORGANIZATIONAL_UNIT":
-        org_details = client.describe_organizational_unit(
-            OrganizationalUnitId=parent_id
-        )
-        org_name = org_details["OrganizationalUnit"]["Name"]
+    try:
+        logger.info(f"Getting details for {account['Id']}")
 
-    # self._pp.pprint(parents)
-    act = {
-        "id": account["Id"],
-        "type": "account",
-        "email": account["Email"],
-        "name": account["Name"],
-        "method": account["JoinedMethod"],
-        "joined_date": str(account["JoinedTimestamp"]),
-        "status": account["Status"],
-        "parent_id": parent_id,
-        "parent_type": parent_type,
-        "org_name": org_name,
-        "vendor": "aws",
-    }
-    return act
+        client = ct_management_session.client("organizations")
+        response = client.describe_account(AccountId=account["Id"])
+
+        account = response["Account"]
+        response = client.list_parents(ChildId=account["Id"])
+        parents = response["Parents"]
+        parent_id = parents[0]["Id"]
+        parent_type = parents[0]["Type"]
+        org_name = ""
+
+        if parent_type == "ORGANIZATIONAL_UNIT":
+            org_details = client.describe_organizational_unit(
+                OrganizationalUnitId=parent_id
+            )
+            org_name = org_details["OrganizationalUnit"]["Name"]
+
+        act = {
+            "id": account["Id"],
+            "type": "account",
+            "email": account["Email"],
+            "name": account["Name"],
+            "method": account["JoinedMethod"],
+            "joined_date": str(account["JoinedTimestamp"]),
+            "status": account["Status"],
+            "parent_id": parent_id,
+            "parent_type": parent_type,
+            "org_name": org_name,
+            "vendor": "aws",
+        }
+        return act
+
+    except Exception as e:
+        message = {
+            "FILE": __file__.split("/")[-1],
+            "METHOD": inspect.stack()[0][3],
+            "EXCEPTION": str(e),
+        }
+        logger.exception(message)
+        raise
 
 
 def get_assume_role_credentials(
@@ -213,13 +229,23 @@ def get_assume_role_credentials(
 
 
 def build_role_arn(session, role_name, account_id=None):
-    account_info = get_account_info(session)
-    if not account_id:
-        role_arn = "arn:aws:iam::" + account_info["account"] + ":role/" + role_name
-        return role_arn
-    else:
-        role_arn = "arn:aws:iam::" + account_id + ":role/" + role_name
-        return role_arn
+    try:
+        account_info = get_account_info(session)
+        if not account_id:
+            role_arn = "arn:aws:iam::" + account_info["account"] + ":role/" + role_name
+            return role_arn
+        else:
+            role_arn = "arn:aws:iam::" + account_id + ":role/" + role_name
+            return role_arn
+
+    except Exception as e:
+        message = {
+            "FILE": __file__.split("/")[-1],
+            "METHOD": inspect.stack()[0][3],
+            "EXCEPTION": str(e),
+        }
+        logger.exception(message)
+        raise
 
 
 def get_account_info(session):
@@ -230,6 +256,7 @@ def get_account_info(session):
         account_info = {"region": session.region_name, "account": response["Account"]}
 
         return account_info
+
     except Exception as e:
         message = {
             "FILE": __file__.split("/")[-1],
@@ -258,43 +285,63 @@ def get_boto_session(credentials):
 
 
 def get_ct_management_session(session):
-    ct_mgmt_account = get_ssm_parameter_value(session, SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID)
-    administrator_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_ADMIN_ROLE)
-    execution_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_EXEC_ROLE)
-    session_name = get_ssm_parameter_value(session, SSM_PARAM_AFT_SESSION_NAME)
+    try:
+        ct_mgmt_account = get_ssm_parameter_value(session, SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID)
+        administrator_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_ADMIN_ROLE)
+        execution_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_EXEC_ROLE)
+        session_name = get_ssm_parameter_value(session, SSM_PARAM_AFT_SESSION_NAME)
 
-    # Assume aws-aft-AdministratorRole locally
-    local_creds = get_assume_role_credentials(
-        session, build_role_arn(session, administrator_role), session_name
-    )
-    local_assumed_session = get_boto_session(local_creds)
-    # Assume AWSAFTExecutionRole in CT management
-    ct_mgmt_creds = get_assume_role_credentials(
-        local_assumed_session,
-        build_role_arn(session, execution_role, ct_mgmt_account),
-        session_name,
-    )
-    return get_boto_session(ct_mgmt_creds)
+        # Assume aws-aft-AdministratorRole locally
+        local_creds = get_assume_role_credentials(
+            session, build_role_arn(session, administrator_role), session_name
+        )
+        local_assumed_session = get_boto_session(local_creds)
+        # Assume AWSAFTExecutionRole in CT management
+        ct_mgmt_creds = get_assume_role_credentials(
+            local_assumed_session,
+            build_role_arn(session, execution_role, ct_mgmt_account),
+            session_name,
+        )
+        return get_boto_session(ct_mgmt_creds)
+
+    except Exception as e:
+        message = {
+            "FILE": __file__.split("/")[-1],
+            "METHOD": inspect.stack()[0][3],
+            "EXCEPTION": str(e),
+        }
+        logger.exception(message)
+        raise
 
 
 def get_log_archive_session(session):
-    log_archive_account = get_ssm_parameter_value(session, SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID)
-    administrator_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_ADMIN_ROLE)
-    execution_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_EXEC_ROLE)
-    session_name = get_ssm_parameter_value(session, SSM_PARAM_AFT_SESSION_NAME)
+    try:
+        log_archive_account = get_ssm_parameter_value(session, SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID)
+        administrator_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_ADMIN_ROLE)
+        execution_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_EXEC_ROLE)
+        session_name = get_ssm_parameter_value(session, SSM_PARAM_AFT_SESSION_NAME)
 
-    # Assume aws-aft-AdministratorRole locally
-    local_creds = get_assume_role_credentials(
-        session, build_role_arn(session, administrator_role), session_name
-    )
-    local_assumed_session = get_boto_session(local_creds)
-    # Assume AWSAFTExecutionRole in CT management
-    log_archive_creds = get_assume_role_credentials(
-        local_assumed_session,
-        build_role_arn(session, execution_role, log_archive_account),
-        session_name,
-    )
-    return get_boto_session(log_archive_creds)
+        # Assume aws-aft-AdministratorRole locally
+        local_creds = get_assume_role_credentials(
+            session, build_role_arn(session, administrator_role), session_name
+        )
+        local_assumed_session = get_boto_session(local_creds)
+        # Assume AWSAFTExecutionRole in CT management
+        log_archive_creds = get_assume_role_credentials(
+            local_assumed_session,
+            build_role_arn(session, execution_role, log_archive_account),
+            session_name,
+        )
+        return get_boto_session(log_archive_creds)
+
+    except Exception as e:
+        message = {
+            "FILE": __file__.split("/")[-1],
+            "METHOD": inspect.stack()[0][3],
+            "EXCEPTION": str(e),
+        }
+        logger.exception(message)
+        raise
 
 
 def get_ct_product_id(session, ct_management_session):
@@ -348,11 +395,15 @@ def ct_provisioning_artifact_is_active(session, ct_management_session, artifact_
         client = ct_management_session.client("servicecatalog")
         sc_product_name = get_ssm_parameter_value(session, SSM_PARAM_SC_PRODUCT_NAME)
         logger.info("Checking provisioning artifact ID " + artifact_id)
+        try:
+            response = client.describe_provisioning_artifact(
+                ProductName=sc_product_name, ProvisioningArtifactId=artifact_id
+            )
+            provisioning_artifact = response["ProvisioningArtifactDetail"]
+        except client.exceptions.ResourceNotFoundException:
+            logger.info("Provisioning artifact id: " + artifact_id + " does not exist")
+            return False
 
-        response = client.describe_provisioning_artifact(
-            ProductName=sc_product_name, ProvisioningArtifactId=artifact_id
-        )
-        provisioning_artifact = response["ProvisioningArtifactDetail"]
         if provisioning_artifact["Active"]:
             logger.info(provisioning_artifact["Id"] + " is active")
             return True
@@ -377,15 +428,29 @@ def product_provisioning_in_progress(ct_management_session, product_id):
         logger.info("Checking for product provisioning in progress")
 
         response = client.scan_provisioned_products(
-            AccessLevelFilter={"Key": "Account", "Value": "self"}
+            AccessLevelFilter={
+                'Key': 'Account',
+                'Value': 'self'
+            },
         )
+        pps = response['ProvisionedProducts']
+        while 'NextPageToken' in response:
+            response = client.scan_provisioned_products(
+                AccessLevelFilter={
+                    'Key': 'Account',
+                    'Value': 'self'
+                },
+                PageToken=response['NextPageToken']
+            )
+            pps.extend(response['ProvisionedProducts'])
 
-        for p in response["ProvisionedProducts"]:
+        for p in pps:
             if p["ProductId"] == product_id:
                 logger.info("Identified CT Product - " + p["Id"])
                 if p["Status"] in ["UNDER_CHANGE", "PLAN_IN_PROGRESS"]:
                     logger.info("Product provisioning in Progress")
                     return True
+
         logger.info("No product provisioning in Progress")
         return False
 
@@ -452,23 +517,11 @@ def receive_sqs_message(session, sqs_queue):
         raise
 
 
-def get_org_account_emails(session):
+def get_org_account_emails(ct_management_session):
     try:
-        client = session.client("organizations")
-        logger.info("Listing accounts in the Organization")
-
-        response = client.list_accounts()
-        accounts = response["Accounts"]
-
-        logger.info(accounts)
-
-        account_emails = []
-
-        for a in accounts:
-            account_emails.append(a["Email"])
-
-        logger.info("Account emails: " + str(account_emails))
-        return account_emails
+        accounts = list_accounts(ct_management_session)
+        
+        return [a['email'] for a in accounts]
 
     except Exception as e:
         message = {
@@ -480,23 +533,11 @@ def get_org_account_emails(session):
         raise
 
 
-def get_org_account_names(session):
+def get_org_account_names(ct_management_session):
     try:
-        client = session.client("organizations")
-        logger.info("Listing accounts in the Organization")
+        accounts = list_accounts(ct_management_session)
 
-        response = client.list_accounts()
-        accounts = response["Accounts"]
-
-        logger.info(accounts)
-
-        account_names = []
-
-        for a in accounts:
-            account_names.append(a["Name"])
-
-        logger.info("Account Names: " + str(account_names))
-        return account_names
+        return [a['name'] for a in accounts]
 
     except Exception as e:
         message = {
@@ -514,9 +555,21 @@ def get_org_ou_names(session):
         logger.info("Listing roots in the Organization")
 
         response = client.list_roots()
-        root_id = response["Roots"][0]["Id"]
+        roots = response["Roots"]
+        while 'NextToken' in response:
+            response = client.list_roots(
+                NextToken=response['NextToken']
+            )
+            roots.append(response["Roots"])
+
+        for r in roots:
+            if r['Name'] == "Root":
+                root_id = r['Id']
+            else:
+                raise Exception ("Root called 'Root' was not found")
 
         logger.info(root_id)
+
         logger.info("Listing OUs for Root " + root_id)
 
         response = client.list_organizational_units_for_parent(ParentId=root_id)
@@ -634,38 +687,13 @@ def invoke_lambda(session, function_name, payload):
         logger.exception(message)
         raise
 
-
-def _paginate_call(client=None, api_name: str = None, top_level_response_key: str = None, **pagination_input):
-    return list(chain.from_iterable(page.get(top_level_response_key, page) for page in client.get_paginator(api_name).paginate(**pagination_input)))
-
-
-def get_org_accounts(session):
-    try:
-        client = session.client("organizations")
-        logger.info("Listing accounts for the org")
-        response = _paginate_call(client=client,
-                                  api_name='list_accounts',
-                                  top_level_response_key='Accounts')
-        logger.info(response)
-        return response
-
-    except Exception as e:
-        message = {
-            "FILE": __file__.split("/")[-1],
-            "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
-        }
-        logger.exception(message)
-        raise
-
-
 def get_account_email_from_id(ct_management_session, id):
     try:
-        accounts = get_org_accounts(ct_management_session)
+        accounts = list_accounts(ct_management_session)
         logger.info("Getting account email for account id " + id)
         for a in accounts:
-            if a["Id"] == id:
-                email = a["Email"]
+            if a["id"] == id:
+                email = a["email"]
                 logger.info("Account email: " + email)
                 return email
         return None
@@ -681,16 +709,26 @@ def get_account_email_from_id(ct_management_session, id):
 
 
 def build_sfn_arn(session, sfn_name):
-    account_info = get_account_info(session)
-    sfn_arn = (
-            "arn:aws:states:"
-            + account_info["region"]
-            + ":"
-            + account_info["account"]
-            + ":stateMachine:"
-            + sfn_name
-    )
-    return sfn_arn
+    try:
+        account_info = get_account_info(session)
+        sfn_arn = (
+                "arn:aws:states:"
+                + account_info["region"]
+                + ":"
+                + account_info["account"]
+                + ":stateMachine:"
+                + sfn_name
+        )
+        return sfn_arn
+
+    except Exception as e:
+        message = {
+            "FILE": __file__.split("/")[-1],
+            "METHOD": inspect.stack()[0][3],
+            "EXCEPTION": str(e),
+        }
+        logger.exception(message)
+        raise
 
 
 def invoke_step_function(session, sfn_name, input):
@@ -810,8 +848,12 @@ def get_all_aft_account_ids(session):
                 'id',
             ]
         )
-        logger.info(response)
-        for i in response['Items']:
+        items = response['Items']
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+        items.append(response['Items'])
+
+        for i in items:
             aft_account_ids.append(i['id'])
         if len(aft_account_ids) > 0:
             return aft_account_ids
@@ -845,10 +887,18 @@ def get_account_ids_in_ous(session, ou_names: list):
                     ParentId=ou_id,
                     ChildType='ACCOUNT'
                 )
+                children = response['Children']
+                while 'NextToken' in response:
+                    response = client.list_children(
+                        ParentId=ou_id,
+                        ChildType='ACCOUNT',
+                        NextToken=response['NextToken']
+                    )
+                    children.extend(response['Children'])
 
-                logger.info(response)
+                logger.info(str(children))
 
-                for a in response['Children']:
+                for a in children:
                     account_ids.append(a["Id"])
             else:
                 logger.info("OUs in " + str(ou_names) + " was not found")
@@ -882,9 +932,17 @@ def get_org_ou_id(session, ou_name):
         response = client.list_organizational_units_for_parent(
             ParentId=root_id
         )
-        logger.info(response)
+        ous = response['OrganizationalUnits']
+        while 'NextToken' in response:
+            response = client.list_organization_units_for_parent(
+                ParentId=root_id,
+                NextToken=response['NextToken']
+            )
+            ous.append(response['OrganizationalUnits'])
 
-        for ou in response['OrganizationalUnits']:
+        logger.info(ous)
+
+        for ou in ous:
             if ou['Name'] == ou_name:
                 logger.info("OU ID for " + ou_name + " is " + ou['Id'])
                 return ou['Id']

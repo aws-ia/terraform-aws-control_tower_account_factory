@@ -127,7 +127,19 @@ def modify_existing_account(session, ct_management_session, request):
                 'Value': 'self'
             },
         )
-        for p in response['ProvisionedProducts']:
+
+        pps = response['ProvisionedProducts']
+        while 'NextPageToken' in response:
+            response = client.scan_provisioned_products(
+                AccessLevelFilter={
+                    'Key': 'Account',
+                    'Value': 'self'
+                },
+                PageToken=response['NextPageToken']
+            )
+            pps.extend(response['ProvisionedProducts'])
+
+        for p in pps:
             if p['Type'] == 'CONTROL_TOWER_ACCOUNT':
                 provisioned_product_ids.append({'Id': p['Id'], 'ProvisioningArtifactId': p['ProvisioningArtifactId']})
 
@@ -140,7 +152,14 @@ def modify_existing_account(session, ct_management_session, request):
             )
             if response['Outputs'][0]['OutputValue'] == request['control_tower_parameters']['AccountEmail']:
                 target_product_id = p['Id']
-                target_provisioning_artifact_id = p['ProvisioningArtifactId']
+
+                # check to see if the product still exists and is still active
+                if utils.ct_provisioning_artifact_is_active(session, ct_management_session, p['ProvisioningArtifactId']):
+                    target_provisioning_artifact_id = p['ProvisioningArtifactId']
+                else:
+                    target_provisioning_artifact_id = utils.get_ct_provisioning_artifact_id(
+                        session, ct_management_session
+                    )
 
                 logger.info("Modifying existing account leveraging parameters: " + str(
                     provisioning_parameters) + " with provisioned product ID " + target_product_id)
