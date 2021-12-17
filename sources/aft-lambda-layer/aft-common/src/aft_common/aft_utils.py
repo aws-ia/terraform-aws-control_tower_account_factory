@@ -2,6 +2,8 @@ import inspect
 import json
 import os
 import uuid
+from typing import List, Dict, Optional
+
 from .logger import Logger
 import boto3
 import botocore
@@ -836,29 +838,31 @@ def tag_org_resource(
         raise
 
 
-def get_all_aft_account_ids(session):
+def get_all_aft_account_ids(session) -> Optional[List[str]]:
     try:
         table_name = get_ssm_parameter_value(session, SSM_PARAM_AFT_DDB_META_TABLE)
-        aft_account_ids = []
         dynamodb = session.resource('dynamodb')
         table = dynamodb.Table(table_name)
         logger.info("Scanning DynamoDB table: " + table_name)
-        response = table.scan(
-            AttributesToGet=[
-                'id',
-            ]
-        )
-        items = response['Items']
-        while 'LastEvaluatedKey' in response:
-            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
-        items.append(response['Items'])
 
-        for i in items:
-            aft_account_ids.append(i['id'])
-        if len(aft_account_ids) > 0:
-            return aft_account_ids
-        else:
+        items: List[Dict[str, str]] = []
+        response = table.scan(
+            ProjectionExpression="id",
+            ConsistentRead=True
+        )
+        items.extend(response['Items'])
+
+        while 'LastEvaluatedKey' in response:
+            logger.debug("Paginated response found, continuing at {}".format(response['LastEvaluatedKey']))
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            items.extend(response['Items'])
+
+        aft_account_ids = [item['id'] for item in items]
+
+        if not aft_account_ids:
             return None
+
+        return aft_account_ids
 
     except Exception as e:
         message = {
