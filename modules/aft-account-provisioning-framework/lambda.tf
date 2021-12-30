@@ -12,7 +12,7 @@ resource "aws_lambda_function" "validate_request" {
   function_name    = "aft-account-provisioning-framework-validate-request"
   description      = "AFT account provisioning framework - validate_request"
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_validate_request.arn
-  handler          = "lambda_function.lambda_handler"
+  handler          = "aft_account_provisioning_framework_validate_request.lambda_handler"
   source_code_hash = data.archive_file.validate_request.output_base64sha256
   runtime          = "python3.8"
   timeout          = 300
@@ -42,7 +42,7 @@ resource "aws_lambda_function" "get_account_info" {
   function_name    = "aft-account-provisioning-framework-get-account-info"
   description      = "AFT account provisioning framework - get_account_info"
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_get_account_info.arn
-  handler          = "lambda_function.lambda_handler"
+  handler          = "aft_account_provisioning_framework_get_account_info.lambda_handler"
   source_code_hash = data.archive_file.get_account_info.output_base64sha256
   runtime          = "python3.8"
   timeout          = 300
@@ -72,7 +72,7 @@ resource "aws_lambda_function" "create_role" {
   function_name    = "aft-account-provisioning-framework-create-aft-execution-role"
   description      = "AFT account provisioning framework - create_role"
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_create_role.arn
-  handler          = "lambda_function.lambda_handler"
+  handler          = "aft_account_provisioning_framework_create_role.lambda_handler"
   source_code_hash = data.archive_file.create_role.output_base64sha256
   runtime          = "python3.8"
   timeout          = 300
@@ -103,7 +103,7 @@ resource "aws_lambda_function" "tag_account" {
   function_name    = "aft-account-provisioning-framework-tag-account"
   description      = "AFT account provisioning framework - tag_account"
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_tag_account.arn
-  handler          = "lambda_function.lambda_handler"
+  handler          = "aft_account_provisioning_framework_tag_account.lambda_handler"
   source_code_hash = data.archive_file.tag_account.output_base64sha256
   runtime          = "python3.8"
   timeout          = 300
@@ -133,7 +133,7 @@ resource "aws_lambda_function" "persist_metadata" {
   function_name    = "aft-account-provisioning-framework-persist-metadata"
   description      = "AFT account provisioning framework - persist_metadata"
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_persist_metadata.arn
-  handler          = "lambda_function.lambda_handler"
+  handler          = "aft_account_provisioning_framework_persist_metadata.lambda_handler"
   source_code_hash = data.archive_file.persist_metadata.output_base64sha256
   runtime          = "python3.8"
   timeout          = 300

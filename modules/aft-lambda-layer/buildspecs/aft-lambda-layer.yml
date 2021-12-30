@@ -31,7 +31,7 @@ phases:
       - python3 -m pip install virtualenv
       - python3 -m venv .venv
       - . .venv/bin/activate
-      - python3 -m pip install -r ./aws-aft-core-framework/sources/aft-lambda-layer/requirements.txt
+      - python3 -m pip install ./aws-aft-core-framework/sources/aft-lambda-layer
   build:
     commands:
       - mkdir -p python

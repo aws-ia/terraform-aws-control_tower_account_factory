@@ -125,6 +125,9 @@ target/
 profile_default/
 ipython_config.py
 
+# mypy
+mypy-report.xml
+
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
 #   intended to run in multiple environments; otherwise, check them in:
@@ -333,6 +336,10 @@ fabric.properties
 modules.xml
 .idea/misc.xml
 *.ipr
+
+#boto3 stub typings
+build/typings/
+typings/
 
 # Sonarlint plugin
 .idea/sonarlint

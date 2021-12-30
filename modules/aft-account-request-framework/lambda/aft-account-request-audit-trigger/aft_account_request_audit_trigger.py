@@ -1,50 +1,38 @@
 import inspect
-import os
-import boto3
-import aft_common.aft_utils as utils
 from datetime import datetime
+from typing import Any, Dict, Union
+
+import aft_common.aft_utils as utils
+import boto3
+from boto3.session import Session
 
 logger = utils.get_logger()
 
 
-def put_audit_record(session, table, image, event_name):
-    try:
-        dynamodb = session.client("dynamodb")
-        item = image
+def put_audit_record(
+    session: Session, table: str, image: Dict[str, Any], event_name: str
+) -> Dict[str, Any]:
+    dynamodb = session.client("dynamodb")
+    item = image
 
-        datetime_format = "%Y-%m-%dT%H:%M:%S.%f"
-        current_time = datetime.now().strftime(datetime_format)
-        item["timestamp"] = {"S": current_time}
+    datetime_format = "%Y-%m-%dT%H:%M:%S.%f"
+    current_time = datetime.now().strftime(datetime_format)
+    item["timestamp"] = {"S": current_time}
 
-        item["ddb_event_name"] = {"S": event_name}
+    item["ddb_event_name"] = {"S": event_name}
 
-        logger.info("Inserting item into " + table + " table: " + str(item))
+    logger.info("Inserting item into " + table + " table: " + str(item))
 
-        response = dynamodb.put_item(TableName=table, Item=item)
+    response: Dict[str, Any] = dynamodb.put_item(TableName=table, Item=item)
 
-        logger.info(response)
+    logger.info(response)
 
-        return response
-
-    except Exception as e:
-        message = {
-            "FILE": __file__.split("/")[-1],
-            "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
-        }
-        logger.exception(message)
-        raise
+    return response
 
 
-def lambda_handler(event, context):
-    try:
-        if event["offline"]:
-            return True
-    except KeyError:
-        pass
+def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
 
     try:
-        print(event)
         logger.info("Lambda_handler Event")
         logger.info(event)
         session = boto3.session.Session()
@@ -63,7 +51,9 @@ def lambda_handler(event, context):
 
                     supported_events = {"INSERT", "MODIFY", "REMOVE"}
 
-                    image_key_name = "OldImage" if event_name == "REMOVE" else "NewImage"
+                    image_key_name = (
+                        "OldImage" if event_name == "REMOVE" else "NewImage"
+                    )
                     image_to_record = event_record["dynamodb"][image_key_name]
 
                     if event_name in supported_events:
@@ -76,7 +66,6 @@ def lambda_handler(event, context):
                 else:
                     logger.info("Non DynamoDB Event Received")
                     sys.exit(1)
-            return response
         else:
             logger.info("Unexpected Event Received")
 

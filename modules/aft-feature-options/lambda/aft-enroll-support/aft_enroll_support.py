@@ -1,28 +1,31 @@
 import inspect
-import os
-import boto3
+from typing import Any, Dict, Optional
+
 import aft_common.aft_utils as utils
+import boto3
+from aft_common.premium_support import account_enrollment_requested, generate_case
 
 logger = utils.get_logger()
 
-def lambda_handler(event, context):
-    logger.info("Lambda_handler Event")
-    logger.info(event)
-    try:
-        if event["offline"]:
-            return True
-    except KeyError:
-        pass
+SUPPORT_API_REGION = "us-east-1"
+
+
+def lambda_handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> None:
 
     try:
-        session = boto3.session.Session()
-
-        response = utils.put_ddb_item(
-            session,
-            utils.get_ssm_parameter_value(session, utils.SSM_PARAM_AFT_EVENTS_TABLE),
-            event
-        )
-        return response
+        logger.info("Lambda_handler Event")
+        logger.info(event)
+        aft_session = boto3.session.Session()
+        ct_mgmt_session = utils.get_ct_management_session(aft_session)
+        target_account_id = event["account_info"]["account"]["id"]
+        if (
+            utils.get_ssm_parameter_value(
+                aft_session, utils.SSM_PARAM_FEATURE_ENTERPRISE_SUPPORT_ENABLED
+            ).lower()
+            == "true"
+        ):
+            if not account_enrollment_requested(ct_mgmt_session, target_account_id):
+                generate_case(ct_mgmt_session, target_account_id)
 
     except Exception as e:
         message = {

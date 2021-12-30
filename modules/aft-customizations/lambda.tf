@@ -10,7 +10,7 @@ resource "aws_lambda_function" "aft_customizations_identify_targets" {
   function_name = "aft-customizations-identify-targets"
   description   = "Identifies targets to be customized. Called from aft-trigger-customizations SFN."
   role          = aws_iam_role.aft_customizations_identify_targets_lambda.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "aft_customizations_identify_targets.lambda_handler"
 
   source_code_hash = data.archive_file.aft_customizations_identify_targets.output_base64sha256
 
@@ -42,7 +42,7 @@ resource "aws_lambda_function" "aft_customizations_execute_pipeline" {
   function_name = "aft-customizations-execute-pipeline"
   description   = "Executes the CodePipeline for account baselining. Called from aft-trigger-customizations SFN"
   role          = aws_iam_role.aft_customizations_execute_pipeline_lambda.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "aft_customizations_execute_pipeline.lambda_handler"
 
   source_code_hash = data.archive_file.aft_customizations_execute_pipeline.output_base64sha256
 
@@ -73,7 +73,7 @@ resource "aws_lambda_function" "aft_customizations_get_pipeline_executions" {
   function_name = "aft-customizations-get-pipeline-executions"
   description   = "Gets status of executing pipelines for baselining. Called from aft-trigger-customizations SFN"
   role          = aws_iam_role.aft_customizations_get_pipeline_executions_lambda.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "aft_customizations_get_pipeline_executions.lambda_handler"
 
   source_code_hash = data.archive_file.aft_customizations_get_pipeline_executions.output_base64sha256
 
@@ -105,7 +105,7 @@ resource "aws_lambda_function" "aft_customizations_invoke_account_provisioning" 
   function_name = "aft-customizations-invoke-account-provisioning"
   description   = "Invokes the account-provisioning SFN."
   role          = aws_iam_role.aft_customizations_invoke_account_provisioning_lambda.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "aft_customizations_invoke_account_provisioning_framework.lambda_handler"
 
   source_code_hash = data.archive_file.aft_customizations_invoke_account_provisioning.output_base64sha256
 

@@ -15,11 +15,11 @@
 
 # !/bin/python
 import json
-from datetime import datetime, date
+from datetime import date, datetime
 
 
 class DateTimeEncoder(json.JSONEncoder):
-    def default(self, o):
+    def default(self, o: object) -> str:
         if isinstance(o, (datetime, date)):
             serial = o.isoformat()
             return serial

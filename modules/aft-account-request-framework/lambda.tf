@@ -11,7 +11,7 @@ resource "aws_lambda_function" "aft_account_request_audit_trigger" {
   function_name = "aft-account-request-audit-trigger"
   description   = "Receives trigger from DynamoDB aft-request table and inserts the event into aft-request-audit table"
   role          = aws_iam_role.aft_account_request_audit_trigger.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "aft_account_request_audit_trigger.lambda_handler"
 
   source_code_hash = data.archive_file.aft_account_request_audit_trigger.output_base64sha256
 
@@ -57,7 +57,7 @@ resource "aws_lambda_function" "aft_account_request_action_trigger" {
   function_name = "aft-account-request-action-trigger"
   description   = "Receives trigger from DynamoDB aft-request table and determines action target - SQS or Lambda aft-invoke-aft-account-provisioning-framework"
   role          = aws_iam_role.aft_account_request_action_trigger.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "aft_account_request_action_trigger.lambda_handler"
 
   source_code_hash = data.archive_file.aft_account_request_action_trigger.output_base64sha256
 
@@ -97,7 +97,7 @@ resource "aws_lambda_function" "aft_controltower_event_logger" {
   function_name = "aft-controltower-event-logger"
   description   = "Receives Control Tower events through dedicated event bus event and writes event to aft-controltower-events table"
   role          = aws_iam_role.aft_controltower_event_logger.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "aft_controltower_event_logger.lambda_handler"
 
   source_code_hash = data.archive_file.aft_controltower_event_logger.output_base64sha256
 
@@ -137,7 +137,7 @@ resource "aws_lambda_function" "aft_account_request_processor" {
   function_name = "aft-account-request-processor"
   description   = "Triggered by CW Event, reads aft-account-request.fifo queue and performs needed action"
   role          = aws_iam_role.aft_account_request_processor.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "aft_account_request_processor.lambda_handler"
 
   source_code_hash = data.archive_file.aft_account_request_processor.output_base64sha256
 
@@ -178,7 +178,7 @@ resource "aws_lambda_function" "aft_invoke_aft_account_provisioning_framework" {
   function_name = "aft-invoke-aft-account-provisioning-framework"
   description   = "Calls AFT Account Provisioning Framework Step Function based on a formatted incoming event from Lambda or CW Event"
   role          = aws_iam_role.aft_invoke_aft_account_provisioning_framework.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "aft_invoke_aft_account_provisioning_framework.lambda_handler"
 
   source_code_hash = data.archive_file.aft_invoke_aft_account_provisioning_framework.output_base64sha256
 

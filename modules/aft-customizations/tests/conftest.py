@@ -1,30 +1,31 @@
-import os
-import sys
-import json
-import jsonschema
-import pytest
-import pprint
 import logging
+import os
+import pprint
 
-pp = pprint.PrettyPrinter(indent=4,depth=6)
+import pytest
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(levelname)-8s %(message)s',
-                    )
+pp = pprint.PrettyPrinter(indent=4, depth=6)
 
-from  tf_analyzer import tfAnalyzer
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(levelname)-8s %(message)s",
+)
+
+from tf_analyzer import tfAnalyzer
 
 BASE_DIR = os.path.join(os.path.dirname(__file__))
 fixture_path = "."
+
 
 def pytest_generate_tests(metafunc):
     os.environ["local_configuration_path"] = "./testdata/temp_configuration_file.tar.gz"
     os.environ["terraform_version"] = "0.15.5"
     os.environ["terraform_api_endpoint"] = "https://app.terraform.io/api/v2"
 
+
 @pytest.fixture
 def plan():
-    plan_file = './tfplan.json'
+    plan_file = "./tfplan.json"
     tf = tfAnalyzer()
     tf.load_plan(plan_file)
     results = {}

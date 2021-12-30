@@ -1,16 +1,18 @@
+import inspect
 import json
 import os
+from typing import Any, Dict, Union
 
-import boto3
-import jsonschema
 import aft_common.aft_utils as utils
-from boto3.dynamodb.conditions import Key
-
+import boto3
+from boto3.session import Session
 
 logger = utils.get_logger()
 
 
-def get_ct_execution_session(aft_management_session, ct_management_session, account_id):
+def get_ct_execution_session(
+    aft_management_session: Session, ct_management_session: Session, account_id: str
+) -> Session:
     session_name = utils.get_ssm_parameter_value(
         aft_management_session, utils.SSM_PARAM_AFT_SESSION_NAME
     )
@@ -25,7 +27,9 @@ def get_ct_execution_session(aft_management_session, ct_management_session, acco
     return utils.get_boto_session(admin_credentials)
 
 
-def persist_metadata(payload, account_info, session, logger):
+def persist_metadata(
+    payload: Dict[str, Any], account_info: Dict[str, Any], session: Session
+) -> Dict[str, Any]:
     logger.info("Function Start - persist_metadata")
 
     account_tags = payload["account_request"]["account_tags"]
@@ -56,8 +60,8 @@ def persist_metadata(payload, account_info, session, logger):
 
 
 def create_aft_execution_role(
-        payload, account_info, session, ct_management_session, logger
-):
+    account_info: Dict[str, Any], session: Session, ct_management_session: Session
+) -> str:
     logger.info("Function Start - create_aft_execution_role")
     role_name = utils.get_ssm_parameter_value(session, utils.SSM_PARAM_AFT_EXEC_ROLE)
     ct_execution_session = get_ct_execution_session(
@@ -66,17 +70,21 @@ def create_aft_execution_role(
     exec_iam_client = ct_execution_session.client("iam")
 
     try:
+        return_value: str
         role = exec_iam_client.get_role(RoleName=role_name.split("/")[-1])
-        if role:
-            logger.info("Role Exists. Exiting")
-            return role["Role"]["Arn"]
+        logger.info("Role Exists. Exiting")
+        return_value = role["Role"]["Arn"]
+        return return_value
     except exec_iam_client.exceptions.NoSuchEntityException:
         logger.info("Role not found in account.")
         role = create_role_in_account(session, ct_execution_session, role_name)
-        return role
+        return_value = role
+        return return_value
 
 
-def create_role_in_account(session, ct_execution_session, role_name):
+def create_role_in_account(
+    session: Session, ct_execution_session: Session, role_name: str
+) -> str:
     logger.info("Function Start - create_role_in_account")
     trust_policy_template = os.path.join(
         os.path.dirname(__file__), "iam/trust-policies/aftmanagement.tpl"
@@ -110,39 +118,56 @@ def create_role_in_account(session, ct_execution_session, role_name):
     logger.info(response)
     logger.info("Returning role")
     logger.info(role)
-    return role
+    return_value: str = role
+    return return_value
 
 
-def lambda_handler(event, context):
-    logger.info("AFT Account Provisioning Framework Create Role Handler Start")
+def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> str:
     try:
-        if event["offline"]:
-            return True
-    except KeyError:
-        pass
+        logger.info("AFT Account Provisioning Framework Create Role Handler Start")
 
+        payload = event["payload"]
+        action = event["action"]
 
-    payload = event["payload"]
-    action = event["action"]
+        session = boto3.session.Session()
+        ct_management_session = utils.get_ct_management_session(session)
 
-    session = boto3.session.Session()
-    ct_management_session = utils.get_ct_management_session(session)
+        if action == "create_role":
+            account_info = payload["account_info"]["account"]
+            aft_role = create_aft_execution_role(
+                account_info, session, ct_management_session
+            )
+            return_value: str = aft_role
+            return return_value
+        else:
+            raise Exception(
+                "Incorrect Command Passed to Lambda Function. Input: {action}. Expected: 'create_role'"
+            )
 
-    if action == "create_role":
-        account_info = payload["account_info"]["account"]
-        aft_role = create_aft_execution_role(
-            payload, account_info, session, ct_management_session, logger
-        )
-        return aft_role
-    else:
-        raise BaseException(
-            "Incorrect Command Passed to Lambda Function. Input: {action}. Expected: 'create_role'"
-        )
+    except Exception as e:
+        message = {
+            "FILE": __file__.split("/")[-1],
+            "METHOD": inspect.stack()[0][3],
+            "EXCEPTION": str(e),
+        }
+        logger.exception(message)
+        raise
 
 
 if __name__ == "__main__":
-    event = {}
-    example_file = os.path.join(os.path.dirname(__file__), "schema/example_event.json")
-    with open(example_file) as json_data:
-        event = json.load(json_data)
-    lambda_handler(event, None)
+    import json
+    import sys
+    from optparse import OptionParser
+
+    logger.info("Local Execution")
+    parser = OptionParser()
+    parser.add_option(
+        "-f", "--event-file", dest="event_file", help="Event file to be processed"
+    )
+    (options, args) = parser.parse_args(sys.argv)
+    if options.event_file is not None:
+        with open(options.event_file) as json_data:
+            event = json.load(json_data)
+            lambda_handler(event, None)
+    else:
+        lambda_handler({}, None)

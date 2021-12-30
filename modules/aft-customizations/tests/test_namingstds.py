@@ -1,10 +1,5 @@
-import os
-import logging
-import pprint
-import sys
-import json
-import jsonschema
 import pytest
+
 
 @pytest.mark.unit
 def test_naming_violations(plan):
