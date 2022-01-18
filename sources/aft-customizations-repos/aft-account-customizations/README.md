@@ -2,9 +2,6 @@
 This repo stores the Terraform and API helpers for the Account Customizations. Account Customizations are used to customize all provisioned accounts with customer defined resources. The resources can be created through Terraform or through Python, leveraging the API helpers. The customization run is parameterized at runtime.
 
 # Usage
-To create an account specific baseline, copy the ACCOUNT_TEMPLATE folder into a new folder. The new folder name should be the account ID you wish to baseline.
-
-# Usage
 To leverage Account Customizations, start by copying the ACCOUNT_TEMPLATE folder into a new folder. The new folder name should match the ```account_customizations_name``` provided in the account request for the accounts you would like to baseline. Then, populate the target folder as per the instructions below.
 
 ## Terraform

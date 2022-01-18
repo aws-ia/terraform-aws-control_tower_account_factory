@@ -1,9 +1,14 @@
 import inspect
-from typing import Any, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 import aft_common.aft_utils as utils
 import boto3
 from boto3.session import Session
+
+if TYPE_CHECKING:
+    from mypy_boto3_cloudtrail import CloudTrailClient
+else:
+    CloudTrailClient = object
 
 logger = utils.get_logger()
 
@@ -11,11 +16,15 @@ CLOUDTRAIL_TRAIL_NAME = "aws-aft-CustomizationsCloudTrail"
 
 
 def trail_exists(session: Session) -> bool:
-    client = session.client("cloudtrail")
+    client: CloudTrailClient = session.client("cloudtrail")
     logger.info("Checking for trail " + CLOUDTRAIL_TRAIL_NAME)
-    response = client.get_trail(Name=CLOUDTRAIL_TRAIL_NAME)
-    logger.info("Trail already exists")
-    return True
+    try:
+        client.get_trail(Name=CLOUDTRAIL_TRAIL_NAME)
+        logger.info("Trail already exists")
+        return True
+    except client.exceptions.TrailNotFoundException:
+        logger.info("Trail does not exist")
+        return False
 
 
 def event_selectors_exists(session: Session) -> bool:

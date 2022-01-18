@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+import os
 import time
 
 import requests
@@ -24,7 +24,8 @@ def check_workspace_exists(organization_name, workspace_name, api_token):
         TERRAFORM_API_ENDPOINT, organization_name, workspace_name
     )
     headers = __build_standard_headers(api_token)
-    response = requests.get(endpoint, headers=headers)
+    tf_dist = os.environ.get("TF_DISTRIBUTION")
+    response = requests.get(endpoint, headers=headers, verify=tf_dist != "tfe")
     data = response.json()
 
     if "data" in data.keys():
@@ -75,7 +76,8 @@ def create_configuration_version(workspace_id, api_token):
 
 def upload_configuration_content(data, upload_url):
     headers = {"Content-Type": "application/octet-stream", "Accept": "application/json"}
-    requests.put(upload_url, data=data, headers=headers)
+    tf_dist = os.environ.get("TF_DISTRIBUTION")
+    requests.put(upload_url, data=data, headers=headers, verify=tf_dist != "tfe")
 
 
 def set_environment_variable(
@@ -203,25 +205,29 @@ def __build_standard_headers(api_token):
 
 
 def __post(endpoint, headers, payload):
-    response = requests.post(endpoint, headers=headers, json=payload)
+    tf_dist = os.environ.get("TF_DISTRIBUTION")
+    response = requests.post(endpoint, headers=headers, json=payload, verify=tf_dist != "tfe")
     __handle_errors(response)
     return response.json()
 
 
 def __patch(endpoint, headers, payload):
-    response = requests.patch(endpoint, headers=headers, json=payload)
+    tf_dist = os.environ.get("TF_DISTRIBUTION")
+    response = requests.patch(endpoint, headers=headers, json=payload, verify=tf_dist != "tfe")
     __handle_errors(response)
     return response.json()
 
 
 def __get(endpoint, headers):
-    response = requests.get(endpoint, headers=headers)
+    tf_dist = os.environ.get("TF_DISTRIBUTION")
+    response = requests.get(endpoint, headers=headers, verify=tf_dist != "tfe")
     __handle_errors(response)
     return response.json()
 
 
 def __delete(endpoint, headers):
-    response = requests.delete(endpoint, headers=headers)
+    tf_dist = os.environ.get("TF_DISTRIBUTION")
+    response = requests.delete(endpoint, headers=headers, verify=tf_dist != "tfe")
     # __handle_errors(response)
     return response.json()
 

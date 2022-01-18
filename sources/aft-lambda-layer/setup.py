@@ -73,7 +73,7 @@ setuptools.setup(
             "pre-commit == 2.16.0",
             "pycodestyle == 2.8.0",
             "mypy == 0.930",
-            "boto3-stubs[support, stepfunctions, ec2, organizations, servicecatalog, sqs, lambda, sns, sts] == 1.20.26",
+            "boto3-stubs[support, stepfunctions, ec2, organizations, servicecatalog, sqs, lambda, sns, sts, cloudtrail] == 1.20.26",
             "mypy_boto3_builder == 5.5.0",
         ]
     },
