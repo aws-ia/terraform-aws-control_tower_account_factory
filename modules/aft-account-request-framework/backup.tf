@@ -16,10 +16,14 @@ resource "aws_backup_selection" "aft_controltower_backup_selection" {
   name         = "aft-controltower-backup-selection"
   plan_id      = aws_backup_plan.aft_controltower_backup_plan.id
 
+  condition {}
+  
   resources = [
     aws_dynamodb_table.aft_request_metadata.arn,
     aws_dynamodb_table.aft_request.arn,
     aws_dynamodb_table.aft_request_audit.arn,
     aws_dynamodb_table.aft_controltower_events.arn
   ]
+  
+  not_resources = []
 }
