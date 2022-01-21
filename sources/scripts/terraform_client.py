@@ -206,14 +206,18 @@ def __build_standard_headers(api_token):
 
 def __post(endpoint, headers, payload):
     tf_dist = os.environ.get("TF_DISTRIBUTION")
-    response = requests.post(endpoint, headers=headers, json=payload, verify=tf_dist != "tfe")
+    response = requests.post(
+        endpoint, headers=headers, json=payload, verify=tf_dist != "tfe"
+    )
     __handle_errors(response)
     return response.json()
 
 
 def __patch(endpoint, headers, payload):
     tf_dist = os.environ.get("TF_DISTRIBUTION")
-    response = requests.patch(endpoint, headers=headers, json=payload, verify=tf_dist != "tfe")
+    response = requests.patch(
+        endpoint, headers=headers, json=payload, verify=tf_dist != "tfe"
+    )
     __handle_errors(response)
     return response.json()
 

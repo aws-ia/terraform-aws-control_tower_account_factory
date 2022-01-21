@@ -33,7 +33,10 @@ if TYPE_CHECKING:
     from mypy_boto3_stepfunctions import SFNClient
     from mypy_boto3_stepfunctions.type_defs import StartExecutionOutputTypeDef
     from mypy_boto3_sts import STSClient
-    from mypy_boto3_sts.type_defs import CredentialsTypeDef
+    from mypy_boto3_sts.type_defs import (
+        AssumeRoleRequestRequestTypeDef,
+        CredentialsTypeDef,
+    )
 else:
     LambdaClient = object
     InvocationResponseTypeDef = object
@@ -225,22 +228,24 @@ def get_assume_role_credentials(
     session_name: str,
     external_id: Optional[str] = None,
     session_duration: int = 900,
+    session_policy: Optional[str] = None,
 ) -> CredentialsTypeDef:
     client: STSClient = session.client("sts")
 
+    assume_role_params: AssumeRoleRequestRequestTypeDef = {
+        "RoleArn": role_arn,
+        "RoleSessionName": session_name,
+        "DurationSeconds": session_duration,
+    }
+
     if external_id:
-        assume_role_response = client.assume_role(
-            RoleArn=role_arn,
-            RoleSessionName=session_name,
-            DurationSeconds=session_duration,
-            ExternalId=external_id,
-        )
-    else:
-        assume_role_response = client.assume_role(
-            RoleArn=role_arn,
-            RoleSessionName=session_name,
-            DurationSeconds=session_duration,
-        )
+        assume_role_params.update({"ExternalId": external_id})
+
+    if session_policy:
+        assume_role_params.update({"Policy": session_policy})
+
+    assume_role_response = client.assume_role(**assume_role_params)
+
     credentials = assume_role_response["Credentials"]
     return credentials
 
@@ -295,6 +300,19 @@ def get_ct_management_session(session: Session) -> Session:
         session_name,
     )
     return get_boto_session(ct_mgmt_creds)
+
+
+def get_aft_admin_role_session(session: Session) -> Session:
+    administrator_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_ADMIN_ROLE)
+    execution_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_EXEC_ROLE)
+    session_name = get_ssm_parameter_value(session, SSM_PARAM_AFT_SESSION_NAME)
+
+    # Assume aws-aft-AdministratorRole locally
+    local_creds = get_assume_role_credentials(
+        session, build_role_arn(session, administrator_role), session_name
+    )
+
+    return get_boto_session(local_creds)
 
 
 def get_log_archive_session(session: Session) -> Session:

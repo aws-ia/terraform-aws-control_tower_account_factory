@@ -13,8 +13,6 @@ Git push action will trigger ct-aft-account-request AWS CodePipeline in AFT mana
 
 - **module source** is path to Account Request terraform module provided by AFT - this should always be ```source = "./modules/aft-account-request"```
 
-- **create_customizations** must **** be set to true if you intend to customize account after provisioning. Refer to <TODO - insert link Account Customization> documentation for more information.
-
 - **control_tower_parameters** captures mandatory inputs listed below to create AWS Control Tower managed account.
     - AccountEmail
     - AccountName

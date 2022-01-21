@@ -44,4 +44,3 @@ variable "account_customizations_name" {
   default     = ""
   description = "The name of the account customizations to apply"
 }
-

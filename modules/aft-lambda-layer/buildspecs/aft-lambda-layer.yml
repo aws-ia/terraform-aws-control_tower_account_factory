@@ -11,6 +11,8 @@ phases:
       - DEFAULT_PATH=$(pwd)
       - AWS_MODULE_SOURCE=$(aws ssm get-parameter --name $SSM_AWS_MODULE_SOURCE --query "Parameter.Value" --output text)
       - AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name $SSM_AWS_MODULE_GIT_REF --query "Parameter.Value" --output text)
+      # URL Without Access ID
+      - URL=$(echo "$AWS_MODULE_SOURCE" | awk '{split($0,a,"@"); print a[2]}')
       - |
         ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption || echo "None")
         if [[ $ssh_key_parameter != "None" ]]; then
@@ -27,6 +29,7 @@ phases:
         fi
       - git config --global credential.helper '!aws codecommit credential-helper $@'
       - git config --global credential.UseHttpPath true
+      - echo "Building aft_common from ${URL}:${AWS_MODULE_GIT_REF}"
       - git clone -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework
       - python3 -m pip install virtualenv
       - python3 -m venv .venv

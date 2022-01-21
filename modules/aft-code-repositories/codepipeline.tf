@@ -339,4 +339,3 @@ resource "aws_cloudwatch_event_target" "account_provisioning_customizations" {
   arn       = aws_codepipeline.codecommit_account_provisioning_customizations[0].arn
   role_arn  = aws_iam_role.cloudwatch_events_codepipeline_role[0].arn
 }
-

@@ -16,4 +16,3 @@ resource "aws_sfn_state_machine" "aft_invoke_customizations_sfn" {
   role_arn   = aws_iam_role.aft_invoke_customizations_sfn.arn
   definition = templatefile(local.state_machine_source, local.replacements_map)
 }
-

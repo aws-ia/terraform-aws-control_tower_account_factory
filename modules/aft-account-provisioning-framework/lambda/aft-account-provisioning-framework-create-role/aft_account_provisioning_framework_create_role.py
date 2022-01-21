@@ -1,11 +1,19 @@
 import inspect
 import json
 import os
-from typing import Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 import aft_common.aft_utils as utils
 import boto3
 from boto3.session import Session
+
+if TYPE_CHECKING:
+    from mypy_boto3_iam import IAMClient
+    from mypy_boto3_iam.type_defs import CreateRoleResponseTypeDef
+else:
+    IAMClient = object
+    CreateRoleResponseTypeDef = object
+
 
 logger = utils.get_logger()
 
@@ -70,16 +78,12 @@ def create_aft_execution_role(
     exec_iam_client = ct_execution_session.client("iam")
 
     try:
-        return_value: str
         role = exec_iam_client.get_role(RoleName=role_name.split("/")[-1])
         logger.info("Role Exists. Exiting")
-        return_value = role["Role"]["Arn"]
-        return return_value
+        return role["Role"]["Arn"]
     except exec_iam_client.exceptions.NoSuchEntityException:
-        logger.info("Role not found in account.")
-        role = create_role_in_account(session, ct_execution_session, role_name)
-        return_value = role
-        return return_value
+        logger.info("Role not found in account. Creating...")
+        return create_role_in_account(session, ct_execution_session, role_name)
 
 
 def create_role_in_account(
@@ -97,9 +101,9 @@ def create_role_in_account(
         template = template.replace("{AftManagementAccount}", aft_management_account)
         assume_role_policy_document = json.loads(template)
 
-    exec_client = ct_execution_session.client("iam")
+    exec_client: IAMClient = ct_execution_session.client("iam")
     logger.info("Creating Role")
-    response = exec_client.create_role(
+    response: CreateRoleResponseTypeDef = exec_client.create_role(
         RoleName=role_name.split("/")[-1],
         AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
         Description="AFT Execution Role",
@@ -111,15 +115,13 @@ def create_role_in_account(
     role = response["Role"]["Arn"]
     logger.info(response)
     logger.info("Attaching Role Policy")
-    response = exec_client.attach_role_policy(
+    exec_client.attach_role_policy(
         RoleName=role_name.split("/")[-1],
         PolicyArn="arn:aws:iam::aws:policy/AdministratorAccess",
     )
-    logger.info(response)
     logger.info("Returning role")
     logger.info(role)
-    return_value: str = role
-    return return_value
+    return role
 
 
 def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> str:

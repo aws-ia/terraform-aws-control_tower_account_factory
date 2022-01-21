@@ -28,4 +28,3 @@ resource "aws_codestarconnections_host" "githubenterprise" {
     vpc_id             = var.vpc_id
   }
 }
-

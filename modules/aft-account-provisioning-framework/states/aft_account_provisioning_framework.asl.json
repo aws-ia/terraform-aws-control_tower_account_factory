@@ -94,7 +94,7 @@
       ]
     },
     "aft_account_provisioning_framework_tag_account": {
-      "Next": "aft_account_provisioning_framework_aft_features",
+      "Next": "aft_account_provisioning_framework_account_metadata_ssm",
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "ResultPath": "$.account_tags",
@@ -105,6 +105,28 @@
           "job_name.$": "$$.Execution.Name",
           "payload.$": "$",
           "action": "tag_account",
+          "account_info.$": "$.account_info"
+        }
+      },
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "aft_account_provisioning_framework_notify_error"
+        }
+      ]
+    },
+    "aft_account_provisioning_framework_account_metadata_ssm": {
+      "Next": "aft_account_provisioning_framework_aft_features",
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.account_metadata_ssm",
+      "ResultSelector": {"StatusCode.$":"$.StatusCode"},
+      "Parameters": {
+        "FunctionName": "${account_metadata_ssm_function_name}",
+        "Payload": {
+          "job_name.$": "$$.Execution.Name",
+          "payload.$": "$",
+          "action": "account_metadata_ssm",
           "account_info.$": "$.account_info"
         }
       },

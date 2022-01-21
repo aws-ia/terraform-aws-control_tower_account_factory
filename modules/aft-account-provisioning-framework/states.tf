@@ -6,6 +6,7 @@ locals {
     create_role_function_name                                         = aws_lambda_function.create_role.function_name
     tag_account_function_name                                         = aws_lambda_function.tag_account.function_name
     persist_metadata_function_name                                    = aws_lambda_function.persist_metadata.function_name
+    account_metadata_ssm_function_name                                = aws_lambda_function.account_metadata_ssm.function_name
     aft_notification_arn                                              = var.aft_sns_topic_arn
     aft_failure_notification_arn                                      = var.aft_failure_sns_topic_arn
     aft_account_provisioning_customizations_state_machine_arn         = "arn:aws:states:${data.aws_region.aft_management.name}:${data.aws_caller_identity.aft_management.account_id}:stateMachine:${var.aft_account_provisioning_customizations_sfn_name}"

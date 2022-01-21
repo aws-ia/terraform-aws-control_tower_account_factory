@@ -149,3 +149,33 @@ resource "aws_cloudwatch_log_group" "persist_metadata" {
   name              = "/aws/lambda/${aws_lambda_function.persist_metadata.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
 }
+
+###  Account Metadata SSM Function
+
+data "archive_file" "account_metadata_ssm" {
+  type        = "zip"
+  source_dir  = "${path.module}/lambda/aft-account-provisioning-framework-account-metadata-ssm/"
+  output_path = "${path.module}/account_metadata_ssm.zip"
+}
+
+resource "aws_lambda_function" "account_metadata_ssm" {
+  filename         = data.archive_file.account_metadata_ssm.output_path
+  function_name    = "aft-account-provisioning-framework-account-metadata-ssm"
+  description      = "AFT account provisioning framework - account_metadata_ssm"
+  role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_persist_metadata.arn
+  handler          = "aft_account_provisioning_framework_account_metadata_ssm.lambda_handler"
+  source_code_hash = data.archive_file.account_metadata_ssm.output_base64sha256
+  runtime          = "python3.8"
+  timeout          = 300
+  layers           = [var.aft_common_layer_arn]
+
+  vpc_config {
+    subnet_ids         = var.aft_vpc_private_subnets
+    security_group_ids = var.aft_vpc_default_sg
+  }
+}
+
+resource "aws_cloudwatch_log_group" "account_metadata_ssm" {
+  name              = "/aws/lambda/${aws_lambda_function.account_metadata_ssm.function_name}"
+  retention_in_days = var.cloudwatch_log_group_retention
+}

@@ -413,4 +413,3 @@ resource "aws_vpc_endpoint" "sts" {
 
   private_dns_enabled = true
 }
-
