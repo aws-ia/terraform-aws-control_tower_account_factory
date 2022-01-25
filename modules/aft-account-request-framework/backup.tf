@@ -15,11 +15,15 @@ resource "aws_backup_selection" "aft_controltower_backup_selection" {
   iam_role_arn = aws_iam_role.aft_aws_backup.arn
   name         = "aft-controltower-backup-selection"
   plan_id      = aws_backup_plan.aft_controltower_backup_plan.id
-
   resources = [
     aws_dynamodb_table.aft_request_metadata.arn,
     aws_dynamodb_table.aft_request.arn,
     aws_dynamodb_table.aft_request_audit.arn,
     aws_dynamodb_table.aft_controltower_events.arn
   ]
+
+  # Explicit workaround due to https://github.com/hashicorp/terraform-provider-aws/issues/22595
+  condition {}
+  not_resources = []
+
 }
