@@ -4,20 +4,21 @@ from typing import Any, Dict, Union
 
 import aft_common.aft_utils as utils
 import boto3
+from aft_common.account import Account
+from boto3.session import Session
 
 logger = utils.get_logger()
 
 
 def new_account_request(record: Dict[str, Any]) -> bool:
-    if record["eventName"] == "INSERT":
-        return True
-    return False
-
-
-def modify_account_request(record: Dict[str, Any]) -> bool:
-    if record["eventName"] == "MODIFY":
-        return True
-    return False
+    ct_management_session = utils.get_ct_management_session(aft_mgmt_session=Session())
+    account_name = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
+        "control_tower_parameters"
+    ]["AccountName"]
+    provisioned_product = Account(
+        ct_management_session=ct_management_session, account_name=account_name
+    ).provisioned_product
+    return provisioned_product is None
 
 
 def delete_account_request(record: Dict[str, Any]) -> bool:
@@ -74,52 +75,51 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
     try:
         logger.info("Lambda_handler Event")
         logger.info(event)
-
         session = boto3.session.Session()
 
         # validate event
-        if "Records" in event:
-            event_record = event["Records"][0]
-            if "eventSource" in event_record:
-                if event_record["eventSource"] == "aws:dynamodb":
-                    logger.info("DynamoDB Event Record Received")
-                    if new_account_request(event_record):
-                        logger.info("New Account Request Received")
-                        sqs_queue = utils.get_ssm_parameter_value(
-                            session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
-                        )
-                        sqs_queue = utils.build_sqs_url(session, sqs_queue)
-                        message = build_sqs_message(event_record)
-                        utils.send_sqs_message(session, sqs_queue, message)
-                    elif modify_account_request(event_record):
-                        if control_tower_param_changed(event_record):
-                            logger.info(
-                                "Control Tower Parameter Update Request Received"
-                            )
-                            sqs_queue = utils.get_ssm_parameter_value(
-                                session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
-                            )
-                            sqs_queue = utils.build_sqs_url(session, sqs_queue)
-                            message = build_sqs_message(event_record)
-                            utils.send_sqs_message(session, sqs_queue, message)
-                        else:
-                            logger.info(
-                                "NON-Control Tower Parameter Update Request Received"
-                            )
-                            payload = build_aft_account_provisioning_framework_event(
-                                event_record
-                            )
-                            lambda_name = utils.get_ssm_parameter_value(
-                                session,
-                                utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
-                            )
-                            utils.invoke_lambda(
-                                session, lambda_name, json.dumps(payload).encode()
-                            )
-                    elif delete_account_request(event_record):
-                        logger.info("Delete account request Received")
-                    else:
-                        logger.info("Non Service Catalog Request Received")
+        if "Records" not in event:
+            return None
+        event_record = event["Records"][0]
+        if "eventSource" not in event_record:
+            return None
+        if event_record["eventSource"] != "aws:dynamodb":
+            return None
+
+        logger.info("DynamoDB Event Record Received")
+        if delete_account_request(event_record):
+            # Terraform handles removing the request record from DynamoDB
+            # AWS does not support automated deletion of accounts
+            logger.info("Delete account request received")
+            return None
+
+        new_account = new_account_request(event_record)
+        if new_account:
+            logger.info("New account request received")
+            sqs_queue = utils.get_ssm_parameter_value(
+                session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
+            )
+            sqs_queue = utils.build_sqs_url(session, sqs_queue)
+            message = build_sqs_message(event_record)
+            utils.send_sqs_message(session, sqs_queue, message)
+        else:
+            logger.info("Modify account request received")
+            if control_tower_param_changed(event_record):
+                logger.info("Control Tower Parameter Update Request Received")
+                sqs_queue = utils.get_ssm_parameter_value(
+                    session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
+                )
+                sqs_queue = utils.build_sqs_url(session, sqs_queue)
+                message = build_sqs_message(event_record)
+                utils.send_sqs_message(session, sqs_queue, message)
+            else:
+                logger.info("NON-Control Tower Parameter Update Request Received")
+                payload = build_aft_account_provisioning_framework_event(event_record)
+                lambda_name = utils.get_ssm_parameter_value(
+                    session,
+                    utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
+                )
+                utils.invoke_lambda(session, lambda_name, json.dumps(payload).encode())
 
     except Exception as e:
         message = {

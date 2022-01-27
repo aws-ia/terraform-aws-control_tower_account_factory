@@ -1,6 +1,7 @@
 {
 	"Version": "2012-10-17",
-	"Statement": [{
+	"Statement": [
+        {
 			"Effect": "Allow",
 			"Action": [
 				"dynamodb:PutItem",
@@ -37,27 +38,36 @@
 				"arn:aws:ssm:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:parameter/aft/*"
 			]
 		},
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "sns:Publish"
-        ],
-        "Resource" : [
-          "${aws_sns_topic_aft_notifications_arn}",
-		  "${aws_sns_topic_aft_failure_notifications_arn}"
-        ]
-      },
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "kms:GenerateDataKey",
-          "kms:Encrypt",
-          "kms:Decrypt"
-        ],
-        "Resource" : [
-			"${aws_kms_key_aft_arn}",
-			"arn:aws:kms:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:alias/aws/sns"
-		]
-      }
+        {
+            "Effect" : "Allow",
+            "Action" : [
+                "sns:Publish"
+            ],
+            "Resource" : [
+                "${aws_sns_topic_aft_notifications_arn}",
+                "${aws_sns_topic_aft_failure_notifications_arn}"
+            ]
+        },
+        {
+            "Effect" : "Allow",
+            "Action" : [
+                "kms:GenerateDataKey",
+                "kms:Encrypt",
+                "kms:Decrypt"
+            ],
+            "Resource" : [
+                "${aws_kms_key_aft_arn}",
+                "arn:aws:kms:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:alias/aws/sns"
+            ]
+        },
+        {
+            "Effect" : "Allow",
+            "Action" : [
+                "sts:AssumeRole"
+            ],
+            "Resource" : [
+                "arn:aws:iam::${data_aws_caller_identity_aft-management_account_id}:role/AWSAFTAdmin"
+            ]
+        }
 	]
 }

@@ -139,6 +139,7 @@ def modify_existing_account(
                 "AccountEmail",
             ],
         )
+
         if (
             product_outputs_response["Outputs"][0]["OutputValue"]
             == request["control_tower_parameters"]["AccountEmail"]

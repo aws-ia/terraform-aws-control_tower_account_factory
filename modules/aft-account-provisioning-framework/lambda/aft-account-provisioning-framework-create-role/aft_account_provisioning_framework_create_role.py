@@ -8,11 +8,12 @@ import boto3
 from boto3.session import Session
 
 if TYPE_CHECKING:
-    from mypy_boto3_iam import IAMClient
+    from mypy_boto3_iam import IAMClient, IAMServiceResource
     from mypy_boto3_iam.type_defs import CreateRoleResponseTypeDef
 else:
     IAMClient = object
     CreateRoleResponseTypeDef = object
+    IAMServiceResource = object
 
 
 logger = utils.get_logger()
@@ -77,19 +78,33 @@ def create_aft_execution_role(
     )
     exec_iam_client = ct_execution_session.client("iam")
 
+    role_name = role_name.split("/")[-1]
+
     try:
-        role = exec_iam_client.get_role(RoleName=role_name.split("/")[-1])
-        logger.info("Role Exists. Exiting")
+        role = exec_iam_client.get_role(RoleName=role_name)
+        logger.info("Role Exists. Updating...")
+        update_aft_role_trust_policy(session, ct_execution_session, role_name)
+        set_role_policy(
+            ct_execution_session=ct_execution_session,
+            role_name=role_name,
+            policy_arn="arn:aws:iam::aws:policy/AdministratorAccess",
+        )
         return role["Role"]["Arn"]
     except exec_iam_client.exceptions.NoSuchEntityException:
         logger.info("Role not found in account. Creating...")
         return create_role_in_account(session, ct_execution_session, role_name)
 
 
-def create_role_in_account(
+def update_aft_role_trust_policy(
     session: Session, ct_execution_session: Session, role_name: str
-) -> str:
-    logger.info("Function Start - create_role_in_account")
+) -> None:
+    assume_role_policy_document = get_aft_trust_policy_document(session)
+    iam_resource: IAMServiceResource = ct_execution_session.resource("iam")
+    role = iam_resource.Role(name=role_name)
+    role.AssumeRolePolicy().update(PolicyDocument=assume_role_policy_document)
+
+
+def get_aft_trust_policy_document(session: Session) -> str:
     trust_policy_template = os.path.join(
         os.path.dirname(__file__), "iam/trust-policies/aftmanagement.tpl"
     )
@@ -99,29 +114,47 @@ def create_role_in_account(
     with open(trust_policy_template) as trust_policy_file:
         template = trust_policy_file.read()
         template = template.replace("{AftManagementAccount}", aft_management_account)
-        assume_role_policy_document = json.loads(template)
+        return template
 
+
+def create_role_in_account(
+    session: Session, ct_execution_session: Session, role_name: str
+) -> str:
+    logger.info("Function Start - create_role_in_account")
+    assume_role_policy_document = get_aft_trust_policy_document(session=session)
     exec_client: IAMClient = ct_execution_session.client("iam")
     logger.info("Creating Role")
     response: CreateRoleResponseTypeDef = exec_client.create_role(
         RoleName=role_name.split("/")[-1],
-        AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
+        AssumeRolePolicyDocument=assume_role_policy_document,
         Description="AFT Execution Role",
         MaxSessionDuration=3600,
         Tags=[
             {"Key": "managed_by", "Value": "AFT"},
         ],
     )
-    role = response["Role"]["Arn"]
+    role_arn = response["Role"]["Arn"]
     logger.info(response)
-    logger.info("Attaching Role Policy")
-    exec_client.attach_role_policy(
-        RoleName=role_name.split("/")[-1],
-        PolicyArn="arn:aws:iam::aws:policy/AdministratorAccess",
+    set_role_policy(
+        ct_execution_session=ct_execution_session,
+        role_name=role_name,
+        policy_arn="arn:aws:iam::aws:policy/AdministratorAccess",
     )
-    logger.info("Returning role")
-    logger.info(role)
-    return role
+    return role_arn
+
+
+def set_role_policy(
+    ct_execution_session: Session, role_name: str, policy_arn: str
+) -> None:
+    iam_resource: IAMServiceResource = ct_execution_session.resource("iam")
+    role = iam_resource.Role(name=role_name)
+    for policy in role.attached_policies.all():
+        role.detach_policy(PolicyArn=policy.arn)
+    logger.info("Attaching Role Policy")
+    role.attach_policy(
+        PolicyArn=policy_arn,
+    )
+    return None
 
 
 def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> str:

@@ -53,7 +53,7 @@ else:
     STSClient = object
     CredentialsTypeDef = object
 
-from aft_common.account import AftAccountInfo
+from aft_common.types import AftAccountInfo
 
 from .logger import Logger
 
@@ -280,23 +280,27 @@ def get_boto_session(credentials: CredentialsTypeDef) -> Session:
     )
 
 
-def get_ct_management_session(session: Session) -> Session:
+def get_ct_management_session(aft_mgmt_session: Session) -> Session:
     ct_mgmt_account = get_ssm_parameter_value(
-        session, SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID
+        aft_mgmt_session, SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID
     )
-    administrator_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_ADMIN_ROLE)
-    execution_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_EXEC_ROLE)
-    session_name = get_ssm_parameter_value(session, SSM_PARAM_AFT_SESSION_NAME)
+    administrator_role = get_ssm_parameter_value(
+        aft_mgmt_session, SSM_PARAM_AFT_ADMIN_ROLE
+    )
+    execution_role = get_ssm_parameter_value(aft_mgmt_session, SSM_PARAM_AFT_EXEC_ROLE)
+    session_name = get_ssm_parameter_value(aft_mgmt_session, SSM_PARAM_AFT_SESSION_NAME)
 
     # Assume aws-aft-AdministratorRole locally
     local_creds = get_assume_role_credentials(
-        session, build_role_arn(session, administrator_role), session_name
+        aft_mgmt_session,
+        build_role_arn(aft_mgmt_session, administrator_role),
+        session_name,
     )
     local_assumed_session = get_boto_session(local_creds)
     # Assume AWSAFTExecutionRole in CT management
     ct_mgmt_creds = get_assume_role_credentials(
         local_assumed_session,
-        build_role_arn(session, execution_role, ct_mgmt_account),
+        build_role_arn(aft_mgmt_session, execution_role, ct_mgmt_account),
         session_name,
     )
     return get_boto_session(ct_mgmt_creds)

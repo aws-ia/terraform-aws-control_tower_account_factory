@@ -3,7 +3,7 @@ from typing import Any, Dict, Union
 
 import aft_common.aft_utils as utils
 import boto3
-from aft_common.account import AftAccountInfo
+from aft_common.types import AftAccountInfo
 from boto3.session import Session
 
 logger = utils.get_logger()
