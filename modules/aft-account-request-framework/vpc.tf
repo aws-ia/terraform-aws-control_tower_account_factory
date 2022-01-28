@@ -197,7 +197,7 @@ resource "aws_nat_gateway" "aft-vpc-natgw-02" {
 #########################################
 
 resource "aws_vpc_endpoint" "s3" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_gateway_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   vpc_endpoint_type = "Gateway"
@@ -206,7 +206,7 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 resource "aws_vpc_endpoint" "dynamodb" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_gateway_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   vpc_endpoint_type = "Gateway"
@@ -219,7 +219,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
 #########################################
 
 resource "aws_vpc_endpoint" "codebuild" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.codebuild.service_name
@@ -233,7 +233,7 @@ resource "aws_vpc_endpoint" "codebuild" {
 }
 
 resource "aws_vpc_endpoint" "codecommit" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.codecommit.service_name
@@ -247,7 +247,7 @@ resource "aws_vpc_endpoint" "codecommit" {
 }
 
 resource "aws_vpc_endpoint" "git-codecommit" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.git-codecommit.service_name
@@ -261,7 +261,7 @@ resource "aws_vpc_endpoint" "git-codecommit" {
 }
 
 resource "aws_vpc_endpoint" "codepipeline" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.codepipeline.service_name
@@ -275,7 +275,7 @@ resource "aws_vpc_endpoint" "codepipeline" {
 }
 
 resource "aws_vpc_endpoint" "servicecatalog" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.servicecatalog.service_name
@@ -289,7 +289,7 @@ resource "aws_vpc_endpoint" "servicecatalog" {
 }
 
 resource "aws_vpc_endpoint" "lambda" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.lambda.service_name
@@ -303,7 +303,7 @@ resource "aws_vpc_endpoint" "lambda" {
 }
 
 resource "aws_vpc_endpoint" "kms" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.kms.service_name
@@ -317,7 +317,7 @@ resource "aws_vpc_endpoint" "kms" {
 }
 
 resource "aws_vpc_endpoint" "logs" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.logs.service_name
@@ -331,7 +331,7 @@ resource "aws_vpc_endpoint" "logs" {
 }
 
 resource "aws_vpc_endpoint" "events" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.events.service_name
@@ -345,7 +345,7 @@ resource "aws_vpc_endpoint" "events" {
 }
 
 resource "aws_vpc_endpoint" "states" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.states.service_name
@@ -359,7 +359,7 @@ resource "aws_vpc_endpoint" "states" {
 }
 
 resource "aws_vpc_endpoint" "ssm" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.ssm.service_name
@@ -373,7 +373,7 @@ resource "aws_vpc_endpoint" "ssm" {
 }
 
 resource "aws_vpc_endpoint" "sns" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.sns.service_name
@@ -387,7 +387,7 @@ resource "aws_vpc_endpoint" "sns" {
 }
 
 resource "aws_vpc_endpoint" "sqs" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.sqs.service_name
@@ -401,7 +401,7 @@ resource "aws_vpc_endpoint" "sqs" {
 }
 
 resource "aws_vpc_endpoint" "sts" {
-  count = var.aft_vpc_endpoints ? 1 : 0
+  count = var.aft_vpc_interface_endpoints ? 1 : 0
 
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.sts.service_name

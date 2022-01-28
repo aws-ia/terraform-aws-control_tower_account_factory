@@ -88,13 +88,23 @@ variable "maximum_concurrent_customizations" {
   }
 }
 
-variable "aft_vpc_endpoints" {
+variable "aft_vpc_interface_endpoints" {
   type        = bool
-  description = "Flag turning VPC endpoints on/off for AFT VPC"
+  description = "Flag turning VPC interface endpoints on/off for AFT VPC"
   default     = true
   validation {
-    condition     = contains([true, false], var.aft_vpc_endpoints)
-    error_message = "Valid values for var: aft_vpc_endpoints are (true, false)."
+    condition     = contains([true, false], var.aft_vpc_interface_endpoints)
+    error_message = "Valid values for var: aft_vpc_interface_endpoints are (true, false)."
+  }
+}
+
+variable "aft_vpc_gateway_endpoints" {
+  type        = bool
+  description = "Flag turning VPC gateway endpoints on/off for AFT VPC"
+  default     = true
+  validation {
+    condition     = contains([true, false], var.aft_vpc_gateway_endpoints)
+    error_message = "Valid values for var: aft_vpc_gateway_endpoints are (true, false)."
   }
 }
 

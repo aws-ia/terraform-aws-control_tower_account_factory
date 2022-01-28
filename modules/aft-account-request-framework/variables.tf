@@ -34,6 +34,10 @@ variable "aft_vpc_public_subnet_02_cidr" {
   type = string
 }
 
-variable "aft_vpc_endpoints" {
+variable "aft_vpc_gateway_endpoints" {
+  type = bool
+}
+
+variable "aft_vpc_interface_endpoints" {
   type = bool
 }
