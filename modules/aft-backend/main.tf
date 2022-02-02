@@ -3,6 +3,7 @@ data "aws_caller_identity" "current" {
 }
 
 # S3 Resources
+
 resource "aws_s3_bucket" "primary-backend-bucket" {
   provider = aws.primary_region
 
@@ -45,6 +46,34 @@ resource "aws_s3_bucket" "primary-backend-bucket" {
   }
 }
 
+resource "aws_s3_bucket_policy" "allow_AWSAFTExecution_role_primary" {
+  bucket = aws_s3_bucket.primary-backend-bucket.id
+  policy = data.aws_iam_policy_document.allow_AWSAFTExecution_primary.json
+}
+
+data "aws_iam_policy_document" "allow_AWSAFTExecution_primary" {
+  statement {
+    principals {
+      type        = "AWS"
+      identifiers = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/AWSAFTExecution"
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:GetBucketVersioning",
+      "s3:List*",
+      "s3:PutObjectAcl",
+      "s3:PutObject"
+    ]
+
+    resources = [
+      aws_s3_bucket.primary-backend-bucket.arn,
+      "${aws_s3_bucket.primary-backend-bucket.arn}/*",
+    ]
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "primary-backend-bucket" {
   provider = aws.primary_region
 
@@ -73,6 +102,34 @@ resource "aws_s3_bucket" "secondary-backend-bucket" {
   }
   tags = {
     "Name" = "aft-backend-${data.aws_caller_identity.current.account_id}-secondary-region"
+  }
+}
+
+resource "aws_s3_bucket_policy" "allow_AWSAFTExecution_role_secondary" {
+  bucket = aws_s3_bucket.secondary-backend-bucket.id
+  policy = data.aws_iam_policy_document.allow_AWSAFTExecution_secondary.json
+}
+
+data "aws_iam_policy_document" "allow_AWSAFTExecution_primary" {
+  statement {
+    principals {
+      type        = "AWS"
+      identifiers = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/AWSAFTExecution"
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:GetBucketVersioning",
+      "s3:List*",
+      "s3:PutObjectAcl",
+      "s3:PutObject"
+    ]
+
+    resources = [
+      aws_s3_bucket.secondary-backend-bucket.arn,
+      "${aws_s3_bucket.secondary-backend-bucket.arn}/*",
+    ]
   }
 }
 
