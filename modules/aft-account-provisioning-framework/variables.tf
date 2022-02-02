@@ -41,3 +41,11 @@ variable "aft_vpc_private_subnets" {
 variable "aft_vpc_default_sg" {
   type = list(string)
 }
+
+variable "provisioning_framework_archive_path" {
+  type = string
+}
+
+variable "provisioning_framework_archive_hash" {
+  type = string
+}

@@ -17,6 +17,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(),
+    package_data={"aft_common": ["schemas/*.json", "templates/*"]},
     python_requires=">=3.8",
     install_requires=[
         "appdirs==1.4.4",

@@ -1,19 +1,14 @@
 ######## aft_account_request_audit_trigger ########
-data "archive_file" "aft_account_request_audit_trigger" {
-  type        = "zip"
-  source_dir  = "${path.module}/lambda/aft-account-request-audit-trigger"
-  output_path = "${path.module}/lambda/aft-account-request-audit-trigger.zip"
-}
 
 resource "aws_lambda_function" "aft_account_request_audit_trigger" {
 
-  filename      = "${path.module}/lambda/aft-account-request-audit-trigger.zip"
+  filename      = var.request_framework_archive_path
   function_name = "aft-account-request-audit-trigger"
   description   = "Receives trigger from DynamoDB aft-request table and inserts the event into aft-request-audit table"
   role          = aws_iam_role.aft_account_request_audit_trigger.arn
   handler       = "aft_account_request_audit_trigger.lambda_handler"
 
-  source_code_hash = data.archive_file.aft_account_request_audit_trigger.output_base64sha256
+  source_code_hash = var.request_framework_archive_hash
 
   runtime = "python3.8"
   timeout = "300"
@@ -45,21 +40,17 @@ resource "aws_cloudwatch_log_group" "aft_account_request_audit_trigger" {
 }
 
 ######## aft_account_request_action_trigger ########
-data "archive_file" "aft_account_request_action_trigger" {
-  type        = "zip"
-  source_dir  = "${path.module}/lambda/aft-account-request-action-trigger"
-  output_path = "${path.module}/lambda/aft-account-request-action-trigger.zip"
-}
+
 
 resource "aws_lambda_function" "aft_account_request_action_trigger" {
 
-  filename      = "${path.module}/lambda/aft-account-request-action-trigger.zip"
+  filename      = var.request_framework_archive_path
   function_name = "aft-account-request-action-trigger"
   description   = "Receives trigger from DynamoDB aft-request table and determines action target - SQS or Lambda aft-invoke-aft-account-provisioning-framework"
   role          = aws_iam_role.aft_account_request_action_trigger.arn
   handler       = "aft_account_request_action_trigger.lambda_handler"
 
-  source_code_hash = data.archive_file.aft_account_request_action_trigger.output_base64sha256
+  source_code_hash = var.request_framework_archive_hash
 
   runtime = "python3.8"
   timeout = "300"
@@ -85,21 +76,17 @@ resource "aws_cloudwatch_log_group" "aft_account_request_action_trigger" {
 }
 
 ######## aft_controltower_event_logger ########
-data "archive_file" "aft_controltower_event_logger" {
-  type        = "zip"
-  source_dir  = "${path.module}/lambda/aft-controltower-event-logger"
-  output_path = "${path.module}/lambda/aft-controltower-event-logger.zip"
-}
+
 
 resource "aws_lambda_function" "aft_controltower_event_logger" {
 
-  filename      = "${path.module}/lambda/aft-controltower-event-logger.zip"
+  filename      = var.request_framework_archive_path
   function_name = "aft-controltower-event-logger"
   description   = "Receives Control Tower events through dedicated event bus event and writes event to aft-controltower-events table"
   role          = aws_iam_role.aft_controltower_event_logger.arn
   handler       = "aft_controltower_event_logger.lambda_handler"
 
-  source_code_hash = data.archive_file.aft_controltower_event_logger.output_base64sha256
+  source_code_hash = var.request_framework_archive_hash
 
   runtime = "python3.8"
   timeout = "300"
@@ -125,21 +112,17 @@ resource "aws_cloudwatch_log_group" "aft_controltower_event_logger" {
 }
 
 ######## aft_account_request_processor ########
-data "archive_file" "aft_account_request_processor" {
-  type        = "zip"
-  source_dir  = "${path.module}/lambda/aft-account-request-processor"
-  output_path = "${path.module}/lambda/aft-account-request-processor.zip"
-}
+
 
 resource "aws_lambda_function" "aft_account_request_processor" {
 
-  filename      = "${path.module}/lambda/aft-account-request-processor.zip"
+  filename      = var.request_framework_archive_path
   function_name = "aft-account-request-processor"
   description   = "Triggered by CW Event, reads aft-account-request.fifo queue and performs needed action"
   role          = aws_iam_role.aft_account_request_processor.arn
   handler       = "aft_account_request_processor.lambda_handler"
 
-  source_code_hash = data.archive_file.aft_account_request_processor.output_base64sha256
+  source_code_hash = var.request_framework_archive_hash
 
   runtime = "python3.8"
   timeout = "300"
@@ -166,21 +149,17 @@ resource "aws_cloudwatch_log_group" "aft_account_request_processor" {
 }
 
 ######## aft_invoke_aft_account_provisioning_framework ########
-data "archive_file" "aft_invoke_aft_account_provisioning_framework" {
-  type        = "zip"
-  source_dir  = "${path.module}/lambda/aft-invoke-aft-account-provisioning-framework"
-  output_path = "${path.module}/lambda/aft-invoke-aft-account-provisioning-framework.zip"
-}
+
 
 resource "aws_lambda_function" "aft_invoke_aft_account_provisioning_framework" {
 
-  filename      = "${path.module}/lambda/aft-invoke-aft-account-provisioning-framework.zip"
+  filename      = var.request_framework_archive_path
   function_name = "aft-invoke-aft-account-provisioning-framework"
   description   = "Calls AFT Account Provisioning Framework Step Function based on a formatted incoming event from Lambda or CW Event"
   role          = aws_iam_role.aft_invoke_aft_account_provisioning_framework.arn
   handler       = "aft_invoke_aft_account_provisioning_framework.lambda_handler"
 
-  source_code_hash = data.archive_file.aft_invoke_aft_account_provisioning_framework.output_base64sha256
+  source_code_hash = var.request_framework_archive_hash
 
   runtime = "python3.8"
   timeout = "300"

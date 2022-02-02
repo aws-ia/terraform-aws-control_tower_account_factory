@@ -45,3 +45,10 @@ variable "log_archive_account_id" {
 variable "aft_features_sfn_name" {
   type = string
 }
+variable "feature_options_archive_path" {
+  type = string
+}
+
+variable "feature_options_archive_hash" {
+  type = string
+}

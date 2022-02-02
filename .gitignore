@@ -345,5 +345,5 @@ typings/
 # Sonarlint plugin
 .idea/sonarlint
 
-# zip archives
+# zip aft-archives
 *.zip

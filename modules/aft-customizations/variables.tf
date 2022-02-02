@@ -104,3 +104,11 @@ variable "maximum_concurrent_customizations" {
 variable "invoke_account_provisioning_sfn_arn" {
   type = string
 }
+
+variable "customizations_archive_path" {
+  type = string
+}
+
+variable "customizations_archive_hash" {
+  type = string
+}

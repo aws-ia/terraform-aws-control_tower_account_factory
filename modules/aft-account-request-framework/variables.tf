@@ -37,3 +37,11 @@ variable "aft_vpc_public_subnet_02_cidr" {
 variable "aft_vpc_endpoints" {
   type = bool
 }
+
+variable "request_framework_archive_path" {
+  type = string
+}
+
+variable "request_framework_archive_hash" {
+  type = string
+}

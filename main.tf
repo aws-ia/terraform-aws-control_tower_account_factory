@@ -1,3 +1,7 @@
+module "packaging" {
+  source = "./modules/aft-archives"
+}
+
 module "aft_account_provisioning_framework" {
   providers = {
     aws = aws.aft_management
@@ -14,6 +18,8 @@ module "aft_account_provisioning_framework" {
   aft_vpc_private_subnets                          = module.aft_account_request_framework.aft_vpc_private_subnets
   aft_vpc_default_sg                               = module.aft_account_request_framework.aft_vpc_default_sg
   cloudwatch_log_group_retention                   = var.cloudwatch_log_group_retention
+  provisioning_framework_archive_path              = module.packaging.provisioning_framework_archive_path
+  provisioning_framework_archive_hash              = module.packaging.provisioning_framework_archive_hash
 }
 
 module "aft_account_request_framework" {
@@ -32,7 +38,11 @@ module "aft_account_request_framework" {
   aft_vpc_public_subnet_01_cidr               = var.aft_vpc_public_subnet_01_cidr
   aft_vpc_public_subnet_02_cidr               = var.aft_vpc_public_subnet_02_cidr
   aft_vpc_endpoints                           = var.aft_vpc_endpoints
+  request_framework_archive_path              = module.packaging.request_framework_archive_path
+  request_framework_archive_hash              = module.packaging.request_framework_archive_hash
 }
+
+
 
 module "aft_backend" {
   providers = {
@@ -102,6 +112,8 @@ module "aft_customizations" {
   terraform_distribution                            = var.terraform_distribution
   cloudwatch_log_group_retention                    = var.cloudwatch_log_group_retention
   maximum_concurrent_customizations                 = var.maximum_concurrent_customizations
+  customizations_archive_path                       = module.packaging.customizations_archive_path
+  customizations_archive_hash                       = module.packaging.customizations_archive_hash
 }
 
 module "aft_feature_options" {
@@ -124,6 +136,8 @@ module "aft_feature_options" {
   aft_vpc_default_sg                        = module.aft_account_request_framework.aft_vpc_default_sg
   log_archive_account_id                    = var.log_archive_account_id
   cloudwatch_log_group_retention            = var.cloudwatch_log_group_retention
+  feature_options_archive_path              = module.packaging.feature_options_archive_path
+  feature_options_archive_hash              = module.packaging.feature_options_archive_hash
 }
 
 module "aft_iam_roles" {
