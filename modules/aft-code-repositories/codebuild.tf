@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 data "local_file" "account_request_buildspec" {
   filename = "${path.module}/buildspecs/ct-aft-account-request.yml"
 }
@@ -18,7 +21,7 @@ resource "aws_codebuild_project" "account_request" {
   }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
+    compute_type                = "BUILD_GENERAL1_MEDIUM"
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
@@ -61,7 +64,7 @@ resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" 
   }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
+    compute_type                = "BUILD_GENERAL1_MEDIUM"
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"

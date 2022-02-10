@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_ssm_parameter" "aft_request_queue_name" {
   name  = "/aft/resources/sqs/aft-request-queue-name"
   type  = "String"

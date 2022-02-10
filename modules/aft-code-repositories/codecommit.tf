@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_codecommit_repository" "global_customizations" {
   count           = local.vcs.is_codecommit ? 1 : 0
   repository_name = var.global_customizations_repo_name

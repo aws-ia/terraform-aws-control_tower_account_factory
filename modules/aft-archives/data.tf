@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 data "archive_file" "provisioning_framework" {
   type        = "zip"
   source_dir  = "${path.module}/../../src/aft_lambda/aft_account_provisioning_framework"
@@ -19,4 +22,10 @@ data "archive_file" "feature_options" {
   type        = "zip"
   source_dir  = "${path.module}/../../src/aft_lambda/aft_feature_options"
   output_path = "${path.module}/../../src/aft_lambda/aft_feature_options.zip"
+}
+
+data "archive_file" "builder" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../src/aft_lambda/aft_builder"
+  output_path = "${path.module}/../../src/aft_lambda/aft_builder.zip"
 }

@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 output "aft_admin_role_arn" {
   value = aws_iam_role.aft_admin_role.arn
 }

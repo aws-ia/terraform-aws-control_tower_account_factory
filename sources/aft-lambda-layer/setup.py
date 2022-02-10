@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 import setuptools
 
 with open("readme.md", "r", encoding="utf-8") as fh:

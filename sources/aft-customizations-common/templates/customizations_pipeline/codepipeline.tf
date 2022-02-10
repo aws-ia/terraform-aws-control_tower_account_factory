@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   count    = local.vcs.is_codecommit ? 1 : 0
   name     = "${var.account_id}-customizations-pipeline"

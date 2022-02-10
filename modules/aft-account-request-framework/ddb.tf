@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 # Table that stores account-meta data
 resource "aws_dynamodb_table" "aft_request_metadata" {
   name           = "aft-request-metadata"

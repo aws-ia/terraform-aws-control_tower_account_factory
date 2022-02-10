@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 ######## aft_delete_default_vpc ########
 resource "aws_lambda_function" "aft_delete_default_vpc" {
   provider      = aws.aft_management

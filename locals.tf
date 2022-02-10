@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 locals {
   aft_version                                      = chomp(trimspace(data.local_file.version.content))
   aft_account_provisioning_customizations_sfn_name = "aft-account-provisioning-customizations"

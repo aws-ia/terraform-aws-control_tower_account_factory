@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 locals {
   state_machine_source = "${path.module}/states/aft_account_provisioning_framework.asl.json"
   replacements_map = {

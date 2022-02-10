@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 ######## aft_account_request_audit_trigger ########
 
 resource "aws_lambda_function" "aft_account_request_audit_trigger" {
@@ -27,11 +30,12 @@ resource "time_sleep" "wait_60_seconds" {
 }
 
 resource "aws_lambda_event_source_mapping" "aft_account_request_audit_trigger" {
-  depends_on        = [time_sleep.wait_60_seconds]
-  event_source_arn  = aws_dynamodb_table.aft_request.stream_arn
-  function_name     = aws_lambda_function.aft_account_request_audit_trigger.arn
-  starting_position = "LATEST"
-  batch_size        = 1
+  depends_on             = [time_sleep.wait_60_seconds]
+  event_source_arn       = aws_dynamodb_table.aft_request.stream_arn
+  function_name          = aws_lambda_function.aft_account_request_audit_trigger.arn
+  starting_position      = "LATEST"
+  batch_size             = 1
+  maximum_retry_attempts = 1
 }
 
 resource "aws_cloudwatch_log_group" "aft_account_request_audit_trigger" {
@@ -64,10 +68,11 @@ resource "aws_lambda_function" "aft_account_request_action_trigger" {
 }
 
 resource "aws_lambda_event_source_mapping" "aft_account_request_action_trigger" {
-  event_source_arn  = aws_dynamodb_table.aft_request.stream_arn
-  function_name     = aws_lambda_function.aft_account_request_action_trigger.arn
-  starting_position = "LATEST"
-  batch_size        = 1
+  event_source_arn       = aws_dynamodb_table.aft_request.stream_arn
+  function_name          = aws_lambda_function.aft_account_request_action_trigger.arn
+  starting_position      = "LATEST"
+  batch_size             = 1
+  maximum_retry_attempts = 1
 }
 
 resource "aws_cloudwatch_log_group" "aft_account_request_action_trigger" {

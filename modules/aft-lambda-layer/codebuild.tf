@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_codebuild_project" "codebuild" {
   name           = local.common_name
   description    = "Codebuild project to create lambda layer ${var.lambda_layer_name}"
@@ -10,7 +13,7 @@ resource "aws_codebuild_project" "codebuild" {
   }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
+    compute_type                = "BUILD_GENERAL1_MEDIUM"
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"

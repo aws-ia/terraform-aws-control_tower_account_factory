@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 import inspect
 import json
 from typing import Any, Dict, Union
@@ -6,8 +9,8 @@ from aft_common import aft_utils as utils
 from aft_common.account_request_framework import (
     create_new_account,
     modify_ct_request_is_valid,
-    modify_existing_account,
     new_ct_request_is_valid,
+    update_existing_account,
 )
 from boto3.session import Session
 
@@ -39,7 +42,7 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
             if sqs_message is not None:
                 sqs_body = json.loads(sqs_message["Body"])
                 ct_request_is_valid = True
-                if sqs_body["operation"] == "INSERT":
+                if sqs_body["operation"] == "ADD":
                     ct_request_is_valid = new_ct_request_is_valid(
                         ct_management_session, sqs_body
                     )
@@ -47,10 +50,10 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
                         response = create_new_account(
                             session, ct_management_session, sqs_body
                         )
-                elif sqs_body["operation"] == "MODIFY":
+                elif sqs_body["operation"] == "UPDATE":
                     ct_request_is_valid = modify_ct_request_is_valid(sqs_body)
                     if ct_request_is_valid:
-                        modify_existing_account(
+                        update_existing_account(
                             session, ct_management_session, sqs_body
                         )
                 else:

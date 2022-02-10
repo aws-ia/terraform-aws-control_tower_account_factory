@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_vpc" "aft_vpc" {
   cidr_block           = var.aft_vpc_cidr
   enable_dns_support   = true

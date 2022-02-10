@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_codestarconnections_connection" "bitbucket" {
   count         = local.vcs.is_bitbucket ? 1 : 0
   name          = "ct-aft-bitbucket-connection"

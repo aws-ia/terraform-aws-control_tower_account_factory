@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 output "aft_customizations_identify_targets_function_arn" {
   value = aws_lambda_function.aft_customizations_identify_targets.arn
 }

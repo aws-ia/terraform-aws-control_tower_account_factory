@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 module "aft" {
   source = "github.com/aws-ia/terraform-aws-control_tower_account_factory"
   # Required Vars

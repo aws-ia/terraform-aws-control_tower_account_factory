@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_kms_key" "aft_log_key" {
   provider            = aws.log_archive
   description         = "KMS key for encrypt/decrypt log files"

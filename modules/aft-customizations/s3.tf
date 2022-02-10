@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_s3_bucket" "aft_codepipeline_customizations_bucket" {
   bucket = "aft-customizations-pipeline-${data.aws_caller_identity.current.account_id}"
   acl    = "private"

@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 output "sns_topic_arn" {
   description = "arn of aft notifications sns topic"
   value       = aws_sns_topic.aft_notifications.arn

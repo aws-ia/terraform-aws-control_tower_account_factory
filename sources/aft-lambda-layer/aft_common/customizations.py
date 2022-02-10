@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 import json
 import os
 import re
@@ -43,7 +46,7 @@ def get_pipeline_for_account(session: Session, account: str) -> str:
                 if t["key"] == "managed_by" and t["value"] == "AFT":
                     pipeline_name: str = p["name"]
                     return pipeline_name
-    raise Exception("Pipelines for account id " + current_account + " was not found")
+    raise Exception("Pipelines for account id " + account + " was not found")
 
 
 def pipeline_is_running(session: Session, name: str) -> bool:

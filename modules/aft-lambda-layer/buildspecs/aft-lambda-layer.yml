@@ -1,9 +1,9 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 version: 0.2
 
 phases:
-  pre_build:
-    commands:
-      - aws events disable-rule --name $EVENT_RULE_NAME
   install:
     runtime-versions:
       python: $PYTHON_VERSION

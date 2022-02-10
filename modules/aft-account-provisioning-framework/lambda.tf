@@ -1,4 +1,6 @@
-
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 ### VALIDATE REQUEST FUNCTION
 
 resource "aws_lambda_function" "validate_request" {

@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 # CodePipeline Roles
 
 resource "aws_iam_role" "account_request_codepipeline_role" {

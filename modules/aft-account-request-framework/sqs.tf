@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_sqs_queue" "aft_account_request" {
   name                              = "aft-account-request.fifo"
   fifo_queue                        = true

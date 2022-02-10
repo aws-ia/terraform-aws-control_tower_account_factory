@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 locals {
   vcs = {
     is_codecommit        = lower(var.vcs_provider) == "codecommit" ? true : false

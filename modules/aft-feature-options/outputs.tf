@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 output "aws_aft_access_logs_s3_bucket_id" {
   value       = aws_s3_bucket.aft_access_logs.id
   description = "The name of the bucket."

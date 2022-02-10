@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 import json
 import sys
 import uuid
@@ -26,7 +29,7 @@ else:
 logger = utils.get_logger()
 
 
-def new_account_request(record: Dict[str, Any]) -> bool:
+def provisioned_product_exists(record: Dict[str, Any]) -> bool:
     ct_management_session = utils.get_ct_management_session(aft_mgmt_session=Session())
     account_name = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
         "control_tower_parameters"
@@ -34,7 +37,18 @@ def new_account_request(record: Dict[str, Any]) -> bool:
     provisioned_product = Account(
         ct_management_session=ct_management_session, account_name=account_name
     ).provisioned_product
-    return provisioned_product is None
+    return provisioned_product is not None
+
+
+def insert_msg_into_acc_req_queue(
+    event_record: Dict[Any, Any], new_account: bool, session: Session
+) -> None:
+    sqs_queue = utils.get_ssm_parameter_value(
+        session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
+    )
+    sqs_queue = utils.build_sqs_url(session=session, queue_name=sqs_queue)
+    message = build_sqs_message(record=event_record, new_account=new_account)
+    utils.send_sqs_message(session=session, sqs_url=sqs_queue, message=message)
 
 
 def delete_account_request(record: Dict[str, Any]) -> bool:
@@ -57,16 +71,16 @@ def control_tower_param_changed(record: Dict[str, Any]) -> bool:
     return False
 
 
-def build_sqs_message(record: Dict[str, Any]) -> Dict[str, Any]:
+def build_sqs_message(record: Dict[str, Any], new_account: bool) -> Dict[str, Any]:
     logger.info("Building SQS Message - ")
     message = {}
-    operation = record["eventName"]
+    operation = "ADD" if new_account else "UPDATE"
 
     new_image = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])
     message["operation"] = operation
     message["control_tower_parameters"] = new_image["control_tower_parameters"]
 
-    if operation == "MODIFY":
+    if record["eventName"] == "MODIFY":
         old_image = utils.unmarshal_ddb_item(record["dynamodb"]["OldImage"])
         message["old_control_tower_parameters"] = old_image["control_tower_parameters"]
 
@@ -136,7 +150,7 @@ def new_ct_request_is_valid(session: Session, request: Dict[str, Any]) -> bool:
 def modify_ct_request_is_valid(request: Dict[str, Any]) -> bool:
     logger.info("Validating modify CT Account Request")
 
-    old_ct_parameters = request["old_control_tower_parameters"]
+    old_ct_parameters = request.get("old_control_tower_parameters", {})
     new_ct_parameters = request["control_tower_parameters"]
 
     for i in old_ct_parameters.keys():
@@ -189,7 +203,7 @@ def create_new_account(
     return response
 
 
-def modify_existing_account(
+def update_existing_account(
     session: Session, ct_management_session: Session, request: Dict[str, Any]
 ) -> None:
     client = ct_management_session.client("servicecatalog")

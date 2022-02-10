@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 resource "aws_sns_topic" "aft_notifications" {
   name              = "aft-notifications"
   kms_master_key_id = "alias/aws/sns"

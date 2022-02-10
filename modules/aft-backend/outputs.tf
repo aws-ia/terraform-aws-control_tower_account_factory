@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 output "bucket_id" {
   description = "The name of the primary bucket."
   value       = aws_s3_bucket.primary-backend-bucket.id

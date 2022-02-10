@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 variable "lambda_layer_name" {
   type = string
   validation {
@@ -46,5 +49,13 @@ variable "aft_vpc_default_sg" {
   type = list(string)
 }
 variable "aft_version" {
+  type = string
+}
+
+variable "builder_archive_path" {
+  type = string
+}
+
+variable "builder_archive_hash" {
   type = string
 }

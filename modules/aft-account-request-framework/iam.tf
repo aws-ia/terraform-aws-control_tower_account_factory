@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 ######### Control Tower Events - CT Management #########
 resource "aws_iam_role" "aft_control_tower_events" {
   provider           = aws.ct_management

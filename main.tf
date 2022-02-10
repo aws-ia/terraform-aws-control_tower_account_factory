@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 module "packaging" {
   source = "./modules/aft-archives"
 }
@@ -167,6 +170,8 @@ module "aft_lambda_layer" {
   aft_vpc_private_subnets                           = module.aft_account_request_framework.aft_vpc_private_subnets
   aft_vpc_default_sg                                = module.aft_account_request_framework.aft_vpc_default_sg
   s3_bucket_name                                    = module.aft_customizations.aft_codepipeline_customizations_bucket_name
+  builder_archive_path                              = module.packaging.builder_archive_path
+  builder_archive_hash                              = module.packaging.builder_archive_hash
 }
 
 module "aft_ssm_parameters" {

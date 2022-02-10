@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 import inspect
 import json
 from typing import Any, Dict, Union
@@ -5,10 +8,10 @@ from typing import Any, Dict, Union
 import aft_common.aft_utils as utils
 from aft_common.account_request_framework import (
     build_aft_account_provisioning_framework_event,
-    build_sqs_message,
     control_tower_param_changed,
     delete_account_request,
-    new_account_request,
+    insert_msg_into_acc_req_queue,
+    provisioned_product_exists,
 )
 from boto3.session import Session
 
@@ -38,33 +41,30 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
             logger.info("Delete account request received")
             return None
 
-        new_account = new_account_request(event_record)
+        new_account = not provisioned_product_exists(event_record)
+        control_tower_updates = control_tower_param_changed(event_record)
+
         if new_account:
             logger.info("New account request received")
-            sqs_queue = utils.get_ssm_parameter_value(
-                session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
+            insert_msg_into_acc_req_queue(
+                event_record=event_record, new_account=True, session=session
             )
-            sqs_queue = utils.build_sqs_url(session, sqs_queue)
-            message = build_sqs_message(event_record)
-            utils.send_sqs_message(session, sqs_queue, message)
-        else:
+        elif not new_account and control_tower_updates:
             logger.info("Modify account request received")
-            if control_tower_param_changed(event_record):
-                logger.info("Control Tower Parameter Update Request Received")
-                sqs_queue = utils.get_ssm_parameter_value(
-                    session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
-                )
-                sqs_queue = utils.build_sqs_url(session, sqs_queue)
-                message = build_sqs_message(event_record)
-                utils.send_sqs_message(session, sqs_queue, message)
-            else:
-                logger.info("NON-Control Tower Parameter Update Request Received")
-                payload = build_aft_account_provisioning_framework_event(event_record)
-                lambda_name = utils.get_ssm_parameter_value(
-                    session,
-                    utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
-                )
-                utils.invoke_lambda(session, lambda_name, json.dumps(payload).encode())
+            logger.info("Control Tower Parameter Update Request Received")
+            insert_msg_into_acc_req_queue(
+                event_record=event_record, new_account=False, session=session
+            )
+        elif not new_account and not control_tower_updates:
+            logger.info("NON-Control Tower Parameter Update Request Received")
+            payload = build_aft_account_provisioning_framework_event(event_record)
+            lambda_name = utils.get_ssm_parameter_value(
+                session,
+                utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
+            )
+            utils.invoke_lambda(session, lambda_name, json.dumps(payload).encode())
+        else:
+            raise Exception("Unsupported account request")
 
     except Exception as e:
         message = {
