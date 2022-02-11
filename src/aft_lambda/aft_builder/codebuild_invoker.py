@@ -5,18 +5,23 @@ import datetime
 import inspect
 import logging
 import time
-from typing import Any, Dict, Union
+from typing import Any, Dict, TypedDict, Union
 
 from boto3.session import Session
 
 logger = logging.getLogger()
 logger.setLevel(level=logging.INFO)
 
+
+class LayerBuildStatus(TypedDict):
+    Status: int
+
+
 # This function is directly responsible for building `aft_common` library
 # Do not import  `aft_common` into this handler!
 def lambda_handler(
     event: Dict[str, Any], context: Union[Dict[str, Any], None]
-) -> Dict[str, Any]:
+) -> LayerBuildStatus:
     try:
         session = Session()
         client = session.client("codebuild")

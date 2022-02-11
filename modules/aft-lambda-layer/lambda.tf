@@ -17,7 +17,6 @@ resource "aws_lambda_function" "codebuild_invoker" {
   }
 }
 
-# TODO - What happens when the function fails?
 data "aws_lambda_invocation" "invoke_codebuild_job" {
   function_name = aws_lambda_function.codebuild_invoker.function_name
 
@@ -28,7 +27,6 @@ data "aws_lambda_invocation" "invoke_codebuild_job" {
 JSON
 }
 
-# TODO condition behavior on result of invocation
 output "lambda_layer_build_status" {
-  value = jsondecode(data.aws_lambda_invocation.invoke_codebuild_job.result)["BuildStatus"]
+  value = jsondecode(data.aws_lambda_invocation.invoke_codebuild_job.result)["Status"]
 }
