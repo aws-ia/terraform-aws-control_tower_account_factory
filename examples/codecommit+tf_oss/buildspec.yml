@@ -1,0 +1,28 @@
+version: 0.2
+ 
+env:
+  variables:
+    region: "us-east-1"
+    applicationname: "AFT_Baseline"
+ 
+phases:
+  install:
+    commands:
+      - wget https://releases.hashicorp.com/terraform/1.1.3/terraform_1.1.3_linux_amd64.zip
+      - unzip terraform_1.1.3_linux_amd64.zip
+      - mv terraform /bin
+      - unzip terraform_1.1.3_linux_amd64.zip
+      - yum install -y curl jq
+      - echo "Prepare terraform environment"
+      - terraform init
+ 
+  build:
+    commands:
+      - echo "Terraform plan"
+      - terraform plan
+      - echo "Terraform apply"
+      - terraform apply -auto-approve
+ 
+  post_build:
+    commands:
+      - echo "Nothing to do in the post_build for now"
