@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
 ### VALIDATE REQUEST FUNCTION
@@ -10,6 +10,7 @@ resource "aws_lambda_function" "validate_request" {
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_validate_request.arn
   handler          = "aft_account_provisioning_framework_validate_request.lambda_handler"
   source_code_hash = var.provisioning_framework_archive_hash
+  memory_size      = 1024
   runtime          = "python3.8"
   timeout          = 300
   layers           = [var.aft_common_layer_arn]
@@ -35,6 +36,7 @@ resource "aws_lambda_function" "get_account_info" {
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_get_account_info.arn
   handler          = "aft_account_provisioning_framework_get_account_info.lambda_handler"
   source_code_hash = var.provisioning_framework_archive_hash
+  memory_size      = 1024
   runtime          = "python3.8"
   timeout          = 300
   layers           = [var.aft_common_layer_arn]
@@ -59,6 +61,7 @@ resource "aws_lambda_function" "create_role" {
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_create_role.arn
   handler          = "aft_account_provisioning_framework_create_role.lambda_handler"
   source_code_hash = var.provisioning_framework_archive_hash
+  memory_size      = 1024
   runtime          = "python3.8"
   timeout          = 300
   layers           = [var.aft_common_layer_arn]
@@ -84,6 +87,7 @@ resource "aws_lambda_function" "tag_account" {
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_tag_account.arn
   handler          = "aft_account_provisioning_framework_tag_account.lambda_handler"
   source_code_hash = var.provisioning_framework_archive_hash
+  memory_size      = 1024
   runtime          = "python3.8"
   timeout          = 300
   layers           = [var.aft_common_layer_arn]
@@ -108,6 +112,7 @@ resource "aws_lambda_function" "persist_metadata" {
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_persist_metadata.arn
   handler          = "aft_account_provisioning_framework_persist_metadata.lambda_handler"
   source_code_hash = var.provisioning_framework_archive_hash
+  memory_size      = 1024
   runtime          = "python3.8"
   timeout          = 300
   layers           = [var.aft_common_layer_arn]
@@ -134,6 +139,7 @@ resource "aws_lambda_function" "account_metadata_ssm" {
   role             = aws_iam_role.aft_lambda_aft_account_provisioning_framework_persist_metadata.arn
   handler          = "aft_account_provisioning_framework_account_metadata_ssm.lambda_handler"
   source_code_hash = var.provisioning_framework_archive_hash
+  memory_size      = 1024
   runtime          = "python3.8"
   timeout          = 300
   layers           = [var.aft_common_layer_arn]

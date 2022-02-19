@@ -1,8 +1,9 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
 import os
+import time
 from typing import TYPE_CHECKING, Any, Dict, List, Sequence
 
 import aft_common.aft_utils as utils
@@ -91,7 +92,9 @@ def get_aft_trust_policy_document(session: Session) -> str:
 
 
 def create_role_in_account(
-    session: Session, ct_execution_session: Session, role_name: str
+    session: Session,
+    ct_execution_session: Session,
+    role_name: str,
 ) -> str:
     logger.info("Function Start - create_role_in_account")
     assume_role_policy_document = get_aft_trust_policy_document(session=session)
@@ -113,6 +116,12 @@ def create_role_in_account(
         role_name=role_name,
         policy_arn="arn:aws:iam::aws:policy/AdministratorAccess",
     )
+
+    # Adding sleep to account for IAM Role creation eventual consistency
+    eventual_consistency_sleep = 60
+    logger.info(f"Sleeping for {eventual_consistency_sleep}s to ensure Role exists")
+    time.sleep(eventual_consistency_sleep)
+
     return role_arn
 
 

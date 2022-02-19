@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
@@ -6,7 +6,7 @@ import sys
 import uuid
 from datetime import datetime
 from functools import partial
-from typing import TYPE_CHECKING, Any, Dict, List, Sequence, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Mapping, Sequence, cast
 
 from aft_common import aft_utils as utils
 from aft_common.account import Account
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
         ProvisionedProductDetailTypeDef,
         ProvisioningParameterTypeDef,
         ProvisionProductOutputTypeDef,
+        SearchProvisionedProductsInputRequestTypeDef,
         UpdateProvisioningParameterTypeDef,
     )
 else:
@@ -30,14 +31,75 @@ logger = utils.get_logger()
 
 
 def provisioned_product_exists(record: Dict[str, Any]) -> bool:
+    # Go get all my accounts from SC (Not all PPs)
     ct_management_session = utils.get_ct_management_session(aft_mgmt_session=Session())
-    account_name = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
+    account_email = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
         "control_tower_parameters"
-    ]["AccountName"]
-    provisioned_product = Account(
-        ct_management_session=ct_management_session, account_name=account_name
-    ).provisioned_product
-    return provisioned_product is not None
+    ]["AccountEmail"]
+
+    sc_product_search_filter: Mapping[Literal["SearchQuery"], Sequence[str]] = {
+        "SearchQuery": [
+            "type:CONTROL_TOWER_ACCOUNT",
+        ]
+    }
+    sc_product_allowed_status = ["AVAILABLE", "TAINTED"]
+    sc_client = ct_management_session.client("servicecatalog")
+
+    logger.info(
+        "Searching Account Factory for account with matching email in healthy status"
+    )
+
+    # Get products with the required type
+    response = sc_client.search_provisioned_products(
+        Filters=sc_product_search_filter, PageSize=100
+    )
+
+    pp_ids = [
+        pp["Id"]
+        for pp in response["ProvisionedProducts"]
+        if pp["Status"] in sc_product_allowed_status
+    ]
+
+    if email_exists_in_batch(account_email, pp_ids, ct_management_session):
+        return True
+
+    while response.get("NextPageToken") is not None:
+        response = sc_client.search_provisioned_products(
+            Filters=sc_product_search_filter,
+            PageSize=100,
+            PageToken=response["NextPageToken"],
+        )
+
+        pp_ids = [
+            pp["Id"]
+            for pp in response["ProvisionedProducts"]
+            if pp["Status"] in sc_product_allowed_status
+        ]
+
+        if email_exists_in_batch(account_email, pp_ids, ct_management_session):
+            return True
+
+    # We processed all batches of accounts with healthy statuses, and did not find a match
+    # It is possible that the account exists, but does not have a healthy status
+    logger.info(
+        "Did not find account with matching email in healthy status in Account Factory"
+    )
+
+    return False
+
+
+def email_exists_in_batch(
+    target_email: str, pps: List[str], ct_management_session: Session
+) -> bool:
+    sc_client = ct_management_session.client("servicecatalog")
+    for pp in pps:
+        pp_email = sc_client.get_provisioned_product_outputs(
+            ProvisionedProductId=pp, OutputKeys=["AccountEmail"]
+        )["Outputs"][0]["OutputValue"]
+        if target_email == pp_email:
+            logger.info("Account email match found; provisioned product exists.")
+            return True
+    return False
 
 
 def insert_msg_into_acc_req_queue(
@@ -132,17 +194,18 @@ def new_ct_request_is_valid(session: Session, request: Dict[str, Any]) -> bool:
         logger.info("Requested AccountEmail is valid: " + ct_parameters["AccountEmail"])
         if ct_parameters["AccountName"] not in org_account_names:
             logger.info(
-                "Requested account_name is valid: " + ct_parameters["AccountName"]
+                "Valid request - AccountName and AccountEmail not already in use"
             )
             return True
         else:
             logger.info(
-                "Requested AccountName is NOT valid: " + ct_parameters["AccountName"]
+                "Invalid Request - AccountName already exists in Organization: "
+                + ct_parameters["AccountName"]
             )
             return False
     else:
         logger.info(
-            f"Requested AccountEmail is NOT valid: {ct_parameters['AccountEmail']}"
+            f"Invalid Request - AccountEmail already exists in Organization: {ct_parameters['AccountEmail']}"
         )
         return False
 

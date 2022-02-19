@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
 ######## customizations_identify_targets ########
@@ -12,10 +12,10 @@ resource "aws_lambda_function" "aft_customizations_identify_targets" {
   handler       = "aft_customizations_identify_targets.lambda_handler"
 
   source_code_hash = var.customizations_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = var.aft_vpc_private_subnets
@@ -38,10 +38,10 @@ resource "aws_lambda_function" "aft_customizations_execute_pipeline" {
   handler       = "aft_customizations_execute_pipeline.lambda_handler"
 
   source_code_hash = var.customizations_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = var.aft_vpc_private_subnets
@@ -63,10 +63,10 @@ resource "aws_lambda_function" "aft_customizations_get_pipeline_executions" {
   handler       = "aft_customizations_get_pipeline_executions.lambda_handler"
 
   source_code_hash = var.customizations_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = var.aft_vpc_private_subnets
@@ -89,10 +89,10 @@ resource "aws_lambda_function" "aft_customizations_invoke_account_provisioning" 
   handler       = "aft_customizations_invoke_account_provisioning_framework.lambda_handler"
 
   source_code_hash = var.customizations_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = var.aft_vpc_private_subnets

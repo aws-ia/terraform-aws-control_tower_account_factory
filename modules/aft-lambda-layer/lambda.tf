@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
 resource "aws_lambda_function" "codebuild_invoker" {
@@ -8,6 +8,7 @@ resource "aws_lambda_function" "codebuild_invoker" {
   role             = aws_iam_role.codebuild_invoker_lambda_role.arn
   handler          = "codebuild_invoker.lambda_handler"
   source_code_hash = var.builder_archive_hash
+  memory_size      = 1024
   runtime          = "python3.8"
   timeout          = 900
 

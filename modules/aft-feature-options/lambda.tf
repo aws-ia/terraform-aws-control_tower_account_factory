@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
 ######## aft_delete_default_vpc ########
@@ -11,10 +11,10 @@ resource "aws_lambda_function" "aft_delete_default_vpc" {
   handler       = "aft_delete_default_vpc.lambda_handler"
 
   source_code_hash = var.feature_options_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = var.aft_vpc_private_subnets
@@ -39,10 +39,10 @@ resource "aws_lambda_function" "aft_enroll_support" {
   handler       = "aft_enroll_support.lambda_handler"
 
   source_code_hash = var.feature_options_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = var.aft_vpc_private_subnets
@@ -66,10 +66,10 @@ resource "aws_lambda_function" "aft_enable_cloudtrail" {
   handler       = "aft_enable_cloudtrail.lambda_handler"
 
   source_code_hash = var.feature_options_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = var.aft_vpc_private_subnets

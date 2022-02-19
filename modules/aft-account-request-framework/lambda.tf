@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
 ######## aft_account_request_audit_trigger ########
@@ -12,10 +12,10 @@ resource "aws_lambda_function" "aft_account_request_audit_trigger" {
   handler       = "aft_account_request_audit_trigger.lambda_handler"
 
   source_code_hash = var.request_framework_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
@@ -55,10 +55,10 @@ resource "aws_lambda_function" "aft_account_request_action_trigger" {
   handler       = "aft_account_request_action_trigger.lambda_handler"
 
   source_code_hash = var.request_framework_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
@@ -92,10 +92,10 @@ resource "aws_lambda_function" "aft_controltower_event_logger" {
   handler       = "aft_controltower_event_logger.lambda_handler"
 
   source_code_hash = var.request_framework_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
@@ -128,10 +128,10 @@ resource "aws_lambda_function" "aft_account_request_processor" {
   handler       = "aft_account_request_processor.lambda_handler"
 
   source_code_hash = var.request_framework_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
@@ -165,10 +165,10 @@ resource "aws_lambda_function" "aft_invoke_aft_account_provisioning_framework" {
   handler       = "aft_invoke_aft_account_provisioning_framework.lambda_handler"
 
   source_code_hash = var.request_framework_archive_hash
-
-  runtime = "python3.8"
-  timeout = "300"
-  layers  = [var.aft_common_layer_arn]
+  memory_size      = 1024
+  runtime          = "python3.8"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
 
   vpc_config {
     subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
