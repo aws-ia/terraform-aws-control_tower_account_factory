@@ -33,4 +33,6 @@ module "network_account" {
     custom1 = "a"
     custom2 = "b"
   }
+
+  account_customizations_name = "network_customizations"
 }
