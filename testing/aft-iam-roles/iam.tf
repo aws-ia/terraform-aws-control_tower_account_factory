@@ -36,7 +36,7 @@ resource "aws_iam_role" "netops_role" {
 
 resource "aws_iam_role_policy" "netops_policy" {
   provider = aws.aft_netops
-  name     = "NetOps_policy"
+  name     = "NetOpsAdmin_policy"
   role     = aws_iam_role.netops_role.id
 
   policy = file("${path.module}/iam_netops/netops_role_policy.tpl")
