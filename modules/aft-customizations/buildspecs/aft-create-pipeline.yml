@@ -10,7 +10,7 @@ phases:
       - AWS_MODULE_SOURCE=$(aws ssm get-parameter --name $SSM_AWS_MODULE_SOURCE --query "Parameter.Value" --output text)
       - AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name $SSM_AWS_MODULE_GIT_REF --query "Parameter.Value" --output text)
       - |
-        ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption || echo "None")
+        ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
         if [[ $ssh_key_parameter != "None" ]]; then
           ssh_key=$(jq --raw-output ".Parameter.Value" <<< $ssh_key_parameter)
           mkdir -p ~/.ssh

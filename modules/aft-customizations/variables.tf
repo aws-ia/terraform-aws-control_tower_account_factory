@@ -115,3 +115,7 @@ variable "customizations_archive_path" {
 variable "customizations_archive_hash" {
   type = string
 }
+
+variable "global_codebuild_timeout" {
+  type = number
+}

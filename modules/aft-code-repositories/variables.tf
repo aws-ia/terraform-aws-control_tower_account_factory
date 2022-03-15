@@ -88,3 +88,7 @@ variable "account_provisioning_customizations_repo_name" {
 variable "account_provisioning_customizations_repo_branch" {
   type = string
 }
+
+variable "global_codebuild_timeout" {
+  type = number
+}

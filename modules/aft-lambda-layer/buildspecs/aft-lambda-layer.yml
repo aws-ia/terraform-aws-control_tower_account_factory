@@ -14,7 +14,7 @@ phases:
       # URL Without Access ID
       - URL=$(echo "$AWS_MODULE_SOURCE" | awk '{split($0,a,"@"); print a[2]}')
       - |
-        ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption || echo "None")
+        ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
         if [[ $ssh_key_parameter != "None" ]]; then
           ssh_key=$(jq --raw-output ".Parameter.Value" <<< $ssh_key_parameter)
           mkdir -p ~/.ssh

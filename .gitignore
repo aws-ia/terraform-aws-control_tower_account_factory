@@ -190,6 +190,7 @@ cython_debug/
 .tflint.hcl
 .terraform.lock.hcl
 backend.tf
+.terraform
 
 # Local .terraform directories
 **/.terraform/*
