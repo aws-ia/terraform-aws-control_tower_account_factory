@@ -12,7 +12,7 @@ resource "aws_codebuild_project" "account_request" {
   depends_on     = [aws_cloudwatch_log_group.account_request]
   name           = "ct-aft-account-request"
   description    = "Job to apply Terraform for Account Requests"
-  build_timeout  = "60"
+  build_timeout  = tostring(var.global_codebuild_timeout)
   service_role   = aws_iam_role.account_request_codebuild_role.arn
   encryption_key = var.aft_key_arn
 
@@ -55,7 +55,7 @@ resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" 
   depends_on     = [aws_cloudwatch_log_group.account_request]
   name           = "ct-aft-account-provisioning-customizations"
   description    = "Deploys the Account Provisioning Customizations terraform project"
-  build_timeout  = "60"
+  build_timeout  = tostring(var.global_codebuild_timeout)
   service_role   = aws_iam_role.account_provisioning_customizations_codebuild_role.arn
   encryption_key = var.aft_key_arn
 

@@ -101,6 +101,19 @@ variable "aft_vpc_endpoints" {
   }
 }
 
+variable "global_codebuild_timeout" {
+  type        = number
+  description = "Codebuild build timeout"
+  default     = 60
+  validation {
+    condition = (
+      var.global_codebuild_timeout >= 5 &&
+      var.global_codebuild_timeout <= 480
+    )
+    error_message = "Codebuild build timeout must be between 5 and 480 minutes."
+  }
+}
+
 #########################################
 # AFT Feature Flags
 #########################################
