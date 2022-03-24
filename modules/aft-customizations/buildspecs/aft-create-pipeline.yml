@@ -44,7 +44,7 @@ phases:
       - cd ./aws-aft-core-framework/sources/aft-customizations-common/templates/customizations_pipeline
       - python3 -m venv ./venv
       - source ./venv/bin/activate
-      - pip install jinja2-cli
+      - pip install jinja2-cli==0.7.0 Jinja2==3.0.1
       - for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID >> $(basename $f .jinja).tf; done
       - for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
       - terraform init
