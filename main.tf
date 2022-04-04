@@ -5,6 +5,23 @@ module "packaging" {
   source = "./modules/aft-archives"
 }
 
+module "aft" {
+  source = "github.com/cynchealth/terraform-aws-control_tower_account_factory"
+  # Required Vars
+  ct_management_account_id    = "788427179122"
+  log_archive_account_id      = "487198671990 "
+  audit_account_id            = "821725598392 "
+  aft_management_account_id   = "859524307727 "
+  ct_home_region              = "us-east-2"
+  tf_backend_secondary_region = "us-west-2"
+  # VCS Vars
+  vcs_provider                                  = "github"
+  account_request_repo_name                     = "cynchealth/aft-account-request"
+  global_customizations_repo_name               = "cynchealth/aft-global-customizations"
+  account_customizations_repo_name              = "cynchealth/aft-account-customizations"
+  account_provisioning_customizations_repo_name = "cynchealth/aft-account-provisioning-customizations"
+}
+
 module "aft_account_provisioning_framework" {
   providers = {
     aws = aws.aft_management

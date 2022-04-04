@@ -121,7 +121,7 @@ variable "global_codebuild_timeout" {
 variable "aft_feature_cloudtrail_data_events" {
   description = "Feature flag toggling CloudTrail data events on/off"
   type        = bool
-  default     = false
+  default     = true
   validation {
     condition     = contains([true, false], var.aft_feature_cloudtrail_data_events)
     error_message = "Valid values for var: aft_feature_cloudtrail_data_events are (true, false)."
@@ -140,7 +140,7 @@ variable "aft_feature_enterprise_support" {
 variable "aft_feature_delete_default_vpcs_enabled" {
   description = "Feature flag toggling deletion of default VPCs on/off"
   type        = bool
-  default     = false
+  default     = true
   validation {
     condition     = contains([true, false], var.aft_feature_delete_default_vpcs_enabled)
     error_message = "Valid values for var: aft_feature_delete_default_vpcs_enabled are (true, false)."
