@@ -18,6 +18,7 @@ phases:
       - AFT_ADMIN_ROLE_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-administrator-role-name | jq --raw-output ".Parameter.Value")
       - AFT_ADMIN_ROLE_ARN=arn:aws:iam::$AFT_MGMT_ACCOUNT:role/$AFT_ADMIN_ROLE_NAME
       - ROLE_SESSION_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-session-name | jq --raw-output ".Parameter.Value")
+      - aws ssm get-parameter --name /aft/config/terraform/spacelift-terraformrc --with-decryption | jq --raw-output ".Parameter.Value" > ~/.terraformrc
       - |
         ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
         if [[ $ssh_key_parameter != "None" ]]; then
