@@ -1,8 +1,8 @@
 # MDLZ CUSTOMIZATION
 data "aws_caller_identity" "current" {}
 
-data "aws_kms_alias" "aft" {
-  name = "alias/aft"
+data "aws_kms_alias" "ssm" {
+  name = "alias/aws/ssm"
 }
 
 data "aws_kms_secrets" "spacelift_terraformrc" {
