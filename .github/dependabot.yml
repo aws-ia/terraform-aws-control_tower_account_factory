@@ -3,6 +3,6 @@ updates:
   - package-ecosystem: "terraform"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
       day: "tuesday"
       time: "09:00"
