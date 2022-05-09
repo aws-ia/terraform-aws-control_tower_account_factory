@@ -102,7 +102,7 @@
         "dynamodb:GetItem"
       ],
         "Resource" : [
-          "arn:aws:dynamodb:${data_aws_caller_identity_current_account_id}:${data_aws_caller_identity_current_account_id}:table/aft*"
+          "arn:aws:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/aft*"
         ]
       }
   ]

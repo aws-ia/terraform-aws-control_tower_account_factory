@@ -26,8 +26,7 @@
       {
         "Effect" : "Allow",
         "Action" : [
-          "sts:AssumeRole",
-          "sns:Publish"
+          "sts:AssumeRole"
         ],
         "Resource" : [
           "arn:aws:iam::${data_aws_caller_identity_aft-management_account_id}:role/AWSAFTAdmin"

@@ -13,6 +13,5 @@ class AftAccountInfo(TypedDict):
     status: str
     parent_id: str
     parent_type: str
-    org_name: str
     type: Literal["account"]
     vendor: Literal["aws"]

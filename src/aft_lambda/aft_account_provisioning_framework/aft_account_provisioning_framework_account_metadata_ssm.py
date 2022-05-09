@@ -3,10 +3,11 @@
 #
 import inspect
 import json
-from typing import Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
 import boto3
+from aft_common import aft_utils as utils
+from aft_common import notifications
 from aft_common.account_provisioning_framework import (
     AFT_EXEC_ROLE,
     SSM_PARAMETER_PATH,
@@ -15,16 +16,20 @@ from aft_common.account_provisioning_framework import (
     get_ssm_parameters_names_by_path,
 )
 
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
+
 logger = utils.get_logger()
 
 
-def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    local_session = boto3.session.Session()
     try:
         account_request = event["payload"]["account_request"]
         custom_fields = json.loads(account_request.get("custom_fields", "{}"))
         target_account_id = event["payload"]["account_info"]["account"]["id"]
-
-        local_session = boto3.session.Session()
 
         aft_session = utils.get_aft_admin_role_session(local_session)
         target_account_role_arn = utils.build_role_arn(
@@ -73,11 +78,17 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
         logger.info(message=f"Adding/Updating SSM params: {custom_fields}")
         create_ssm_parameters(target_account_session, custom_fields)
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=local_session,
+            message=str(error),
+            context=context,
+            subject="AFT account provisioning failed",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

@@ -186,51 +186,47 @@ def put_audit_record(
 ) -> Dict[str, Any]:
     dynamodb = session.client("dynamodb")
     item = image
-
     datetime_format = "%Y-%m-%dT%H:%M:%S.%f"
     current_time = datetime.now().strftime(datetime_format)
     item["timestamp"] = {"S": current_time}
-
     item["ddb_event_name"] = {"S": event_name}
-
     logger.info("Inserting item into " + table + " table: " + str(item))
-
     response: Dict[str, Any] = dynamodb.put_item(TableName=table, Item=item)
-
     logger.info(response)
-
     return response
 
 
+def account_name_or_email_in_use(
+    ct_management_session: Session, account_name: str, account_email: str
+) -> bool:
+    orgs = ct_management_session.client("organizations")
+    paginator = orgs.get_paginator("list_accounts")
+    for page in paginator.paginate():
+        for account in page["Accounts"]:
+            if account_name == account["Name"]:
+                logger.error(
+                    f"Account Name: {account_name} already used in Organizations"
+                )
+                return True
+            if account_email == account["Email"]:
+                logger.error(
+                    f"Account Email: {account_email} already used in Organizations"
+                )
+                return True
+
+    return False
+
+
 def new_ct_request_is_valid(session: Session, request: Dict[str, Any]) -> bool:
-    logger.info("Validating new CT Account Request")
-    org_account_emails = utils.get_org_account_emails(session)
-    org_account_names = utils.get_org_account_names(session)
-
     ct_parameters = request["control_tower_parameters"]
-
-    if ct_parameters["AccountEmail"] not in org_account_emails:
-        logger.info("Requested AccountEmail is valid: " + ct_parameters["AccountEmail"])
-        if ct_parameters["AccountName"] not in org_account_names:
-            logger.info(
-                "Valid request - AccountName and AccountEmail not already in use"
-            )
-            return True
-        else:
-            logger.info(
-                "Invalid Request - AccountName already exists in Organization: "
-                + ct_parameters["AccountName"]
-            )
-            return False
-    else:
-        logger.info(
-            f"Invalid Request - AccountEmail already exists in Organization: {ct_parameters['AccountEmail']}"
-        )
-        return False
+    return not account_name_or_email_in_use(
+        ct_management_session=session,
+        account_name=ct_parameters["AccountName"],
+        account_email=ct_parameters["AccountEmail"],
+    )
 
 
 def modify_ct_request_is_valid(request: Dict[str, Any]) -> bool:
-    logger.info("Validating modify CT Account Request")
 
     old_ct_parameters = request.get("old_control_tower_parameters", {})
     new_ct_parameters = request["control_tower_parameters"]
@@ -238,10 +234,8 @@ def modify_ct_request_is_valid(request: Dict[str, Any]) -> bool:
     for i in old_ct_parameters.keys():
         if i != "ManagedOrganizationalUnit":
             if old_ct_parameters[i] != new_ct_parameters[i]:
-                logger.info(i + " cannot be modified")
+                logger.error(f"Control Tower parameter {i} cannot be modified")
                 return False
-
-    logger.info("Modify CT Account Request is Valid")
     return True
 
 

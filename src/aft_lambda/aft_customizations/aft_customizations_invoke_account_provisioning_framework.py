@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-from typing import Any, Dict, Union
+import json
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
+from aft_common import aft_utils as utils
+from aft_common import notifications
 from aft_common.customizations import (
     build_invoke_event,
     get_account_metadata_record,
@@ -13,15 +15,17 @@ from aft_common.customizations import (
 )
 from boto3.session import Session
 
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
+
 logger = utils.get_logger()
 
 
-def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    session = Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
-        session = Session()
-
         pending_account_ids = event["targets"]["pending_accounts"]
         account_metadata_table = utils.get_ssm_parameter_value(
             session, utils.SSM_PARAM_AFT_DDB_META_TABLE
@@ -46,11 +50,17 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
                 session, provisioning_framework_sfn, sfn_event
             )
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=session,
+            message=json.dumps(error),
+            context=context,
+            subject="Failed to invoke account provisioning framework",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

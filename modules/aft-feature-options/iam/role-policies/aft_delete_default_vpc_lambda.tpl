@@ -52,6 +52,16 @@
         "Effect" : "Allow",
         "Action" : "sts:GetCallerIdentity",
         "Resource" : "*"
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+            "sns:Publish"
+        ],
+        "Resource" : [
+            "${aws_sns_topic_aft_notifications_arn}",
+            "${aws_sns_topic_aft_failure_notifications_arn}"
+        ]
       }
     ]
 }
