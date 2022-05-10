@@ -24,10 +24,14 @@ from boto3.session import Session
 from botocore.response import StreamingBody
 
 if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
     from mypy_boto3_lambda import LambdaClient
     from mypy_boto3_lambda.type_defs import InvocationResponseTypeDef
-    from mypy_boto3_organizations import OrganizationsClient
-    from mypy_boto3_organizations.type_defs import TagTypeDef
+    from mypy_boto3_organizations import ListAccountsPaginator, OrganizationsClient
+    from mypy_boto3_organizations.type_defs import (
+        DescribeAccountResponseTypeDef,
+        TagTypeDef,
+    )
     from mypy_boto3_servicecatalog import ServiceCatalogClient
     from mypy_boto3_sns import SNSClient
     from mypy_boto3_sns.type_defs import PublishResponseTypeDef
@@ -55,6 +59,7 @@ else:
     StartExecutionOutputTypeDef = object
     STSClient = object
     CredentialsTypeDef = object
+    LambdaContext = object
 
 from aft_common.types import AftAccountInfo
 
@@ -166,29 +171,13 @@ def put_ddb_item(
 
 
 def get_account_id_from_email(ct_management_session: Session, email: str) -> str:
-    logger.info("begin get_account_by_email")
-    accounts = list_accounts(ct_management_session)
-    account = [a for a in accounts if a["email"] == email]
-    logger.info(account)
-    if len(account):
-        return account[0]["id"]
-    else:
-        raise Exception("Account not found for email")
-
-
-def list_accounts(ct_management_session: Session) -> List[AftAccountInfo]:
-    client: OrganizationsClient = ct_management_session.client("organizations")
-    response = client.list_accounts()
-    accounts = response["Accounts"]
-    account_info: List[AftAccountInfo] = []
-    while "NextToken" in response:
-        response = client.list_accounts(NextToken=response["NextToken"])
-        accounts.extend(response["Accounts"])
-
-    for a in accounts:
-        account_info.append(get_account_info(ct_management_session, a["Id"]))
-
-    return account_info
+    orgs = ct_management_session.client("organizations")
+    paginator: ListAccountsPaginator = orgs.get_paginator("list_accounts")
+    for page in paginator.paginate():
+        for account in page["Accounts"]:
+            if account["Email"] == email:
+                return account["Id"]
+    raise Exception(f"Account email {email} not found in Organization")
 
 
 def get_account_info(ct_management_session: Session, account_id: str) -> AftAccountInfo:
@@ -202,13 +191,6 @@ def get_account_info(ct_management_session: Session, account_id: str) -> AftAcco
     parents = list_response["Parents"]
     parent_id = parents[0]["Id"]
     parent_type = parents[0]["Type"]
-    org_name = ""
-
-    if parent_type == "ORGANIZATIONAL_UNIT":
-        org_details = client.describe_organizational_unit(
-            OrganizationalUnitId=parent_id
-        )
-        org_name = org_details["OrganizationalUnit"]["Name"]
 
     return AftAccountInfo(
         id=account["Id"],
@@ -219,7 +201,6 @@ def get_account_info(ct_management_session: Session, account_id: str) -> AftAcco
         status=account["Status"],
         parent_id=parent_id,
         parent_type=parent_type,
-        org_name=org_name,
         type="account",
         vendor="aws",
     )
@@ -458,18 +439,6 @@ def receive_sqs_message(session: Session, sqs_queue: str) -> Optional[MessageTyp
         return None
 
 
-def get_org_account_emails(ct_management_session: Session) -> List[str]:
-    accounts = list_accounts(ct_management_session)
-
-    return [a["email"] for a in accounts]
-
-
-def get_org_account_names(ct_management_session: Session) -> List[str]:
-    accounts = list_accounts(ct_management_session)
-
-    return [a["name"] for a in accounts]
-
-
 def get_org_ou_names(session: Session) -> List[str]:
     client: OrganizationsClient = session.client("organizations")
     logger.info("Listing roots in the Organization")
@@ -566,14 +535,9 @@ def invoke_lambda(
 
 
 def get_account_email_from_id(ct_management_session: Session, id: str) -> str:
-    accounts = list_accounts(ct_management_session)
-    logger.info("Getting account email for account id " + id)
-    for a in accounts:
-        if a["id"] == id:
-            email = a["email"]
-            logger.info("Account email: " + email)
-            return email
-    raise Exception("Account ID " + id + " was not found in the Organization")
+    orgs = ct_management_session.client("organizations")
+    response: DescribeAccountResponseTypeDef = orgs.describe_account(AccountId=id)
+    return response["Account"]["Email"]
 
 
 def build_sfn_arn(session: Session, sfn_name: str) -> str:
@@ -619,19 +583,6 @@ def is_aft_supported_controltower_event(event: Dict[str, Any]) -> bool:
     else:
         logger.info("Control Tower Event is NOT supported")
         return False
-
-
-def send_sns_message(
-    session: Session, topic: str, sns_message: str, subject: str
-) -> PublishResponseTypeDef:
-    logger.info("Sending SNS Message")
-    client: SNSClient = session.client("sns")
-
-    response = client.publish(TopicArn=topic, Message=sns_message, Subject=subject)
-
-    logger.info(response)
-
-    return response
 
 
 def tag_org_resource(

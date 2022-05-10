@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-from typing import TYPE_CHECKING, Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
 import boto3
+from aft_common import aft_utils as utils
+from aft_common import notifications
 from aft_common.feature_options import (
     delete_acls,
     delete_internet_gateways,
@@ -28,17 +29,17 @@ else:
     EC2Client = object
     EC2ServiceResource = object
 
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
+
 logger = utils.get_logger()
 
 
-def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
-    logger.info("Lambda_handler Event")
-    logger.info(event)
-
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    aft_session = boto3.session.Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
-        aft_session = boto3.session.Session()
         role_arn = utils.build_role_arn(
             aft_session,
             utils.get_ssm_parameter_value(aft_session, utils.SSM_PARAM_AFT_ADMIN_ROLE),
@@ -99,11 +100,17 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
                     delete_security_groups(client, security_groups)
                     delete_vpc(client, vpc)
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=aft_session,
+            message=str(error),
+            context=context,
+            subject="AFT: Failed to delete default VPC",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

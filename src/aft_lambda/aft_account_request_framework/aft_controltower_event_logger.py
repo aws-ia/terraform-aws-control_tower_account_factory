@@ -2,47 +2,41 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-from typing import Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
 import boto3
+from aft_common import aft_utils as utils
+from aft_common import notifications
+
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
 
 logger = utils.get_logger()
 
 
-def lambda_handler(
-    event: Dict[str, Any], context: Union[Dict[str, Any], None]
-) -> Dict[str, Any]:
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
+    session = boto3.session.Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
+        response: Dict[str, Any] = utils.put_ddb_item(
+            session,
+            utils.get_ssm_parameter_value(session, utils.SSM_PARAM_AFT_EVENTS_TABLE),
+            event,
+        )
+        return response
 
-        try:
-            session = boto3.session.Session()
-
-            response: Dict[str, Any] = utils.put_ddb_item(
-                session,
-                utils.get_ssm_parameter_value(
-                    session, utils.SSM_PARAM_AFT_EVENTS_TABLE
-                ),
-                event,
-            )
-            return response
-
-        except Exception as e:
-            message = {
-                "FILE": __file__.split("/")[-1],
-                "METHOD": inspect.stack()[0][3],
-                "EXCEPTION": str(e),
-            }
-            logger.exception(message)
-            raise
-
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=session,
+            message=str(error),
+            context=context,
+            subject="AFT Event Logging failed",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

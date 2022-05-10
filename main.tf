@@ -229,7 +229,7 @@ module "aft_ssm_parameters" {
   aft_config_backend_primary_region                           = var.ct_home_region
   aft_config_backend_secondary_region                         = var.tf_backend_secondary_region
   aft_framework_repo_url                                      = var.aft_framework_repo_url
-  aft_framework_repo_git_ref                                  = var.aft_framework_repo_git_ref
+  aft_framework_repo_git_ref                                  = local.aft_framework_repo_git_ref
   terraform_token                                             = var.terraform_token
   terraform_version                                           = var.terraform_version
   terraform_org_name                                          = var.terraform_org_name

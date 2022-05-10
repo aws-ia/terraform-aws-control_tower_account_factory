@@ -3,23 +3,27 @@
 #
 import inspect
 import json
-from typing import Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
+from aft_common import aft_utils as utils
+from aft_common import notifications
 from aft_common.account_request_framework import (
     build_invoke_event,
     is_customizations_event,
 )
 from boto3.session import Session
 
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
+
 logger = utils.get_logger()
 
 
-def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    session = Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
-        session = Session()
         ct_management_session = utils.get_ct_management_session(session)
         response = None
         if utils.is_controltower_event(
@@ -46,11 +50,17 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
             )
         logger.info(response)
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=session,
+            message=str(error),
+            context=context,
+            subject="AFT account request failed",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

@@ -45,12 +45,8 @@ variable "aft_framework_repo_url" {
 
 variable "aft_framework_repo_git_ref" {
   description = "Git branch from which the AFT framework should be sourced from"
-  default     = "main"
+  default     = null
   type        = string
-  validation {
-    condition     = length(var.aft_framework_repo_git_ref) > 0
-    error_message = "Variable var: aft_framework_repo_git_ref cannot be empty."
-  }
 }
 
 variable "aft_management_account_id" {

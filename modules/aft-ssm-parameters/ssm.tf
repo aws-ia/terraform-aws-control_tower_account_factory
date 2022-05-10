@@ -271,6 +271,8 @@ resource "aws_ssm_parameter" "aft_framework_repo_git_ref" {
   value = var.aft_framework_repo_git_ref
 }
 
+
+
 resource "aws_ssm_parameter" "aft_feature_cloudtrail_data_events" {
   name  = "/aft/config/feature/cloudtrail-data-events-enabled"
   type  = "String"

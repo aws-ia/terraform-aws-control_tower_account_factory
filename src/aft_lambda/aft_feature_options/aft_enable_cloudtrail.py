@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-from typing import Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
+from aft_common import aft_utils as utils
+from aft_common import notifications
 from aft_common.feature_options import (
     create_trail,
     event_selectors_exists,
@@ -16,16 +17,19 @@ from aft_common.feature_options import (
 )
 from boto3.session import Session
 
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
+
 logger = utils.get_logger()
 
 CLOUDTRAIL_TRAIL_NAME = "aws-aft-CustomizationsCloudTrail"
 
 
-def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    aft_session = Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
-        aft_session = Session()
         ct_session = utils.get_ct_management_session(aft_session)
         log_archive_session = utils.get_log_archive_session(aft_session)
 
@@ -50,11 +54,17 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
             if not trail_is_logging(ct_session):
                 start_logging(ct_session)
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=aft_session,
+            message=str(error),
+            context=context,
+            subject="AFT: Failed to enable cloudtrail",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise
