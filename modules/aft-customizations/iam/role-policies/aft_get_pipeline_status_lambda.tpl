@@ -21,6 +21,16 @@
         "Resource" : [
             "${aws_kms_key_aft_arn}"
         ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+            "sns:Publish"
+        ],
+        "Resource" : [
+            "${aft_sns_topic_arn}",
+            "${aft_failure_sns_topic_arn}"
+        ]
       }
     ]
 }

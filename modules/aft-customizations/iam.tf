@@ -80,6 +80,8 @@ resource "aws_iam_role_policy" "aft_identify_targets_lambda" {
     data_aws_region_current_name                = data.aws_region.current.name
     request_metadata_table_name                 = var.request_metadata_table_name
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
+    aft_sns_topic_arn                           = var.aft_sns_topic_arn
+    aft_failure_sns_topic_arn                   = var.aft_failure_sns_topic_arn
   })
 
 }
@@ -107,6 +109,8 @@ resource "aws_iam_role_policy" "aft_execute_pipeline_lambda" {
     data_aws_region_current_name                = data.aws_region.current.name
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
+    aft_sns_topic_arn                           = var.aft_sns_topic_arn
+    aft_failure_sns_topic_arn                   = var.aft_failure_sns_topic_arn
   })
 
 }
@@ -134,6 +138,8 @@ resource "aws_iam_role_policy" "aft_get_pipeline_executions_lambda" {
     data_aws_region_current_name                = data.aws_region.current.name
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
+    aft_sns_topic_arn                           = var.aft_sns_topic_arn
+    aft_failure_sns_topic_arn                   = var.aft_failure_sns_topic_arn
   })
 
 }
@@ -178,6 +184,8 @@ resource "aws_iam_role_policy" "aft_customizations_invoke_account_provisioning_l
     data_aws_dynamo_account_metadata_table      = var.request_metadata_table_name
     data_aws_dynamo_account_request_table       = var.account_request_table_name
     invoke_account_provisioning_arn             = var.invoke_account_provisioning_sfn_arn
+    aft_sns_topic_arn                           = var.aft_sns_topic_arn
+    aft_failure_sns_topic_arn                   = var.aft_failure_sns_topic_arn
   })
 
 }

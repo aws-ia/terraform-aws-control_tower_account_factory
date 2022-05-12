@@ -30,6 +30,16 @@
           "Effect": "Allow",
           "Action": "sts:GetCallerIdentity",
           "Resource": "*"
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+            "sns:Publish"
+        ],
+        "Resource" : [
+            "${aft_sns_topic_arn}",
+            "${aft_failure_sns_topic_arn}"
+        ]
       }
     ]
 }
