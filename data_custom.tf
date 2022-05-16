@@ -1,3 +1,4 @@
+data "aws_caller_identity" "current" {}
 data "aws_kms_secrets" "mondelez" {
   secret {
     name    = "github_app_private_key"
