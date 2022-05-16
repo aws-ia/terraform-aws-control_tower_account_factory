@@ -7,7 +7,7 @@ resource "aws_ssm_parameter" "github_app_credentials" {
     owner           = "mondelez-ctiso"
     pem_file        = data.aws_kms_secrets.mondelez.plaintext.github_app_private_key
   })
-  key_id = data.aws_kms_alias.aft.name
+  key_id = "alias/aws/ssm"
 }
 
 resource "aws_ssm_parameter" "spacelift_api_credentials" {
@@ -18,5 +18,5 @@ resource "aws_ssm_parameter" "spacelift_api_credentials" {
     api_key_secret   = data.aws_kms_secrets.mondelez.plaintext.spacelift_api_key
     api_key_endpoint = "https://mondelez-ctiso.app.spacelift.io"
   })
-  key_id = data.aws_kms_alias.aft.name
+  key_id = "alias/aws/ssm"
 }
