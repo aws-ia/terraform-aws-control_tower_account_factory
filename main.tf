@@ -120,6 +120,7 @@ module "aft_customizations" {
   customizations_archive_path                       = module.packaging.customizations_archive_path
   customizations_archive_hash                       = module.packaging.customizations_archive_hash
   global_codebuild_timeout                          = var.global_codebuild_timeout
+  spacelift_api_credentials_ssm_path                = local.ssm_paths_custom.spacelift_api_credentials
 }
 
 module "aft_feature_options" {

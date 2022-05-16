@@ -1,6 +1,6 @@
 resource "aws_ssm_parameter" "github_app_credentials" {
   provider = aws.aft_management
-  name     = "/aft/config/github/app-credentials"
+  name     = local.ssm_paths_custom.github_app_credentials
   type     = "SecureString"
   value = jsonencode({
     app_id          = 164830
@@ -13,7 +13,7 @@ resource "aws_ssm_parameter" "github_app_credentials" {
 
 resource "aws_ssm_parameter" "spacelift_api_credentials" {
   provider = aws.aft_management
-  name     = "/aft/config/spacelift/api-credentials"
+  name     = local.ssm_paths_custom.spacelift_api_credentials
   type     = "SecureString"
   value = jsonencode({
     api_key_id       = "01FX5W7Z54VYZTE8TYN0X3BJFB",

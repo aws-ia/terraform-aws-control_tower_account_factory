@@ -22,6 +22,12 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+
+    environment_variable {
+      name  = "SPACELIFT_API_CREDENTIALS_JSON"
+      value = var.spacelift_api_credentials_ssm_path
+      type  = "PARAMETER_STORE"
+    }
   }
 
   logs_config {
