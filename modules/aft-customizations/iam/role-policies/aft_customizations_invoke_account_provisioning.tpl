@@ -34,6 +34,16 @@
             "kms:GenerateDataKey"
           ],
           "Resource": "${data_aws_kms_alias_aft_key_target_key_arn}"
+        },
+        {
+            "Effect" : "Allow",
+            "Action" : [
+              "sns:Publish"
+            ],
+            "Resource" : [
+              "${aft_sns_topic_arn}",
+              "${aft_failure_sns_topic_arn}"
+            ]
         }
     ]
 }

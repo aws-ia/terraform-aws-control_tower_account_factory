@@ -75,6 +75,8 @@ resource "aws_iam_role_policy" "aft_enroll_support" {
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
     data_aws_region_current_name                = data.aws_region.current.name
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
+    aws_sns_topic_aft_notifications_arn         = var.aft_sns_topic_arn
+    aws_sns_topic_aft_failure_notifications_arn = var.aft_failure_sns_topic_arn
   })
 
 }
@@ -105,6 +107,8 @@ resource "aws_iam_role_policy" "aft_enable_cloudtrail" {
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
     data_aws_region_current_name                = data.aws_region.current.name
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
+    aws_sns_topic_aft_notifications_arn         = var.aft_sns_topic_arn
+    aws_sns_topic_aft_failure_notifications_arn = var.aft_failure_sns_topic_arn
   })
 
 }
