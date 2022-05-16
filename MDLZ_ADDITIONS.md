@@ -23,3 +23,10 @@ To allow private module use within the AFT Terraform CodeBuild projects.
 - [modules/aft-ssm-parameters/secrets/039570753310/spacelift_terraformrc.enc](modules/aft-ssm-parameters/secrets/039570753310/spacelift_terraformrc.enc) added encrypted .terraformrc to repo
 - [modules/aft-ssm-parameters/data_custom.tf](modules/aft-ssm-parameters/data.tf) added decryption for the .terraformrc
 - [modules/aft-ssm-parameters/ssm_secrets_custom.tf](modules/aft-ssm-parameters/ssm_secrets.tf) added the SSM secret
+
+## Secrets
+### Purpose
+To enable AFT to leverage custom secrets.
+### Modifications
+- [data_custom.tf](data.tf) decryption of the secrets
+- [ssm_custom.tf](ssm_custom.tf) added the SSM secrets
