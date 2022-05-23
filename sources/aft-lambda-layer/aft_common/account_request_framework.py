@@ -20,6 +20,7 @@ from typing import (
 )
 
 from aft_common import aft_utils as utils
+from aft_common.auth import AuthClient
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -85,7 +86,8 @@ def get_healthy_ct_product_batch(
 
 def provisioned_product_exists(record: Dict[str, Any]) -> bool:
     # Go get all my accounts from SC (Not all PPs)
-    ct_management_session = utils.get_ct_management_session(aft_mgmt_session=Session())
+    auth = AuthClient()
+    ct_management_session = auth.get_ct_management_session()
     account_email = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
         "control_tower_parameters"
     ]["AccountEmail"]
@@ -333,7 +335,9 @@ def update_existing_account(
 
     # check to see if the product still exists and is still active
     if utils.ct_provisioning_artifact_is_active(
-        session, ct_management_session, target_product["ProvisioningArtifactId"]
+        session=session,
+        ct_management_session=ct_management_session,
+        artifact_id=target_product["ProvisioningArtifactId"],
     ):
         target_provisioning_artifact_id = target_product["ProvisioningArtifactId"]
     else:

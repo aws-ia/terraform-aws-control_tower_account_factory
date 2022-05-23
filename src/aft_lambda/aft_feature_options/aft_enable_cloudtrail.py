@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
+from aft_common.account_provisioning_framework import ProvisionRoles
+from aft_common.auth import AuthClient
 from aft_common.feature_options import (
     create_trail,
     event_selectors_exists,
@@ -28,10 +30,15 @@ CLOUDTRAIL_TRAIL_NAME = "aws-aft-CustomizationsCloudTrail"
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    auth = AuthClient()
     aft_session = Session()
     try:
-        ct_session = utils.get_ct_management_session(aft_session)
-        log_archive_session = utils.get_log_archive_session(aft_session)
+        ct_session = auth.get_ct_management_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
+        )
+        log_archive_session = auth.get_log_archive_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
+        )
 
         # Get SSM Parameters
         cloudtrail_enabled = utils.get_ssm_parameter_value(

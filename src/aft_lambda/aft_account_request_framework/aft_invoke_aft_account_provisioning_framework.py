@@ -11,6 +11,7 @@ from aft_common.account_request_framework import (
     build_invoke_event,
     is_customizations_event,
 )
+from aft_common.auth import AuthClient
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -23,8 +24,9 @@ logger = utils.get_logger()
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     session = Session()
+    auth = AuthClient()
     try:
-        ct_management_session = utils.get_ct_management_session(session)
+        ct_management_session = auth.get_ct_management_session()
         response = None
         if utils.is_controltower_event(
             event

@@ -9,12 +9,13 @@ import boto3
 from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import (
-    AFT_EXEC_ROLE,
     SSM_PARAMETER_PATH,
+    ProvisionRoles,
     create_ssm_parameters,
     delete_ssm_parameters,
     get_ssm_parameters_names_by_path,
 )
+from aft_common.auth import AuthClient
 
 if TYPE_CHECKING:
     from aws_lambda_powertools.utilities.typing import LambdaContext
@@ -25,19 +26,14 @@ logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
-    local_session = boto3.session.Session()
+    auth = AuthClient()
     try:
         account_request = event["payload"]["account_request"]
         custom_fields = json.loads(account_request.get("custom_fields", "{}"))
         target_account_id = event["payload"]["account_info"]["account"]["id"]
 
-        aft_session = utils.get_aft_admin_role_session(local_session)
-        target_account_role_arn = utils.build_role_arn(
-            aft_session, AFT_EXEC_ROLE, target_account_id
-        )
-
         # Create the custom field parameters in the AFT home region
-        target_region = aft_session.region_name
+        target_region = auth.get_aft_management_session().region_name
 
         aft_ssm_session_policy = {
             "Version": "2012-10-17",
@@ -54,13 +50,11 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             ],
         }
 
-        target_account_creds = utils.get_assume_role_credentials(
-            session=aft_session,
-            role_arn=target_account_role_arn,
-            session_name="aft_ssm_metadata",
+        target_account_session = auth.get_target_account_session(
+            account_id=target_account_id,
             session_policy=json.dumps(aft_ssm_session_policy),
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME,
         )
-        target_account_session = utils.get_boto_session(target_account_creds)
 
         params = get_ssm_parameters_names_by_path(
             target_account_session, SSM_PARAMETER_PATH
@@ -80,7 +74,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=local_session,
+            session=auth.get_aft_management_session(),
             message=str(error),
             context=context,
             subject="AFT account provisioning failed",

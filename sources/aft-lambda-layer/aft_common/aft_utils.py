@@ -17,14 +17,13 @@ from typing import (
     cast,
 )
 
-import attr
 import boto3
+from boto3 import Session
 from boto3.dynamodb.types import TypeDeserializer
 from boto3.session import Session
 from botocore.response import StreamingBody
 
 if TYPE_CHECKING:
-    from aws_lambda_powertools.utilities.typing import LambdaContext
     from mypy_boto3_lambda import LambdaClient
     from mypy_boto3_lambda.type_defs import InvocationResponseTypeDef
     from mypy_boto3_organizations import ListAccountsPaginator, OrganizationsClient
@@ -33,17 +32,11 @@ if TYPE_CHECKING:
         TagTypeDef,
     )
     from mypy_boto3_servicecatalog import ServiceCatalogClient
-    from mypy_boto3_sns import SNSClient
-    from mypy_boto3_sns.type_defs import PublishResponseTypeDef
     from mypy_boto3_sqs import SQSClient
     from mypy_boto3_sqs.type_defs import MessageTypeDef, SendMessageResultTypeDef
     from mypy_boto3_stepfunctions import SFNClient
     from mypy_boto3_stepfunctions.type_defs import StartExecutionOutputTypeDef
     from mypy_boto3_sts import STSClient
-    from mypy_boto3_sts.type_defs import (
-        AssumeRoleRequestRequestTypeDef,
-        CredentialsTypeDef,
-    )
 else:
     LambdaClient = object
     InvocationResponseTypeDef = object
@@ -57,7 +50,6 @@ else:
     SendMessageResultTypeDef = object
     SFNClient = object
     StartExecutionOutputTypeDef = object
-    STSClient = object
     CredentialsTypeDef = object
     LambdaContext = object
 
@@ -204,125 +196,6 @@ def get_account_info(ct_management_session: Session, account_id: str) -> AftAcco
         type="account",
         vendor="aws",
     )
-
-
-def get_assume_role_credentials(
-    session: Session,
-    role_arn: str,
-    session_name: str,
-    external_id: Optional[str] = None,
-    session_duration: int = 900,
-    session_policy: Optional[str] = None,
-) -> CredentialsTypeDef:
-    client: STSClient = session.client("sts")
-
-    assume_role_params: AssumeRoleRequestRequestTypeDef = {
-        "RoleArn": role_arn,
-        "RoleSessionName": session_name,
-        "DurationSeconds": session_duration,
-    }
-
-    if external_id:
-        assume_role_params.update({"ExternalId": external_id})
-
-    if session_policy:
-        assume_role_params.update({"Policy": session_policy})
-
-    assume_role_response = client.assume_role(**assume_role_params)
-
-    credentials = assume_role_response["Credentials"]
-    return credentials
-
-
-def build_role_arn(
-    session: Session, role_name: str, account_id: Optional[str] = None
-) -> str:
-    account_info = get_session_info(session)
-    role_arn: str
-    if not account_id:
-        role_arn = "arn:aws:iam::" + account_info["account"] + ":role/" + role_name
-        return role_arn
-    else:
-        role_arn = "arn:aws:iam::" + account_id + ":role/" + role_name
-        return role_arn
-
-
-def get_session_info(session: Session) -> Dict[str, str]:
-    client: STSClient = session.client("sts")
-    response = client.get_caller_identity()
-
-    account_info = {"region": session.region_name, "account": response["Account"]}
-
-    return account_info
-
-
-def get_boto_session(credentials: CredentialsTypeDef) -> Session:
-    return boto3.session.Session(
-        aws_access_key_id=credentials["AccessKeyId"],
-        aws_secret_access_key=credentials["SecretAccessKey"],
-        aws_session_token=credentials["SessionToken"],
-    )
-
-
-def get_ct_management_session(aft_mgmt_session: Session) -> Session:
-    ct_mgmt_account = get_ssm_parameter_value(
-        aft_mgmt_session, SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID
-    )
-    administrator_role = get_ssm_parameter_value(
-        aft_mgmt_session, SSM_PARAM_AFT_ADMIN_ROLE
-    )
-    execution_role = get_ssm_parameter_value(aft_mgmt_session, SSM_PARAM_AFT_EXEC_ROLE)
-    session_name = get_ssm_parameter_value(aft_mgmt_session, SSM_PARAM_AFT_SESSION_NAME)
-
-    # Assume aws-aft-AdministratorRole locally
-    local_creds = get_assume_role_credentials(
-        aft_mgmt_session,
-        build_role_arn(aft_mgmt_session, administrator_role),
-        session_name,
-    )
-    local_assumed_session = get_boto_session(local_creds)
-    # Assume AWSAFTExecutionRole in CT management
-    ct_mgmt_creds = get_assume_role_credentials(
-        local_assumed_session,
-        build_role_arn(aft_mgmt_session, execution_role, ct_mgmt_account),
-        session_name,
-    )
-    return get_boto_session(ct_mgmt_creds)
-
-
-def get_aft_admin_role_session(session: Session) -> Session:
-    administrator_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_ADMIN_ROLE)
-    execution_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_EXEC_ROLE)
-    session_name = get_ssm_parameter_value(session, SSM_PARAM_AFT_SESSION_NAME)
-
-    # Assume aws-aft-AdministratorRole locally
-    local_creds = get_assume_role_credentials(
-        session, build_role_arn(session, administrator_role), session_name
-    )
-
-    return get_boto_session(local_creds)
-
-
-def get_log_archive_session(session: Session) -> Session:
-    log_archive_account = get_ssm_parameter_value(
-        session, SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID
-    )
-    administrator_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_ADMIN_ROLE)
-    execution_role = get_ssm_parameter_value(session, SSM_PARAM_AFT_EXEC_ROLE)
-    session_name = get_ssm_parameter_value(session, SSM_PARAM_AFT_SESSION_NAME)
-
-    # Assume aws-aft-AdministratorRole locally
-    local_creds = get_assume_role_credentials(
-        session, build_role_arn(session, administrator_role), session_name
-    )
-    local_assumed_session = get_boto_session(local_creds)
-    # Assume AWSAFTExecutionRole in CT management
-    log_archive_creds = get_assume_role_credentials(
-        local_assumed_session,
-        build_role_arn(session, execution_role, log_archive_account),
-        session_name,
-    )
-    return get_boto_session(log_archive_creds)
 
 
 def get_ct_product_id(session: Session, ct_management_session: Session) -> str:
@@ -732,3 +605,12 @@ def get_accounts_by_tags(
         return matched_accounts
     else:
         return None
+
+
+def get_session_info(session: Session) -> Dict[str, str]:
+    client: STSClient = session.client("sts")
+    response = client.get_caller_identity()
+
+    account_info = {"region": session.region_name, "account": response["Account"]}
+
+    return account_info

@@ -53,7 +53,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
             session=session,
-            message=json.dumps(error),
+            message=str(error),
             context=context,
             subject="Failed to invoke account provisioning framework",
         )

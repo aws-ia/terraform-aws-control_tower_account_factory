@@ -13,6 +13,7 @@ from aft_common.account_request_framework import (
     new_ct_request_is_valid,
     update_existing_account,
 )
+from aft_common.auth import AuthClient
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -25,12 +26,15 @@ logger = utils.get_logger()
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     session = Session()
+    auth = AuthClient()
     try:
-        ct_management_session = utils.get_ct_management_session(session)
-
+        ct_management_session = auth.get_ct_management_session()
+        product_id = utils.get_ct_product_id(
+            session=session, ct_management_session=ct_management_session
+        )
         if utils.product_provisioning_in_progress(
-            ct_management_session,
-            utils.get_ct_product_id(session, ct_management_session),
+            ct_management_session=ct_management_session,
+            product_id=product_id,
         ):
             logger.info("Exiting due to provisioning in progress")
             return None
@@ -50,14 +54,18 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                     )
                     if ct_request_is_valid:
                         response = create_new_account(
-                            session, ct_management_session, sqs_body
+                            session=session,
+                            ct_management_session=ct_management_session,
+                            request=sqs_body,
                         )
 
                 elif sqs_body["operation"] == "UPDATE":
                     ct_request_is_valid = modify_ct_request_is_valid(sqs_body)
                     if ct_request_is_valid:
                         update_existing_account(
-                            session, ct_management_session, sqs_body
+                            session=session,
+                            ct_management_session=ct_management_session,
+                            request=sqs_body,
                         )
                 else:
                     logger.info("Unknown operation received in message")

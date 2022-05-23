@@ -14,7 +14,8 @@ from aft_common.account_request_framework import (
     insert_msg_into_acc_req_queue,
     provisioned_product_exists,
 )
-from boto3.session import Session
+from aft_common.auth import AuthClient
+from aft_common.shared_account import shared_account_request
 
 if TYPE_CHECKING:
     from aws_lambda_powertools.utilities.typing import LambdaContext
@@ -25,7 +26,7 @@ logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
-    session = Session()
+    auth = AuthClient()
     try:
         # validate event
         if "Records" not in event:
@@ -43,34 +44,60 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             logger.info("Delete account request received")
             return None
 
+        # If it is a shared account update request, invoke the Account Provisioning Framework Lambda
+        if shared_account_request(
+            aft_management_session=auth.get_aft_management_session(),
+            event_record=event_record,
+        ):
+            logger.info("Shared Account Update Request Received")
+            payload = build_aft_account_provisioning_framework_event(event_record)
+            lambda_name = utils.get_ssm_parameter_value(
+                auth.get_aft_management_session(),
+                utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
+            )
+            utils.invoke_lambda(
+                auth.get_aft_management_session(),
+                lambda_name,
+                json.dumps(payload).encode(),
+            )
+            return None
+
         new_account = not provisioned_product_exists(event_record)
         control_tower_updates = control_tower_param_changed(event_record)
 
         if new_account:
             logger.info("New account request received")
             insert_msg_into_acc_req_queue(
-                event_record=event_record, new_account=True, session=session
+                event_record=event_record,
+                new_account=True,
+                session=auth.get_aft_management_session(),
             )
         elif not new_account and control_tower_updates:
             logger.info("Modify account request received")
             logger.info("Control Tower Parameter Update Request Received")
             insert_msg_into_acc_req_queue(
-                event_record=event_record, new_account=False, session=session
+                event_record=event_record,
+                new_account=False,
+                session=auth.get_aft_management_session(),
             )
         elif not new_account and not control_tower_updates:
             logger.info("NON-Control Tower Parameter Update Request Received")
             payload = build_aft_account_provisioning_framework_event(event_record)
             lambda_name = utils.get_ssm_parameter_value(
-                session,
+                auth.get_aft_management_session(),
                 utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
             )
-            utils.invoke_lambda(session, lambda_name, json.dumps(payload).encode())
+            utils.invoke_lambda(
+                auth.get_aft_management_session(),
+                lambda_name,
+                json.dumps(payload).encode(),
+            )
         else:
             raise Exception("Unsupported account request")
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=session,
+            session=auth.get_aft_management_session(),
             message=str(error),
             context=context,
             subject="AFT account request failed",

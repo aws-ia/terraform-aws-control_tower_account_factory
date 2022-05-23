@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import get_account_info
+from aft_common.auth import AuthClient
 from aft_common.types import AftAccountInfo
 from boto3.session import Session
 
@@ -19,16 +20,18 @@ logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> AftAccountInfo:
-    session = Session()
+    auth = AuthClient()
     try:
         logger.info("AFT Account Provisioning Framework Get Account Info Handler Start")
 
         payload = event["payload"]
         action = event["action"]
 
-        ct_management_session = utils.get_ct_management_session(session)
+        ct_management_session = auth.get_ct_management_session()
         if action == "get_account_info":
-            return get_account_info(payload, session, ct_management_session)
+            return get_account_info(
+                payload=payload, ct_management_session=ct_management_session
+            )
         else:
             raise Exception(
                 f"Incorrect Command Passed to Lambda Function. Input action: {action}. Expected: 'get_account_info'"
@@ -36,7 +39,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> AftAccountI
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=session,
+            session=auth.get_aft_management_session(),
             message=str(error),
             context=context,
             subject="AFT account provisioning failed",

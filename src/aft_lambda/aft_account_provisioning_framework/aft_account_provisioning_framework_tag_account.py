@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import tag_account
+from aft_common.auth import AuthClient
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -19,6 +20,7 @@ logger = utils.get_logger()
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     session = Session()
+    auth = AuthClient()
     try:
         logger.info("AFT Account Provisioning Framework Handler Start")
 
@@ -31,7 +33,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
         payload = event["payload"]
         action = event["action"]
-        ct_management_session = utils.get_ct_management_session(session)
+        ct_management_session = auth.get_ct_management_session()
 
         if action == "tag_account":
             account_info = payload["account_info"]["account"]

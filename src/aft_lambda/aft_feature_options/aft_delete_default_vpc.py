@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any, Dict
 import boto3
 from aft_common import aft_utils as utils
 from aft_common import notifications
+from aft_common.account_provisioning_framework import ProvisionRoles
+from aft_common.auth import AuthClient
 from aft_common.feature_options import (
     delete_acls,
     delete_internet_gateways,
@@ -38,37 +40,15 @@ logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    auth = AuthClient()
     aft_session = boto3.session.Session()
     try:
-        role_arn = utils.build_role_arn(
-            aft_session,
-            utils.get_ssm_parameter_value(aft_session, utils.SSM_PARAM_AFT_ADMIN_ROLE),
-        )
-        aft_admin_session = utils.get_boto_session(
-            utils.get_assume_role_credentials(
-                aft_session,
-                role_arn,
-                utils.get_ssm_parameter_value(
-                    aft_session, utils.SSM_PARAM_AFT_SESSION_NAME
-                ),
-            )
-        )
         target_account = event["account_info"]["account"]["id"]
-        role_arn = utils.build_role_arn(
-            aft_session,
-            utils.get_ssm_parameter_value(aft_session, utils.SSM_PARAM_AFT_EXEC_ROLE),
-            target_account,
+
+        target_account_session = auth.get_target_account_session(
+            account_id=target_account, role_name=ProvisionRoles.SERVICE_ROLE_NAME
         )
-        session = utils.get_boto_session(
-            utils.get_assume_role_credentials(
-                aft_admin_session,
-                role_arn,
-                utils.get_ssm_parameter_value(
-                    aft_session, utils.SSM_PARAM_AFT_SESSION_NAME
-                ),
-            )
-        )
-        client: EC2Client = session.client("ec2")
+        client: EC2Client = target_account_session.client("ec2")
         regions = get_aws_regions(client)
 
         if (

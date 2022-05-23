@@ -54,3 +54,36 @@ module "aft_exec_role" {
   }
   trusted_entity = aws_iam_role.aft_admin_role.arn
 }
+
+
+module "ct_management_service_role" {
+  source = "./service-role"
+  providers = {
+    aws = aws.ct_management
+  }
+  trusted_entity = aws_iam_role.aft_admin_role.arn
+}
+
+module "log_archive_service_role" {
+  source = "./service-role"
+  providers = {
+    aws = aws.log_archive
+  }
+  trusted_entity = aws_iam_role.aft_admin_role.arn
+}
+
+module "audit_service_role" {
+  source = "./service-role"
+  providers = {
+    aws = aws.audit
+  }
+  trusted_entity = aws_iam_role.aft_admin_role.arn
+}
+
+module "aft_service_role" {
+  source = "./service-role"
+  providers = {
+    aws = aws.aft_management
+  }
+  trusted_entity = aws_iam_role.aft_admin_role.arn
+}
