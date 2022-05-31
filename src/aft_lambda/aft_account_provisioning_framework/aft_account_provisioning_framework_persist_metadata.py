@@ -18,7 +18,7 @@ logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
-    session = Session()
+    aft_management_session = Session()
     try:
         logger.info("AFT Account Provisioning Framework Handler Start")
 
@@ -35,7 +35,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
 
         if action == "persist_metadata":
             account_info = payload["account_info"]["account"]
-            update_metadata = persist_metadata(payload, account_info, session)
+            update_metadata = persist_metadata(
+                payload, account_info, aft_management_session
+            )
             return update_metadata
         else:
             raise Exception(
@@ -44,7 +46,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=session,
+            session=aft_management_session,
             message=str(error),
             context=context,
             subject="AFT account provisioning failed",

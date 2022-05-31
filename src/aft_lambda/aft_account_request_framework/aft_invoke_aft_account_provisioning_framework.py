@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
+from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.account_request_framework import (
     build_invoke_event,
     is_customizations_event,
@@ -26,7 +27,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     session = Session()
     auth = AuthClient()
     try:
-        ct_management_session = auth.get_ct_management_session()
+        ct_management_session = auth.get_ct_management_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
+        )
         response = None
         if utils.is_controltower_event(
             event

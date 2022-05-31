@@ -3,17 +3,21 @@
 #
 import inspect
 import json
+import time
 from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
+from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.account_request_framework import (
+    AccountRequest,
     create_new_account,
     modify_ct_request_is_valid,
     new_ct_request_is_valid,
     update_existing_account,
 )
 from aft_common.auth import AuthClient
+from aft_common.exceptions import NoAccountFactoryPortfolioFound
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -25,24 +29,29 @@ logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
-    session = Session()
+    aft_management_session = Session()
     auth = AuthClient()
     try:
-        ct_management_session = auth.get_ct_management_session()
-        product_id = utils.get_ct_product_id(
-            session=session, ct_management_session=ct_management_session
+        account_request = AccountRequest(auth=auth)
+        try:
+            account_request.associate_aft_service_role_with_account_factory()
+        except NoAccountFactoryPortfolioFound:
+            logger.warning(
+                message=f"Failed to automatically associate {ProvisionRoles.SERVICE_ROLE_NAME} to portfolio {AccountRequest.ACCOUNT_FACTORY_PORTFOLIO_NAME}. Manual intervention may be required"
+            )
+
+        ct_management_session = auth.get_ct_management_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
         )
-        if utils.product_provisioning_in_progress(
-            ct_management_session=ct_management_session,
-            product_id=product_id,
-        ):
+
+        if account_request.provisioning_in_progress():
             logger.info("Exiting due to provisioning in progress")
             return None
         else:
             sqs_message = utils.receive_sqs_message(
-                session,
+                aft_management_session,
                 utils.get_ssm_parameter_value(
-                    session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
+                    aft_management_session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
                 ),
             )
             if sqs_message is not None:
@@ -54,7 +63,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                     )
                     if ct_request_is_valid:
                         response = create_new_account(
-                            session=session,
+                            session=aft_management_session,
                             ct_management_session=ct_management_session,
                             request=sqs_body,
                         )
@@ -63,21 +72,21 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                     ct_request_is_valid = modify_ct_request_is_valid(sqs_body)
                     if ct_request_is_valid:
                         update_existing_account(
-                            session=session,
+                            session=aft_management_session,
                             ct_management_session=ct_management_session,
                             request=sqs_body,
                         )
                 else:
                     logger.info("Unknown operation received in message")
 
-                utils.delete_sqs_message(session, sqs_message)
+                utils.delete_sqs_message(aft_management_session, sqs_message)
                 if not ct_request_is_valid:
                     logger.exception("CT Request is not valid")
                     assert ct_request_is_valid
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=session,
+            session=aft_management_session,
             message=str(error),
             context=context,
             subject="AFT account request failed",

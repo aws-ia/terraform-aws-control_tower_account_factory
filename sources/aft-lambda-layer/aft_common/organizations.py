@@ -26,8 +26,10 @@ else:
 class OrganizationsAgent:
     ROOT_OU = "Root"
 
-    def __init__(self, orgs_session: Session):
-        self.orgs_client: OrganizationsClient = orgs_session.client("organizations")
+    def __init__(self, ct_management_session: Session):
+        self.orgs_client: OrganizationsClient = ct_management_session.client(
+            "organizations"
+        )
 
     def get_root_ou_id(self) -> str:
         return self.orgs_client.list_roots()["Roots"][0]["Id"]

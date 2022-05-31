@@ -5,7 +5,7 @@ import json
 import sys
 import uuid
 from datetime import datetime
-from functools import partial
+from functools import cached_property, partial
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -20,10 +20,16 @@ from typing import (
 )
 
 from aft_common import aft_utils as utils
+from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.auth import AuthClient
+from aft_common.exceptions import (
+    NoAccountFactoryPortfolioFound,
+    ServiceRoleNotAssociated,
+)
 from boto3.session import Session
 
 if TYPE_CHECKING:
+    from mypy_boto3_servicecatalog import ServiceCatalogClient
     from mypy_boto3_servicecatalog.type_defs import (
         ProvisionedProductAttributeTypeDef,
         ProvisioningParameterTypeDef,
@@ -37,6 +43,7 @@ else:
     ProvisionProductOutputTypeDef = object
     UpdateProvisioningParameterTypeDef = object
     ProvisionedProductAttributeTypeDef = object
+    ServiceCatalogClient = object
 
 
 logger = utils.get_logger()
@@ -87,7 +94,9 @@ def get_healthy_ct_product_batch(
 def provisioned_product_exists(record: Dict[str, Any]) -> bool:
     # Go get all my accounts from SC (Not all PPs)
     auth = AuthClient()
-    ct_management_session = auth.get_ct_management_session()
+    ct_management_session = auth.get_ct_management_session(
+        role_name=ProvisionRoles.SERVICE_ROLE_NAME
+    )
     account_email = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
         "control_tower_parameters"
     ]["AccountEmail"]
@@ -429,3 +438,99 @@ def build_invoke_event(
         return invoke_event
 
     raise Exception("Unsupported event type")
+
+
+class AccountRequest:
+    ACCOUNT_FACTORY_PORTFOLIO_NAME = "AWS Control Tower Account Factory Portfolio"
+
+    def __init__(self, auth: AuthClient) -> None:
+        self.ct_management_session = auth.get_ct_management_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
+        )
+        self.ct_management_account_id = auth.get_account_id_from_session(
+            session=self.ct_management_session
+        )
+        self.aft_management_session = auth.get_aft_management_session()
+        self.account_factory_product_id = utils.get_ct_product_id(
+            session=self.aft_management_session,
+            ct_management_session=self.ct_management_session,
+        )
+
+    @property
+    def service_role_arn(self) -> str:
+        return f"arn:aws:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
+
+    @cached_property
+    def account_factory_portfolio_id(self) -> str:
+        """
+        Paginates through all portfolios and returns the ID of the CT Account Factory Portfolio
+        if it exists, raises exception if not found
+        """
+        client: ServiceCatalogClient = self.ct_management_session.client(
+            "servicecatalog"
+        )
+        paginator = client.get_paginator("list_portfolios")
+        for response in paginator.paginate():
+            for portfolio in response["PortfolioDetails"]:
+                if (
+                    portfolio["DisplayName"]
+                    == AccountRequest.ACCOUNT_FACTORY_PORTFOLIO_NAME
+                ):
+                    return portfolio["Id"]
+
+        raise NoAccountFactoryPortfolioFound(
+            f"No Portfolio ID found for {AccountRequest.ACCOUNT_FACTORY_PORTFOLIO_NAME}"
+        )
+
+    def associate_aft_service_role_with_account_factory(self) -> None:
+        """
+        Associates the AWSAFTService role with the Control Tower Account Factory Service Catalog portfolio
+        """
+        client = self.ct_management_session.client("servicecatalog")
+        aft_service_role_arn = f"arn:aws:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
+        client.associate_principal_with_portfolio(
+            PortfolioId=self.account_factory_portfolio_id,
+            PrincipalARN=aft_service_role_arn,
+            PrincipalType="IAM",
+        )
+
+    def validate_service_role_associated_with_account_factory(self) -> None:
+        client = self.ct_management_session.client("servicecatalog")
+        paginator = client.get_paginator("list_principals_for_portfolio")
+        for response in paginator.paginate(
+            PortfolioId=self.account_factory_portfolio_id
+        ):
+            if self.service_role_arn in [
+                principal["PrincipalARN"] for principal in response["Principals"]
+            ]:
+                return None
+        raise ServiceRoleNotAssociated(
+            f"{ProvisionRoles.SERVICE_ROLE_NAME} Role not associated with portfolio {self.account_factory_portfolio_id}"
+        )
+
+    def provisioning_in_progress(self) -> bool:
+        client: ServiceCatalogClient = self.ct_management_session.client(
+            "servicecatalog"
+        )
+        logger.info("Checking for account provisioning in progress")
+
+        response = client.scan_provisioned_products(
+            AccessLevelFilter={"Key": "Account", "Value": "self"},
+        )
+        pps = response["ProvisionedProducts"]
+        while "NextPageToken" in response:
+            response = client.scan_provisioned_products(
+                AccessLevelFilter={"Key": "Account", "Value": "self"},
+                PageToken=response["NextPageToken"],
+            )
+            pps.extend(response["ProvisionedProducts"])
+
+        for p in pps:
+            if p["ProductId"] == self.account_factory_product_id:
+                logger.info("Identified CT Product - " + p["Id"])
+                if p["Status"] in ["UNDER_CHANGE", "PLAN_IN_PROGRESS"]:
+                    logger.info("Product provisioning in Progress")
+                    return True
+
+        logger.info("No product provisioning in Progress")
+        return False

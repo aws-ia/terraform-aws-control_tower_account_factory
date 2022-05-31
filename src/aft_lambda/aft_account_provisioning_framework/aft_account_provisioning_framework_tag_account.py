@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
-from aft_common.account_provisioning_framework import tag_account
+from aft_common.account_provisioning_framework import ProvisionRoles, tag_account
 from aft_common.auth import AuthClient
 from boto3.session import Session
 
@@ -19,7 +19,7 @@ logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
-    session = Session()
+    aft_management_session = Session()
     auth = AuthClient()
     try:
         logger.info("AFT Account Provisioning Framework Handler Start")
@@ -33,7 +33,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
         payload = event["payload"]
         action = event["action"]
-        ct_management_session = auth.get_ct_management_session()
+        ct_management_session = auth.get_ct_management_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
+        )
 
         if action == "tag_account":
             account_info = payload["account_info"]["account"]
@@ -45,7 +47,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=session,
+            session=aft_management_session,
             message=str(error),
             context=context,
             subject="AFT account provisioning failed",

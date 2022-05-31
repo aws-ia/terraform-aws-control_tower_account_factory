@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
-from aft_common.account_provisioning_framework import get_account_info
+from aft_common.account_provisioning_framework import ProvisionRoles, get_account_info
 from aft_common.auth import AuthClient
 from aft_common.types import AftAccountInfo
 from boto3.session import Session
@@ -27,7 +27,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> AftAccountI
         payload = event["payload"]
         action = event["action"]
 
-        ct_management_session = auth.get_ct_management_session()
+        ct_management_session = auth.get_ct_management_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
+        )
         if action == "get_account_info":
             return get_account_info(
                 payload=payload, ct_management_session=ct_management_session

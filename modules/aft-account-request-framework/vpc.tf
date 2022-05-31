@@ -227,7 +227,7 @@ resource "aws_vpc_endpoint" "codebuild" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.codebuild.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.codebuild.ids
+  subnet_ids        = data.aws_subnets.codebuild.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -241,7 +241,7 @@ resource "aws_vpc_endpoint" "codecommit" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.codecommit.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.codecommit.ids
+  subnet_ids        = data.aws_subnets.codecommit.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -255,7 +255,7 @@ resource "aws_vpc_endpoint" "git-codecommit" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.git-codecommit.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.git-codecommit.ids
+  subnet_ids        = data.aws_subnets.git-codecommit.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -269,7 +269,7 @@ resource "aws_vpc_endpoint" "codepipeline" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.codepipeline.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.codepipeline.ids
+  subnet_ids        = data.aws_subnets.codepipeline.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -283,7 +283,7 @@ resource "aws_vpc_endpoint" "servicecatalog" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.servicecatalog.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.servicecatalog.ids
+  subnet_ids        = data.aws_subnets.servicecatalog.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -297,7 +297,7 @@ resource "aws_vpc_endpoint" "lambda" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.lambda.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.lambda.ids
+  subnet_ids        = data.aws_subnets.lambda.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -311,7 +311,7 @@ resource "aws_vpc_endpoint" "kms" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.kms.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.kms.ids
+  subnet_ids        = data.aws_subnets.kms.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -325,7 +325,7 @@ resource "aws_vpc_endpoint" "logs" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.logs.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.logs.ids
+  subnet_ids        = data.aws_subnets.logs.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -339,7 +339,7 @@ resource "aws_vpc_endpoint" "events" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.events.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.events.ids
+  subnet_ids        = data.aws_subnets.events.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -353,7 +353,7 @@ resource "aws_vpc_endpoint" "states" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.states.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.states.ids
+  subnet_ids        = data.aws_subnets.states.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -367,7 +367,7 @@ resource "aws_vpc_endpoint" "ssm" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.ssm.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.ssm.ids
+  subnet_ids        = data.aws_subnets.ssm.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -381,7 +381,7 @@ resource "aws_vpc_endpoint" "sns" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.sns.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.sns.ids
+  subnet_ids        = data.aws_subnets.sns.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -395,7 +395,7 @@ resource "aws_vpc_endpoint" "sqs" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.sqs.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.sqs.ids
+  subnet_ids        = data.aws_subnets.sqs.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -409,7 +409,7 @@ resource "aws_vpc_endpoint" "sts" {
   vpc_id            = aws_vpc.aft_vpc.id
   service_name      = data.aws_vpc_endpoint_service.sts.service_name
   vpc_endpoint_type = "Interface"
-  subnet_ids        = data.aws_subnet_ids.sts.ids
+  subnet_ids        = data.aws_subnets.sts.ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]

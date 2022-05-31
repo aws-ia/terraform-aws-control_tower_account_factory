@@ -4,6 +4,7 @@
 from typing import Any, Dict, List
 
 from aft_common import aft_utils as utils
+from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.aft_utils import (
     SSM_PARAM_ACCOUNT_AUDIT_ACCOUNT_ID,
     SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID,
@@ -29,17 +30,17 @@ def shared_account_request(
     shared_account_ids = get_shared_ids(
         aft_management_session=auth.get_aft_management_session()
     )
-
+    ct_management_session = auth.get_ct_management_session(
+        role_name=ProvisionRoles.SERVICE_ROLE_NAME
+    )
+    orgs_client = ct_management_session.client("organizations")
     for shared_account_id in shared_account_ids:
-        orgs_client = auth.get_ct_management_session().client("organizations")
         response = orgs_client.describe_account(AccountId=shared_account_id)
         if (
             response["Account"]["Email"] == account_email
             and response["Account"]["Name"] == account_name
         ):
-            orgs_agent = OrganizationsAgent(
-                orgs_session=auth.get_ct_management_session()
-            )
+            orgs_agent = OrganizationsAgent(ct_management_session=ct_management_session)
             if not orgs_agent.ou_contains_account(
                 ou_name=request_ou, account_id=shared_account_id
             ):
@@ -51,14 +52,14 @@ def shared_account_request(
             response["Account"]["Email"] == account_email
             and response["Account"]["Name"] != account_name
         ):
-            logger.error(
+            raise ValueError(
                 f"Account Email {account_email} is a shared account email, however, the Account Name {account_name} does not match"
             )
         elif (
             response["Account"]["Name"] == account_name
             and response["Account"]["Email"] != account_email
         ):
-            logger.error(
+            raise ValueError(
                 f"Account Name {account_name} is a shared account Name, however, the Account Email {account_email} does not match"
             )
     return False

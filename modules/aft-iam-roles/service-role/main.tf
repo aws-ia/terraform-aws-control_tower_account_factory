@@ -1,6 +1,15 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 4.9.0"
+    }
+  }
+}
 variable "trusted_entity_type" {
   default = "AWS"
 }
@@ -16,8 +25,6 @@ variable "trusted_entity" {
 resource "aws_iam_role" "role" {
   name = var.role_name
 
-  # Terraform's "jsonencode" function converts a
-  # Terraform expression result to valid JSON syntax.
   assume_role_policy = templatefile("${path.module}/trust_policy.tpl",
     {
       trusted_entity_type = var.trusted_entity_type
