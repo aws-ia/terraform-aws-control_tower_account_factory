@@ -4,7 +4,10 @@
     {
       "Effect": "Allow",
       "Action": "sts:AssumeRole",
-      "Resource": "arn:aws:iam::*:role/AWSAFTExecution"
+      "Resource": [
+        "arn:aws:iam::*:role/AWSAFTExecution",
+        "arn:aws:iam::*:role/AWSAFTService"
+      ]
     }
   ]
 }

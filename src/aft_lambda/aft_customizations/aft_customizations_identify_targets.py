@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
+from aft_common.auth import AuthClient
 from aft_common.customizations import (
     get_excluded_accounts,
     get_included_accounts,
@@ -25,12 +26,13 @@ logger = utils.get_logger()
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
     session = Session()
+    auth = AuthClient()
     try:
         payload = event
         if not validate_request(payload):
             sys.exit(1)
         else:
-            ct_mgmt_session = utils.get_ct_management_session(session)
+            ct_mgmt_session = auth.get_ct_management_session()
             included_accounts = get_included_accounts(
                 session, ct_mgmt_session, payload["include"]
             )
