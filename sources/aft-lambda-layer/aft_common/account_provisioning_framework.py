@@ -65,17 +65,16 @@ class ProvisionRoles:
         trusts federation from the CT Management account, we pass a hub session
         that has already been federated into the CT Management account
         """
-        ct_mgmt_acc_id = (
-            self.auth.get_ct_management_session()
-            .client("sts")
-            .get_caller_identity()["Account"]
+        ct_mgmt_session = self.auth.get_ct_management_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
         )
+        ct_mgmt_acc_id = ct_mgmt_session.client("sts").get_caller_identity()["Account"]
         if self.target_account_id == ct_mgmt_acc_id:
-            target_account_session = self.auth.get_ct_management_session()
+            target_account_session = ct_mgmt_session
         else:
             target_account_session = self.auth.get_target_account_session(
                 account_id=self.target_account_id,
-                hub_session=self.auth.get_ct_management_session(),
+                hub_session=ct_mgmt_session,
                 role_name=AuthClient.CONTROL_TOWER_EXECUTION_ROLE_NAME,
             )
         client: IAMClient = target_account_session.client("iam")

@@ -16,8 +16,6 @@ variable "trusted_entity" {
 resource "aws_iam_role" "role" {
   name = var.role_name
 
-  # Terraform's "jsonencode" function converts a
-  # Terraform expression result to valid JSON syntax.
   assume_role_policy = templatefile("${path.module}/trust_policy.tpl",
     {
       trusted_entity_type = var.trusted_entity_type

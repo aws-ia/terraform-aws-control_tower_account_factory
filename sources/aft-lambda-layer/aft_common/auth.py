@@ -200,3 +200,7 @@ class AuthClient:
             region=region,
             session_policy=session_policy,
         )
+
+    @staticmethod
+    def get_account_id_from_session(session: Session) -> str:
+        return session.client("sts").get_caller_identity()["Account"]

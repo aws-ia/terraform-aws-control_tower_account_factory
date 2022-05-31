@@ -10,43 +10,63 @@ resource "aws_s3_bucket" "primary-backend-bucket" {
   provider = aws.primary_region
 
   bucket = "aft-backend-${data.aws_caller_identity.current.account_id}-primary-region"
-  acl    = "private"
 
-  versioning {
-    enabled = true
-  }
-  replication_configuration {
-    role = aws_iam_role.replication.arn
-
-    rules {
-      id       = "0"
-      priority = "0"
-      status   = "Enabled"
-      source_selection_criteria {
-        sse_kms_encrypted_objects {
-          enabled = true
-        }
-      }
-
-      destination {
-        bucket             = aws_s3_bucket.secondary-backend-bucket.arn
-        storage_class      = "STANDARD"
-        replica_kms_key_id = aws_kms_key.encrypt-secondary-region.arn
-      }
-    }
-  }
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.encrypt-primary-region.arn
-        sse_algorithm     = "aws:kms"
-      }
-    }
-  }
   tags = {
     "Name" = "aft-backend-${data.aws_caller_identity.current.account_id}-primary-region"
   }
 }
+
+resource "aws_s3_bucket_replication_configuration" "primary-backend-bucket-replication" {
+  provider = aws.primary_region
+  bucket   = aws_s3_bucket.primary-backend-bucket.id
+  role     = aws_iam_role.replication.arn
+
+  rule {
+    id       = "0"
+    priority = "0"
+    status   = "Enabled"
+    source_selection_criteria {
+      sse_kms_encrypted_objects {
+        status = "Enabled"
+      }
+    }
+
+    destination {
+      bucket        = aws_s3_bucket.secondary-backend-bucket.arn
+      storage_class = "STANDARD"
+      encryption_configuration {
+        replica_kms_key_id = aws_kms_key.encrypt-secondary-region.arn
+      }
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "primary-backend-bucket-versioning" {
+  provider = aws.primary_region
+  bucket   = aws_s3_bucket.primary-backend-bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "primary-backend-bucket-encryption" {
+  provider = aws.primary_region
+  bucket   = aws_s3_bucket.primary-backend-bucket.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.encrypt-primary-region.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+resource "aws_s3_bucket_acl" "primary-backend-bucket-acl" {
+  provider = aws.primary_region
+  bucket   = aws_s3_bucket.primary-backend-bucket.id
+  acl      = "private"
+}
+
 
 resource "aws_s3_bucket_public_access_block" "primary-backend-bucket" {
   provider = aws.primary_region
@@ -59,25 +79,39 @@ resource "aws_s3_bucket_public_access_block" "primary-backend-bucket" {
 
 resource "aws_s3_bucket" "secondary-backend-bucket" {
   provider = aws.secondary_region
-
-  bucket = "aft-backend-${data.aws_caller_identity.current.account_id}-secondary-region"
-  acl    = "private"
-
-  versioning {
-    enabled = true
-  }
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.encrypt-secondary-region.arn
-        sse_algorithm     = "aws:kms"
-      }
-    }
-  }
+  bucket   = "aft-backend-${data.aws_caller_identity.current.account_id}-secondary-region"
   tags = {
     "Name" = "aft-backend-${data.aws_caller_identity.current.account_id}-secondary-region"
   }
 }
+
+resource "aws_s3_bucket_versioning" "secondary-backend-bucket-versioning" {
+  provider = aws.secondary_region
+  bucket   = aws_s3_bucket.secondary-backend-bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "secondary-backend-bucket-encryption" {
+  provider = aws.secondary_region
+  bucket   = aws_s3_bucket.secondary-backend-bucket.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.encrypt-secondary-region.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+resource "aws_s3_bucket_acl" "secondary-backend-bucket-acl" {
+  provider = aws.secondary_region
+  bucket   = aws_s3_bucket.secondary-backend-bucket.id
+  acl      = "private"
+}
+
+
 
 resource "aws_s3_bucket_public_access_block" "secondary-backend-bucket" {
   provider = aws.secondary_region

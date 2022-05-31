@@ -250,35 +250,6 @@ def ct_provisioning_artifact_is_active(
         return False
 
 
-def product_provisioning_in_progress(
-    ct_management_session: Session, product_id: str
-) -> bool:
-    client: ServiceCatalogClient = ct_management_session.client("servicecatalog")
-
-    logger.info("Checking for product provisioning in progress")
-
-    response = client.scan_provisioned_products(
-        AccessLevelFilter={"Key": "Account", "Value": "self"},
-    )
-    pps = response["ProvisionedProducts"]
-    while "NextPageToken" in response:
-        response = client.scan_provisioned_products(
-            AccessLevelFilter={"Key": "Account", "Value": "self"},
-            PageToken=response["NextPageToken"],
-        )
-        pps.extend(response["ProvisionedProducts"])
-
-    for p in pps:
-        if p["ProductId"] == product_id:
-            logger.info("Identified CT Product - " + p["Id"])
-            if p["Status"] in ["UNDER_CHANGE", "PLAN_IN_PROGRESS"]:
-                logger.info("Product provisioning in Progress")
-                return True
-
-    logger.info("No product provisioning in Progress")
-    return False
-
-
 def build_sqs_url(session: Session, queue_name: str) -> str:
     account_info = get_session_info(session)
     url = (

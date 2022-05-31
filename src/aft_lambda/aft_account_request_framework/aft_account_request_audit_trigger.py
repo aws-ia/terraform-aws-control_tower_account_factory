@@ -19,7 +19,7 @@ logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
-    session = Session()
+    aft_management_session = Session()
     try:
         # validate event
         if "Records" in event:
@@ -29,7 +29,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                 if event_record["eventSource"] == "aws:dynamodb":
                     logger.info("DynamoDB Event Record Received")
                     table_name = utils.get_ssm_parameter_value(
-                        session, utils.SSM_PARAM_AFT_DDB_AUDIT_TABLE
+                        aft_management_session, utils.SSM_PARAM_AFT_DDB_AUDIT_TABLE
                     )
                     event_name = event_record["eventName"]
 
@@ -43,7 +43,10 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                     if event_name in supported_events:
                         logger.info("Event Name: " + event_name)
                         response = put_audit_record(
-                            session, table_name, image_to_record, event_name
+                            aft_management_session,
+                            table_name,
+                            image_to_record,
+                            event_name,
                         )
                     else:
                         logger.info(f"Event Name: {event_name} is unsupported.")
@@ -55,7 +58,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=session,
+            session=aft_management_session,
             message=str(error),
             context=context,
             subject="AFT account request failed",

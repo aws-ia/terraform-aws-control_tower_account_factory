@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
+from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.auth import AuthClient
 from aft_common.customizations import (
     get_excluded_accounts,
@@ -25,20 +26,22 @@ logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
-    session = Session()
+    aft_management_session = Session()
     auth = AuthClient()
     try:
         payload = event
         if not validate_request(payload):
             sys.exit(1)
         else:
-            ct_mgmt_session = auth.get_ct_management_session()
+            ct_mgmt_session = auth.get_ct_management_session(
+                role_name=ProvisionRoles.SERVICE_ROLE_NAME
+            )
             included_accounts = get_included_accounts(
-                session, ct_mgmt_session, payload["include"]
+                aft_management_session, ct_mgmt_session, payload["include"]
             )
             if "exclude" in payload.keys():
                 excluded_accounts = get_excluded_accounts(
-                    session, ct_mgmt_session, payload["exclude"]
+                    aft_management_session, ct_mgmt_session, payload["exclude"]
                 )
                 target_accounts = get_target_accounts(
                     included_accounts, excluded_accounts
@@ -53,7 +56,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=session,
+            session=aft_management_session,
             message=str(error),
             context=context,
             subject="Failed to identify targets for AFT account customizations",
