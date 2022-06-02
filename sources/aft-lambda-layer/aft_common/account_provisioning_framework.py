@@ -4,6 +4,7 @@
 import json
 import os
 import time
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Dict, List, Sequence
 
 import aft_common.aft_utils as utils
@@ -11,9 +12,10 @@ import jsonschema
 from aft_common.auth import AuthClient
 from aft_common.types import AftAccountInfo
 from boto3.session import Session
+from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
-    from mypy_boto3_iam import IAMClient
+    from mypy_boto3_iam import IAMClient, IAMServiceResource
     from mypy_boto3_organizations.type_defs import TagTypeDef
 else:
     IAMClient = object
@@ -77,15 +79,33 @@ class ProvisionRoles:
                 hub_session=ct_mgmt_session,
                 role_name=AuthClient.CONTROL_TOWER_EXECUTION_ROLE_NAME,
             )
+        self._put_role(
+            target_account_session=target_account_session,
+            role_name=role_name,
+            trust_policy=trust_policy,
+        )
+        self._put_policy_on_role(
+            target_account_session=target_account_session,
+            role_name=role_name,
+            policy_arn=policy_arn,
+        )
+
+    def _put_role(
+        self,
+        target_account_session: Session,
+        role_name: str,
+        trust_policy: str,
+        max_attempts: int = 20,
+        delay: int = 5,
+    ) -> None:
         client: IAMClient = target_account_session.client("iam")
-        try:
-            client.get_role(RoleName=role_name)
+        if self.role_exists(
+            role_name=role_name, target_account_session=target_account_session
+        ):
             client.update_assume_role_policy(
                 RoleName=role_name, PolicyDocument=trust_policy
             )
-
-        except client.exceptions.NoSuchEntityException:
-            logger.info(f"Creating {role_name} in {self.target_account_id}")
+        else:
             client.create_role(
                 RoleName=role_name,
                 AssumeRolePolicyDocument=trust_policy,
@@ -93,35 +113,106 @@ class ProvisionRoles:
                 MaxSessionDuration=3600,
                 Tags=[{"Key": "managed_by", "Value": "AFT"}],
             )
-            eventual_consistency_sleep = 60
-            logger.info(
-                f"Sleeping for {eventual_consistency_sleep}s to ensure Role exists"
+            waiter = client.get_waiter("role_exists")
+            waiter.wait(
+                RoleName=role_name,
+                WaiterConfig={"Delay": delay, "MaxAttempts": max_attempts},
             )
-            time.sleep(eventual_consistency_sleep)
 
-        client.attach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
+    @staticmethod
+    def role_exists(role_name: str, target_account_session: Session) -> bool:
+        client: IAMClient = target_account_session.client("iam")
+        try:
+            client.get_role(RoleName=role_name)
+            return True
 
-    def deploy_aws_aft_execution_role(self) -> None:
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchEntity":
+                return False
+            raise
+
+    def _put_policy_on_role(
+        self,
+        target_account_session: Session,
+        role_name: str,
+        policy_arn: str,
+        delay: int = 5,
+        timeout_in_mins: int = 1,
+    ) -> None:
+        if not self.role_policy_is_attached(
+            role_name=role_name,
+            policy_arn=policy_arn,
+            target_account_session=target_account_session,
+        ):
+            resource: IAMServiceResource = target_account_session.resource("iam")
+            role = resource.Role(role_name)
+            role.attach_policy(PolicyArn=policy_arn)
+            timeout = datetime.utcnow() + timedelta(minutes=timeout_in_mins)
+            while datetime.utcnow() < timeout:
+                time.sleep(delay)
+                if self.role_policy_is_attached(
+                    role_name=role_name,
+                    policy_arn=policy_arn,
+                    target_account_session=target_account_session,
+                ):
+                    return None
+        return None
+
+    @staticmethod
+    def role_policy_is_attached(
+        role_name: str, policy_arn: str, target_account_session: Session
+    ) -> bool:
+        resource: IAMServiceResource = target_account_session.resource("iam")
+        role = resource.Role(role_name)
+        policy_iterator = role.attached_policies.all()
+        policy_arns = [policy.arn for policy in policy_iterator]
+        logger.info(policy_arns)
+        return policy_arn in policy_arns
+
+    def _ensure_role_can_be_assumed(
+        self, role_name: str, timeout_in_mins: int = 1, delay: int = 5
+    ) -> None:
+        timeout = datetime.utcnow() + timedelta(minutes=timeout_in_mins)
+        while datetime.utcnow() < timeout:
+            if self._can_assume_role(role_name=role_name):
+                return None
+            time.sleep(delay)
+        raise TimeoutError(
+            f"Could not assume role {role_name} within {timeout_in_mins} minutes"
+        )
+
+    def _can_assume_role(self, role_name: str) -> bool:
+        try:
+            self.auth.get_target_account_session(
+                account_id=self.target_account_id, role_name=role_name
+            )
+            return True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDenied":
+                return False
+            raise error
+
+    def deploy_aws_aft_roles(self) -> None:
+        trust_policy = self.generate_aft_trust_policy()
+
         aft_execution_role_name = utils.get_ssm_parameter_value(
             session=self.auth.get_aft_management_session(),
             param=AuthClient.SSM_PARAM_AFT_EXEC_ROLE_NAME,
         )
-        # Account for paths
         aft_execution_role_name = aft_execution_role_name.split("/")[-1]
-        trust_policy = self.generate_aft_trust_policy()
-        self._deploy_role_in_target_account(
-            role_name=aft_execution_role_name,
-            trust_policy=trust_policy,
-            policy_arn=ProvisionRoles.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN,
-        )
 
-    def deploy_aws_aft_service_role(self) -> None:
-        trust_policy = self.generate_aft_trust_policy()
-        self._deploy_role_in_target_account(
-            role_name=ProvisionRoles.SERVICE_ROLE_NAME,
-            trust_policy=trust_policy,
-            policy_arn=ProvisionRoles.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN,
-        )
+        aft_role_names = [ProvisionRoles.SERVICE_ROLE_NAME, aft_execution_role_name]
+        for role_name in aft_role_names:
+            self._deploy_role_in_target_account(
+                role_name=role_name,
+                trust_policy=trust_policy,
+                policy_arn=ProvisionRoles.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN,
+            )
+            logger.info(f"Deployed {role_name} role")
+
+        for role_name in aft_role_names:
+            self._ensure_role_can_be_assumed(role_name=role_name)
+            logger.info(f"Can assume {role_name} role")
 
 
 def get_account_info(
