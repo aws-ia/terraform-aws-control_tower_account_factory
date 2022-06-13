@@ -32,8 +32,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
         account_id = payload["account_info"]["account"]["id"]
         provisioning = ProvisionRoles(auth=auth, account_id=account_id)
-        provisioning.deploy_aws_aft_execution_role()
-        provisioning.deploy_aws_aft_service_role()
+        provisioning.deploy_aws_aft_roles()
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
