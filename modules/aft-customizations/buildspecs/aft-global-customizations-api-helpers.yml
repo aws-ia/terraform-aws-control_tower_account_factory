@@ -27,7 +27,8 @@ phases:
       - git config --global credential.UseHttpPath true
       - git clone -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework
       - chmod +x ./aws-aft-core-framework/sources/scripts/creds.sh
-      - ./aws-aft-core-framework/sources/scripts/creds.sh --account-id $VENDED_ACCOUNT_ID
+      - ./aws-aft-core-framework/sources/scripts/creds.sh --aft-mgmt
+      - ./aws-aft-core-framework/sources/scripts/creds.sh --account-id $VENDED_ACCOUNT_ID --no-purge
       - python3 -m venv ./venv
       - source ./venv/bin/activate
       - pip install -r ./api_helpers/python/requirements.txt
