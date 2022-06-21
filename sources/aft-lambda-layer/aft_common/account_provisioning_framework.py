@@ -15,9 +15,11 @@ from boto3.session import Session
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
+    from mypy_boto3_dynamodb.type_defs import PutItemOutputTableTypeDef
     from mypy_boto3_iam import IAMClient, IAMServiceResource
     from mypy_boto3_organizations.type_defs import TagTypeDef
 else:
+    PutItemOutputTableTypeDef = object
     IAMClient = object
     CreateRoleResponseTypeDef = object
     IAMServiceResource = object
@@ -254,7 +256,7 @@ def get_account_info(
 # From persist-metadata Lambda
 def persist_metadata(
     payload: Dict[str, Any], account_info: Dict[str, str], session: Session
-) -> Dict[str, Any]:
+) -> PutItemOutputTableTypeDef:
 
     logger.info("Function Start - persist_metadata")
 
