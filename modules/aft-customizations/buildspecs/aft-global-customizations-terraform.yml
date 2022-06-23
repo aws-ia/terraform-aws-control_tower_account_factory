@@ -54,7 +54,7 @@ phases:
 
       # Install API Helper Python Dependencies
       - python3 -m venv $DEFAULT_PATH/api-helpers-venv
-      - $DEFAULT_PATH/api-helpers-venv/bin/pip install -r ./api_helpers/python/requirements.txt
+      - $DEFAULT_PATH/api-helpers-venv/bin/pip install -r $DEFAULT_PATH/api_helpers/python/requirements.txt
 
       # Mark helper scripts as executable
       - chmod +x $DEFAULT_PATH/api_helpers/pre-api-helpers.sh

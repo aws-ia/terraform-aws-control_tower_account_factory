@@ -23,112 +23,122 @@ phases:
       - |
         CUSTOMIZATION=$(aws dynamodb get-item --table-name aft-request-metadata --key "{\"id\": {\"S\": \"$VENDED_ACCOUNT_ID\"}}" --attributes-to-get "account_customizations_name" | jq --raw-output ".Item.account_customizations_name.S")
 
-      # Check if customization directory exists
+      # Check if customization directory exists       
       - |
-        if [[ ! -d "$DEFAULT_PATH/$CUSTOMIZATION" ]]; then
-          echo "${CUSTOMIZATION} directory does not exist"
-          exit 1
-        else
+        if [[ ! -z "$CUSTOMIZATION" ]]; then  
+          if [[ ! -d "$DEFAULT_PATH/$CUSTOMIZATION" ]]; then
+            echo "Error: ${CUSTOMIZATION} directory does not exist"
+            exit 1
+          fi
+          
           echo "Found customization" $CUSTOMIZATION
-        fi  
- 
-      # Configure Development SSH Key
-      - |
-        ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
-        if [[ $ssh_key_parameter != "None" ]]; then
-          ssh_key=$(jq --raw-output ".Parameter.Value" <<< $ssh_key_parameter)
-          mkdir -p ~/.ssh
-          echo "Host *" >> ~/.ssh/config
-          echo "StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
-          echo "$ssh_key" > ~/.ssh/ssh_key
-          echo -e "\n\n" >>  ~/.ssh/ssh_key
-          chmod 600 ~/.ssh/ssh_key
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/ssh_key
-        fi   
 
-      # Clone AFT
-      - AWS_MODULE_SOURCE=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-url" --query "Parameter.Value" --output text)
-      - AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-git-ref" --query "Parameter.Value" --output text)
-      - git config --global credential.helper '!aws codecommit credential-helper $@'
-      - git config --global credential.UseHttpPath true
-      - git clone --quiet -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework
+          # Configure Development SSH Key
+          ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
 
-      # Install AFT Python Dependencies
-      - python3 -m venv $DEFAULT_PATH/aft-venv
-      - $DEFAULT_PATH/aft-venv/bin/pip install pip==22.1.2
-      - $DEFAULT_PATH/aft-venv/bin/pip install jinja2-cli==0.7.0 Jinja2==3.0.1 MarkupSafe==2.0.1 boto3==1.18.56 requests==2.26.0
+          if [[ $ssh_key_parameter != "None" ]]; then
+            ssh_key=$(jq --raw-output ".Parameter.Value" <<< $ssh_key_parameter)
+            mkdir -p ~/.ssh
+            echo "Host *" >> ~/.ssh/config
+            echo "StrictHostKeyChecking no" >> ~/.ssh/config
+            echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+            echo "$ssh_key" > ~/.ssh/ssh_key
+            echo -e "\n\n" >>  ~/.ssh/ssh_key
+            chmod 600 ~/.ssh/ssh_key
+            eval "$(ssh-agent -s)"
+            ssh-add ~/.ssh/ssh_key
+          fi   
 
-      # Install API Helper Python Dependencies
-      - python3 -m venv $DEFAULT_PATH/api-helpers-venv
-      - $DEFAULT_PATH/api-helpers-venv/bin/pip install -r ./$CUSTOMIZATION/api_helpers/python/requirements.txt
+          # Clone AFT
+          AWS_MODULE_SOURCE=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-url" --query "Parameter.Value" --output text)
+          AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-git-ref" --query "Parameter.Value" --output text)
+          git config --global credential.helper '!aws codecommit credential-helper $@'
+          git config --global credential.UseHttpPath true
+          git clone --quiet -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework
 
-      # Mark helper scripts as executable
-      - chmod +x $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/pre-api-helpers.sh
-      - chmod +x $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/post-api-helpers.sh
+          # Install AFT Python Dependencies
+          python3 -m venv $DEFAULT_PATH/aft-venv
+          $DEFAULT_PATH/aft-venv/bin/pip install pip==22.1.2
+          $DEFAULT_PATH/aft-venv/bin/pip install jinja2-cli==0.7.0 Jinja2==3.0.1 MarkupSafe==2.0.1 boto3==1.18.56 requests==2.26.0
 
-      # Generate session profiles
-      - chmod +x $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
-      - $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
+          # Install API Helper Python Dependencies
+          python3 -m venv $DEFAULT_PATH/api-helpers-venv
+          $DEFAULT_PATH/api-helpers-venv/bin/pip install -r $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/python/requirements.txt
+
+          # Mark helper scripts as executable
+          chmod +x $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/pre-api-helpers.sh
+          chmod +x $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/post-api-helpers.sh
+
+          # Generate session profiles
+          chmod +x $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
+          $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
+        fi
 
 
   pre_build:
     on-failure: ABORT
     commands:
-      - source $DEFAULT_PATH/api-helpers-venv/bin/activate
-      - export AWS_PROFILE=aft-target
-      - $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/pre-api-helpers.sh
-      - unset AWS_PROFILE
+      - |
+        if [[ ! -z "$CUSTOMIZATION" ]]; then 
+          source $DEFAULT_PATH/api-helpers-venv/bin/activate
+          export AWS_PROFILE=aft-target
+          $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/pre-api-helpers.sh
+          unset AWS_PROFILE
+        fi
 
   build:
     on-failure: ABORT
     commands:
       # Apply Customizations
-      - source $DEFAULT_PATH/aft-venv/bin/activate
       - |
-        if [ $TF_DISTRIBUTION = "oss" ]; then
-          TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
-          TF_KMS_KEY_ID=$(aws ssm get-parameter --name "/aft/config/oss-backend/kms-key-id" --query "Parameter.Value" --output text)
-          TF_DDB_TABLE=$(aws ssm get-parameter --name "/aft/config/oss-backend/table-id" --query "Parameter.Value" --output text)
-          TF_S3_BUCKET=$(aws ssm get-parameter --name "/aft/config/oss-backend/bucket-id" --query "Parameter.Value" --output text)
-          TF_S3_KEY=$VENDED_ACCOUNT_ID-aft-account-customizations/terraform.tfstate
+        if [[ ! -z "$CUSTOMIZATION" ]]; then 
+          source $DEFAULT_PATH/aft-venv/bin/activate
+          if [ $TF_DISTRIBUTION = "oss" ]; then
+            TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
+            TF_KMS_KEY_ID=$(aws ssm get-parameter --name "/aft/config/oss-backend/kms-key-id" --query "Parameter.Value" --output text)
+            TF_DDB_TABLE=$(aws ssm get-parameter --name "/aft/config/oss-backend/table-id" --query "Parameter.Value" --output text)
+            TF_S3_BUCKET=$(aws ssm get-parameter --name "/aft/config/oss-backend/bucket-id" --query "Parameter.Value" --output text)
+            TF_S3_KEY=$VENDED_ACCOUNT_ID-aft-account-customizations/terraform.tfstate
 
-          cd /tmp
-          echo "Installing Terraform"
-          curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
-          mkdir -p /opt/aft/bin
-          unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip 
-          mv terraform /opt/aft/bin
-          /opt/aft/bin/terraform --version
+            cd /tmp
+            echo "Installing Terraform"
+            curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+            mkdir -p /opt/aft/bin
+            unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip 
+            mv terraform /opt/aft/bin
+            /opt/aft/bin/terraform --version
 
-          cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
-          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID >> ./$(basename $f .jinja).tf; done
-          for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
-          
-          cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
-          export AWS_PROFILE=aft-management-admin
-          /opt/aft/bin/terraform init
-          /opt/aft/bin/terraform apply --auto-approve
-        else
-          TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
-          TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
-          TF_TOKEN=$(aws ssm get-parameter --name "/aft/config/terraform/token" --with-decryption --query "Parameter.Value" --output text)
-          TF_ENDPOINT=$(aws ssm get-parameter --name "/aft/config/terraform/api-endpoint" --query "Parameter.Value" --output text)
-          TF_WORKSPACE_NAME=$VENDED_ACCOUNT_ID-aft-account-customizations
-          TF_CONFIG_PATH="./temp_configuration_file.tar.gz"
+            cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
+            for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID >> ./$(basename $f .jinja).tf; done
+            for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
+            
+            cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
+            export AWS_PROFILE=aft-management-admin
+            /opt/aft/bin/terraform init
+            /opt/aft/bin/terraform apply --auto-approve
+          else
+            TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
+            TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
+            TF_TOKEN=$(aws ssm get-parameter --name "/aft/config/terraform/token" --with-decryption --query "Parameter.Value" --output text)
+            TF_ENDPOINT=$(aws ssm get-parameter --name "/aft/config/terraform/api-endpoint" --query "Parameter.Value" --output text)
+            TF_WORKSPACE_NAME=$VENDED_ACCOUNT_ID-aft-account-customizations
+            TF_CONFIG_PATH="./temp_configuration_file.tar.gz"
 
-          cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
-          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D provider_region=$CT_MGMT_REGION -D tf_distribution_type=$TF_DISTRIBUTION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D terraform_org_name=$TF_ORG_NAME -D terraform_workspace_name=$TF_WORKSPACE_NAME  >> ./$(basename $f .jinja).tf; done
-          for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
-          
-          cd $DEFAULT_PATH/$CUSTOMIZATION
-          tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
-          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH
+            cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
+            for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D provider_region=$CT_MGMT_REGION -D tf_distribution_type=$TF_DISTRIBUTION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D terraform_org_name=$TF_ORG_NAME -D terraform_workspace_name=$TF_WORKSPACE_NAME  >> ./$(basename $f .jinja).tf; done
+            for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
+            
+            cd $DEFAULT_PATH/$CUSTOMIZATION
+            tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
+            python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH
+          fi
         fi
   post_build:
     on-failure: ABORT
     commands:
-      - source $DEFAULT_PATH/api-helpers-venv/bin/activate
-      - export AWS_PROFILE=aft-target
-      - $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/post-api-helpers.sh
+      - |
+        if [[ ! -z "$CUSTOMIZATION" ]]; then 
+          source $DEFAULT_PATH/api-helpers-venv/bin/activate
+          export AWS_PROFILE=aft-target
+          $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/post-api-helpers.sh
+        fi
