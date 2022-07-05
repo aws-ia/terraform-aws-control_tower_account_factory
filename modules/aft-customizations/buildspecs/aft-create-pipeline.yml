@@ -4,11 +4,21 @@
 version: 0.2
 
 phases:
-  pre_build:
+  install:
     commands:
+      - set -e
+      # Populate Required Variables
       - DEFAULT_PATH=$(pwd)
-      - AWS_MODULE_SOURCE=$(aws ssm get-parameter --name $SSM_AWS_MODULE_SOURCE --query "Parameter.Value" --output text)
-      - AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name $SSM_AWS_MODULE_GIT_REF --query "Parameter.Value" --output text)
+      - TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+      - TF_S3_BUCKET=$(aws ssm get-parameter --name $SSM_TF_S3_BUCKET --query "Parameter.Value" --output text)
+      - TF_S3_KEY=$VENDED_ACCOUNT_ID-customizations-pipeline/terraform.tfstate
+      - TF_BACKEND_REGION=$(aws ssm get-parameter --name $SSM_TF_BACKEND_REGION --query "Parameter.Value" --output text)
+      - TF_KMS_KEY_ID=$(aws ssm get-parameter --name $SSM_TF_KMS_KEY_ID --query "Parameter.Value" --output text)
+      - TF_DDB_TABLE=$(aws ssm get-parameter --name $SSM_TF_DDB_TABLE --query "Parameter.Value" --output text)
+      - TF_VERSION=$(aws ssm get-parameter --name $SSM_TF_VERSION --query "Parameter.Value" --output text)
+
+
+      # Configure Development SSH Key
       - |
         ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
         if [[ $ssh_key_parameter != "None" ]]; then
@@ -23,34 +33,40 @@ phases:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/ssh_key
         fi
-      - TF_S3_BUCKET=$(aws ssm get-parameter --name $SSM_TF_S3_BUCKET --query "Parameter.Value" --output text)
-      - TF_S3_KEY=$VENDED_ACCOUNT_ID-customizations-pipeline/terraform.tfstate
-      - TF_BACKEND_REGION=$(aws ssm get-parameter --name $SSM_TF_BACKEND_REGION --query "Parameter.Value" --output text)
-      - TF_KMS_KEY_ID=$(aws ssm get-parameter --name $SSM_TF_KMS_KEY_ID --query "Parameter.Value" --output text)
-      - TF_DDB_TABLE=$(aws ssm get-parameter --name $SSM_TF_DDB_TABLE --query "Parameter.Value" --output text)
-      - TF_VERSION=$(aws ssm get-parameter --name $SSM_TF_VERSION --query "Parameter.Value" --output text)
+
+      # Clone AFT
+      - AWS_MODULE_SOURCE=$(aws ssm get-parameter --name $SSM_AWS_MODULE_SOURCE --query "Parameter.Value" --output text)
+      - AWS_MODULE_GIT_REF=$(aws ssm get-parameter --name $SSM_AWS_MODULE_GIT_REF --query "Parameter.Value" --output text)
       - git config --global credential.helper '!aws codecommit credential-helper $@'
       - git config --global credential.UseHttpPath true
-      - git clone -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework
-      - chmod +x ./aws-aft-core-framework/sources/scripts/creds.sh
-      - ./aws-aft-core-framework/sources/scripts/creds.sh --aft-mgmt
-      - TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+      - git clone --quiet -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework
+
+      # Generate session profiles
+      - chmod +x $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
+      - $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
+
+      # Install Terraform
       - cd /tmp
       - echo "Installing Terraform"
-      - curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
-      - unzip -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
+      - curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+      - unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
       - terraform --version
-      - cd $DEFAULT_PATH
-      - cd ./aws-aft-core-framework/sources/aft-customizations-common/templates/customizations_pipeline
+
+      # Install Python Dependencies
       - python3 -m venv ./venv
       - source ./venv/bin/activate
+      - pip install pip==22.1.2
       - pip install jinja2-cli==0.7.0 Jinja2==3.0.1
+
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - cd $DEFAULT_PATH/aws-aft-core-framework/sources/aft-customizations-common/templates/customizations_pipeline
       - for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID >> $(basename $f .jinja).tf; done
       - for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
-      - terraform init
   build:
+    on-failure: ABORT
     commands:
+      - export AWS_PROFILE=aft-management-admin
+      - terraform init
       - terraform apply -var="account_id=$VENDED_ACCOUNT_ID" --auto-approve
-  post_build:
-    commands:
-      - echo "Post-Build"

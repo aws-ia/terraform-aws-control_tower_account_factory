@@ -10,6 +10,7 @@ from aft_common import notifications
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.auth import AuthClient
 from aft_common.customizations import (
+    build_customization_invoke_event_for_target_account,
     get_excluded_accounts,
     get_included_accounts,
     get_target_accounts,
@@ -49,9 +50,27 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
             else:
                 target_accounts = included_accounts
 
+            target_account_info = []
+            account_metadata_table = utils.get_ssm_parameter_value(
+                aft_management_session, utils.SSM_PARAM_AFT_DDB_META_TABLE
+            )
+            account_request_table = utils.get_ssm_parameter_value(
+                aft_management_session, utils.SSM_PARAM_AFT_DDB_REQ_TABLE
+            )
+            for account_id in target_accounts:
+                target_account_info.append(
+                    build_customization_invoke_event_for_target_account(
+                        account_id=account_id,
+                        account_metadata_table=account_metadata_table,
+                        account_request_table=account_request_table,
+                        aft_management_session=aft_management_session,
+                    )
+                )
+
             return {
                 "number_pending_accounts": len(target_accounts),
                 "pending_accounts": target_accounts,
+                "target_accounts_info": target_account_info,
             }
 
     except Exception as error:

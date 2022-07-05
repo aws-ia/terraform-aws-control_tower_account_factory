@@ -3,7 +3,6 @@
 #
 from typing import TYPE_CHECKING
 
-import boto3
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
@@ -24,7 +23,6 @@ else:
 from typing import Optional
 
 import aft_common.aft_utils as utils
-import boto3
 
 SUPPORT_API_REGION = "us-east-1"
 CLOUDTRAIL_TRAIL_NAME = "aws-aft-CustomizationsCloudTrail"

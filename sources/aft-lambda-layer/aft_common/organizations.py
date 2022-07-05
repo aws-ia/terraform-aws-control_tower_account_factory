@@ -3,7 +3,6 @@
 #
 from typing import TYPE_CHECKING, List, Optional
 
-from aft_common.auth import AuthClient
 from boto3.session import Session
 
 if TYPE_CHECKING:

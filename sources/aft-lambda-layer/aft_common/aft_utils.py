@@ -18,12 +18,12 @@ from typing import (
 )
 
 import boto3
-from boto3 import Session
 from boto3.dynamodb.types import TypeDeserializer
 from boto3.session import Session
 from botocore.response import StreamingBody
 
 if TYPE_CHECKING:
+    from mypy_boto3_dynamodb.type_defs import PutItemOutputTableTypeDef
     from mypy_boto3_lambda import LambdaClient
     from mypy_boto3_lambda.type_defs import InvocationResponseTypeDef
     from mypy_boto3_organizations import ListAccountsPaginator, OrganizationsClient
@@ -38,6 +38,8 @@ if TYPE_CHECKING:
     from mypy_boto3_stepfunctions.type_defs import StartExecutionOutputTypeDef
     from mypy_boto3_sts import STSClient
 else:
+    ListAccountsPaginator = object
+    PutItemOutputTableTypeDef = object
     LambdaClient = object
     InvocationResponseTypeDef = object
     OrganizationsClient = object
@@ -52,6 +54,9 @@ else:
     StartExecutionOutputTypeDef = object
     CredentialsTypeDef = object
     LambdaContext = object
+    DescribeAccountResponseTypeDef = object
+    STSClient = object
+
 
 from aft_common.types import AftAccountInfo
 
@@ -149,16 +154,12 @@ def get_ssm_parameter_value(session: Session, param: str, decrypt: bool = False)
 
 def put_ddb_item(
     session: Session, table_name: str, item: Dict[str, str]
-) -> Dict[str, Any]:
+) -> PutItemOutputTableTypeDef:
     dynamodb = session.resource("dynamodb")
     table = dynamodb.Table(table_name)
-
     logger.info("Inserting item into " + table_name + " table: " + str(item))
-
-    response: Dict[str, Any] = table.put_item(Item=item)
-
+    response = table.put_item(Item=item)
     logger.info(response)
-
     return response
 
 
@@ -453,10 +454,9 @@ def get_all_aft_account_ids(session: Session) -> List[str]:
     table = dynamodb.Table(table_name)
     logger.info("Scanning DynamoDB table: " + table_name)
 
-    items: List[Dict[str, str]] = []
+    items: List[Dict[str, Any]] = []
     response = table.scan(ProjectionExpression="id", ConsistentRead=True)
     items.extend(response["Items"])
-
     while "LastEvaluatedKey" in response:
         logger.debug(
             "Paginated response found, continuing at {}".format(

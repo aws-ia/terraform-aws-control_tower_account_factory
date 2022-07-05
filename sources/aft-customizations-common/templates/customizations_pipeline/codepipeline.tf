@@ -58,35 +58,9 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   ##############################################################
 
   stage {
-    name = "Apply-AFT-Global-Customizations"
-
+    name = "Global-Customizations"
     action {
-      name            = "Pre-API-Helpers"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source-aft-global-customizations"]
-      version         = "1"
-      run_order       = "1"
-      configuration = {
-        ProjectName = var.aft_global_customizations_api_helpers_codebuild_name
-        EnvironmentVariables = jsonencode([
-          {
-            name  = "VENDED_ACCOUNT_ID",
-            value = var.account_id,
-            type  = "PLAINTEXT"
-          },
-          {
-            name  = "SHELL_SCRIPT",
-            value = "pre-api-helpers.sh",
-            type  = "PLAINTEXT"
-          }
-        ])
-      }
-    }
-
-    action {
-      name            = "Apply-Terraform"
+      name            = "Apply"
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
@@ -104,67 +78,15 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
         ])
       }
     }
-
-    action {
-      name            = "Post-API-Helpers"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source-aft-global-customizations"]
-      version         = "1"
-      run_order       = "3"
-      configuration = {
-        ProjectName = var.aft_global_customizations_api_helpers_codebuild_name
-        EnvironmentVariables = jsonencode([
-          {
-            name  = "VENDED_ACCOUNT_ID",
-            value = var.account_id,
-            type  = "PLAINTEXT"
-          },
-          {
-            name  = "SHELL_SCRIPT",
-            value = "post-api-helpers.sh",
-            type  = "PLAINTEXT"
-          }
-        ])
-      }
-    }
-
   }
   ##############################################################
   # Apply-AFT-Account-Customizations
   ##############################################################
-
   stage {
-    name = "Apply-AFT-Account-Customizations"
+    name = "Account-Customizations"
 
     action {
-      name            = "Pre-API-Helpers"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source-aft-account-customizations"]
-      version         = "1"
-      run_order       = "1"
-      configuration = {
-        ProjectName = var.aft_account_customizations_api_helpers_codebuild_name
-        EnvironmentVariables = jsonencode([
-          {
-            name  = "VENDED_ACCOUNT_ID",
-            value = var.account_id,
-            type  = "PLAINTEXT"
-          },
-          {
-            name  = "SHELL_SCRIPT",
-            value = "pre-api-helpers.sh",
-            type  = "PLAINTEXT"
-          }
-        ])
-      }
-    }
-
-    action {
-      name            = "Apply-Terraform"
+      name            = "Apply"
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
@@ -177,31 +99,6 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
           {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
-            type  = "PLAINTEXT"
-          }
-        ])
-      }
-    }
-
-    action {
-      name            = "Post-API-Helpers"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source-aft-account-customizations"]
-      version         = "1"
-      run_order       = "3"
-      configuration = {
-        ProjectName = var.aft_account_customizations_api_helpers_codebuild_name
-        EnvironmentVariables = jsonencode([
-          {
-            name  = "VENDED_ACCOUNT_ID",
-            value = var.account_id,
-            type  = "PLAINTEXT"
-          },
-          {
-            name  = "SHELL_SCRIPT",
-            value = "post-api-helpers.sh",
             type  = "PLAINTEXT"
           }
         ])
@@ -271,35 +168,10 @@ resource "aws_codepipeline" "aft_codestar_customizations_codepipeline" {
   ##############################################################
 
   stage {
-    name = "Apply-AFT-Global-Customizations"
+    name = "AFT-Global-Customizations"
 
     action {
-      name            = "Pre-API-Helpers"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source-aft-global-customizations"]
-      version         = "1"
-      run_order       = "1"
-      configuration = {
-        ProjectName = var.aft_global_customizations_api_helpers_codebuild_name
-        EnvironmentVariables = jsonencode([
-          {
-            name  = "VENDED_ACCOUNT_ID",
-            value = var.account_id,
-            type  = "PLAINTEXT"
-          },
-          {
-            name  = "SHELL_SCRIPT",
-            value = "pre-api-helpers.sh",
-            type  = "PLAINTEXT"
-          }
-        ])
-      }
-    }
-
-    action {
-      name            = "Apply-Terraform"
+      name            = "Apply"
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
@@ -318,66 +190,15 @@ resource "aws_codepipeline" "aft_codestar_customizations_codepipeline" {
       }
     }
 
-    action {
-      name            = "Post-API-Helpers"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source-aft-global-customizations"]
-      version         = "1"
-      run_order       = "3"
-      configuration = {
-        ProjectName = var.aft_global_customizations_api_helpers_codebuild_name
-        EnvironmentVariables = jsonencode([
-          {
-            name  = "VENDED_ACCOUNT_ID",
-            value = var.account_id,
-            type  = "PLAINTEXT"
-          },
-          {
-            name  = "SHELL_SCRIPT",
-            value = "post-api-helpers.sh",
-            type  = "PLAINTEXT"
-          }
-        ])
-      }
-    }
-
   }
   ##############################################################
   # Apply-AFT-Account-Customizations
   ##############################################################
 
   stage {
-    name = "Apply-AFT-Account-Customizations"
-
+    name = "AFT-Account-Customizations"
     action {
-      name            = "Pre-API-Helpers"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source-aft-account-customizations"]
-      version         = "1"
-      run_order       = "1"
-      configuration = {
-        ProjectName = var.aft_account_customizations_api_helpers_codebuild_name
-        EnvironmentVariables = jsonencode([
-          {
-            name  = "VENDED_ACCOUNT_ID",
-            value = var.account_id,
-            type  = "PLAINTEXT"
-          },
-          {
-            name  = "SHELL_SCRIPT",
-            value = "pre-api-helpers.sh",
-            type  = "PLAINTEXT"
-          }
-        ])
-      }
-    }
-
-    action {
-      name            = "Apply-Terraform"
+      name            = "Apply"
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
@@ -390,31 +211,6 @@ resource "aws_codepipeline" "aft_codestar_customizations_codepipeline" {
           {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
-            type  = "PLAINTEXT"
-          }
-        ])
-      }
-    }
-
-    action {
-      name            = "Post-API-Helpers"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source-aft-account-customizations"]
-      version         = "1"
-      run_order       = "3"
-      configuration = {
-        ProjectName = var.aft_account_customizations_api_helpers_codebuild_name
-        EnvironmentVariables = jsonencode([
-          {
-            name  = "VENDED_ACCOUNT_ID",
-            value = var.account_id,
-            type  = "PLAINTEXT"
-          },
-          {
-            name  = "SHELL_SCRIPT",
-            value = "post-api-helpers.sh",
             type  = "PLAINTEXT"
           }
         ])

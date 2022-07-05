@@ -11,13 +11,17 @@ from boto3.session import Session
 
 if TYPE_CHECKING:
     from aws_lambda_powertools.utilities.typing import LambdaContext
+    from mypy_boto3_dynamodb.type_defs import PutItemOutputTableTypeDef
 else:
+    PutItemOutputTableTypeDef = object
     LambdaContext = object
 
 logger = utils.get_logger()
 
 
-def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
+def lambda_handler(
+    event: Dict[str, Any], context: LambdaContext
+) -> PutItemOutputTableTypeDef:
     aft_management_session = Session()
     try:
         logger.info("AFT Account Provisioning Framework Handler Start")
