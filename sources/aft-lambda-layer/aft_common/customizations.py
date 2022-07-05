@@ -303,19 +303,27 @@ def build_invoke_event(account_request_record: Dict[str, Any]) -> Dict[str, Any]
         "control_tower_event": {},
         "account_provisioning": {},
     }
-    invoke_event["account_provisioning"]["run_create_pipeline"] = "false"
+    invoke_event["account_provisioning"]["run_create_pipeline"] = "true"
 
     logger.info(str(invoke_event))
     return invoke_event
 
 
-def invoke_account_provisioning_sfn(
-    session: Session, sfn_name: str, event: Dict[str, Any]
-) -> None:
-    client = session.client("stepfunctions")
-    logger.info("Invoking SFN - " + sfn_name)
-    response = client.start_execution(
-        stateMachineArn=utils.build_sfn_arn(session, sfn_name),
-        input=json.dumps(event),
+def build_customization_invoke_event_for_target_account(
+    aft_management_session: Session,
+    account_metadata_table: str,
+    account_id: str,
+    account_request_table: str,
+) -> Dict[str, Any]:
+    account_metadata_record = get_account_metadata_record(
+        session=aft_management_session,
+        table_name=account_metadata_table,
+        account_id=account_id,
     )
-    logger.info(response)
+    account_request_email = account_metadata_record["email"]
+    account_request_record = get_account_request_record(
+        session=aft_management_session,
+        table_name=account_request_table,
+        email_address=account_request_email,
+    )
+    return build_invoke_event(account_request_record)

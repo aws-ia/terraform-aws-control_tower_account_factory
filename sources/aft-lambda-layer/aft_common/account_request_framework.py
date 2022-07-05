@@ -29,6 +29,7 @@ from aft_common.exceptions import (
 from boto3.session import Session
 
 if TYPE_CHECKING:
+    from mypy_boto3_dynamodb.type_defs import PutItemOutputTypeDef
     from mypy_boto3_servicecatalog import ServiceCatalogClient
     from mypy_boto3_servicecatalog.type_defs import (
         ProvisionedProductAttributeTypeDef,
@@ -38,6 +39,8 @@ if TYPE_CHECKING:
         UpdateProvisioningParameterTypeDef,
     )
 else:
+    SearchProvisionedProductsOutputTypeDef = object
+    PutItemOutputTypeDef = object
     ProvisioningParameterTypeDef = object
     ProvisionedProductDetailTypeDef = object
     ProvisionProductOutputTypeDef = object
@@ -194,7 +197,7 @@ def build_aft_account_provisioning_framework_event(
 
 def put_audit_record(
     session: Session, table: str, image: Dict[str, Any], event_name: str
-) -> Dict[str, Any]:
+) -> PutItemOutputTypeDef:
     dynamodb = session.client("dynamodb")
     item = image
     datetime_format = "%Y-%m-%dT%H:%M:%S.%f"
@@ -202,7 +205,7 @@ def put_audit_record(
     item["timestamp"] = {"S": current_time}
     item["ddb_event_name"] = {"S": event_name}
     logger.info("Inserting item into " + table + " table: " + str(item))
-    response: Dict[str, Any] = dynamodb.put_item(TableName=table, Item=item)
+    response = dynamodb.put_item(TableName=table, Item=item)
     logger.info(response)
     return response
 

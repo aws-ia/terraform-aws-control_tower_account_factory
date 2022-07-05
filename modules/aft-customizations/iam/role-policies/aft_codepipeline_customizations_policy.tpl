@@ -32,7 +32,7 @@
         "codecommit:GetUploadArchiveStatus",
         "codecommit:CancelUploadArchive"
       ],
-      "Resource": "arn:aws:codecommit:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:aft-*"
+      "Resource": "arn:aws:codecommit:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*"
     },
     {
       "Effect": "Allow",

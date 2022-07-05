@@ -79,9 +79,11 @@ resource "aws_iam_role_policy" "aft_identify_targets_lambda" {
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
     data_aws_region_current_name                = data.aws_region.current.name
     request_metadata_table_name                 = var.request_metadata_table_name
+    account_request_table_name                  = var.account_request_table_name
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
     aft_sns_topic_arn                           = var.aft_sns_topic_arn
     aft_failure_sns_topic_arn                   = var.aft_failure_sns_topic_arn
+    invoke_account_provisioning_arn             = var.invoke_account_provisioning_sfn_arn
   })
 
 }
@@ -162,36 +164,4 @@ resource "aws_iam_role_policy" "terraform_oss_backend_codebuild_customizations_p
     aws_s3_bucket_aft_terraform_oss_backend_bucket_id = var.aft_config_backend_bucket_id
     aws_s3_bucket_aft_terraform_oss_kms_key_id        = var.aft_config_backend_kms_key_id
   })
-}
-
-###################################################################
-# Lambda - Invoke Account Provisioning
-###################################################################
-
-resource "aws_iam_role" "aft_customizations_invoke_account_provisioning_lambda" {
-  name               = "aft-customizations-invoke-account-provisioning-role"
-  assume_role_policy = templatefile("${path.module}/iam/trust-policies/lambda.tpl", { none = "none" })
-}
-
-resource "aws_iam_role_policy" "aft_customizations_invoke_account_provisioning_lambda" {
-  name = "aft-customizations-invoke-account-provisioning-policy"
-  role = aws_iam_role.aft_customizations_invoke_account_provisioning_lambda.id
-
-  policy = templatefile("${path.module}/iam/role-policies/aft_customizations_invoke_account_provisioning.tpl", {
-    data_aws_region_current_name                = data.aws_region.current.name
-    data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
-    data_aws_kms_alias_aft_key_target_key_arn   = var.aft_kms_key_arn
-    data_aws_dynamo_account_metadata_table      = var.request_metadata_table_name
-    data_aws_dynamo_account_request_table       = var.account_request_table_name
-    invoke_account_provisioning_arn             = var.invoke_account_provisioning_sfn_arn
-    aft_sns_topic_arn                           = var.aft_sns_topic_arn
-    aft_failure_sns_topic_arn                   = var.aft_failure_sns_topic_arn
-  })
-
-}
-
-resource "aws_iam_role_policy_attachment" "aft_customizations_invoke_account_provisioning_lambda" {
-  count      = length(local.lambda_managed_policies)
-  role       = aws_iam_role.aft_customizations_invoke_account_provisioning_lambda.name
-  policy_arn = local.lambda_managed_policies[count.index]
 }
