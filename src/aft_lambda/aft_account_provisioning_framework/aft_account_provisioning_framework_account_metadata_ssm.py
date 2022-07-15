@@ -33,7 +33,8 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
         target_account_id = event["payload"]["account_info"]["account"]["id"]
 
         # Create the custom field parameters in the AFT home region
-        target_region = auth.get_aft_management_session().region_name
+        session = auth.get_aft_management_session()
+        target_region = session.region_name
 
         aft_ssm_session_policy = {
             "Version": "2012-10-17",
@@ -45,7 +46,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                         "ssm:DeleteParameters",
                     ],
                     "Effect": "Allow",
-                    "Resource": f"arn:aws:ssm:{target_region}:{target_account_id}:parameter{SSM_PARAMETER_PATH}*",
+                    "Resource": f"arn:{utils.get_aws_partition(session)}:ssm:{target_region}:{target_account_id}:parameter{SSM_PARAMETER_PATH}*",
                 }
             ],
         }

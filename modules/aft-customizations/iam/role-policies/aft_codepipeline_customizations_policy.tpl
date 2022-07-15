@@ -19,7 +19,7 @@
         "codebuild:BatchGetBuilds",
         "codebuild:StartBuild"
       ],
-        "Resource": "arn:aws:codebuild:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*customizations*"
+        "Resource": "arn:${data_aws_partition_current_partition}:codebuild:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*customizations*"
     },
     {
       "Effect": "Allow",
@@ -32,7 +32,7 @@
         "codecommit:GetUploadArchiveStatus",
         "codecommit:CancelUploadArchive"
       ],
-      "Resource": "arn:aws:codecommit:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*"
+      "Resource": "arn:${data_aws_partition_current_partition}:codecommit:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*"
     },
     {
       "Effect": "Allow",

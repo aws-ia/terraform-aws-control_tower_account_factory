@@ -34,7 +34,7 @@ def get_pipeline_for_account(session: Session, account: str) -> str:
         name = p["name"]
         if name.startswith(account + "-"):
             pipeline_arn = (
-                "arn:aws:codepipeline:"
+                f"arn:{utils.get_aws_partition(session)}:codepipeline:"
                 + current_region
                 + ":"
                 + current_account

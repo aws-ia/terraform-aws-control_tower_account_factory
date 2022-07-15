@@ -46,9 +46,13 @@ class OrganizationsAgent:
     def list_tags_for_resource(self, resource: str) -> List[TagTypeDef]:
         return self.orgs_client.list_tags_for_resource(ResourceId=resource)["Tags"]
 
-    def get_ou_for_account_id(
+    def get_ou_id_for_account_id(
         self, account_id: str
     ) -> Optional[DescribeOrganizationalUnitResponseTypeDef]:
+        if self.account_id_is_member_of_root(account_id=account_id):
+            return self.orgs_client.describe_organizational_unit(
+                OrganizationalUnitId=self.get_root_ou_id()
+            )
         ou_ids = [ou["Id"] for ou in self.get_ous_for_root()]
         for ou_id in ou_ids:
             ou_accounts = self.get_accounts_for_ou(ou_id=ou_id)
@@ -74,7 +78,7 @@ class OrganizationsAgent:
     def ou_contains_account(self, ou_name: str, account_id: str) -> bool:
         if ou_name == OrganizationsAgent.ROOT_OU:
             return self.account_id_is_member_of_root(account_id=account_id)
-        current_ou = self.get_ou_for_account_id(account_id=account_id)
+        current_ou = self.get_ou_id_for_account_id(account_id=account_id)
         if current_ou:
             current_ou_name = current_ou["OrganizationalUnit"]["Name"]
             if current_ou_name == ou_name:

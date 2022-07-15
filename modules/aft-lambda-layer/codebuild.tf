@@ -48,6 +48,13 @@ resource "aws_codebuild_project" "codebuild" {
       value = var.aft_tf_aws_customizations_module_git_ref_ssm_path
       type  = "PLAINTEXT"
     }
+
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
+
   }
 
   logs_config {

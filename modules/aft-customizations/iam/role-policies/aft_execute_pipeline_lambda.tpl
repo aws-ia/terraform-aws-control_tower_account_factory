@@ -11,8 +11,8 @@
                 "codepipeline:ListTagsForResource"
             ],
             "Resource": [
-                "arn:aws:codepipeline:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*",
-                "arn:aws:ssm:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:parameter/aft/*"
+                "arn:${data_aws_partition_current_partition}:codepipeline:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*",
+                "arn:${data_aws_partition_current_partition}:ssm:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:parameter/aft/*"
             ]
         },
       {

@@ -23,7 +23,10 @@ from boto3.session import Session
 from botocore.response import StreamingBody
 
 if TYPE_CHECKING:
-    from mypy_boto3_dynamodb.type_defs import PutItemOutputTableTypeDef
+    from mypy_boto3_dynamodb.type_defs import (
+        AttributeValueTypeDef,
+        PutItemOutputTableTypeDef,
+    )
     from mypy_boto3_lambda import LambdaClient
     from mypy_boto3_lambda.type_defs import InvocationResponseTypeDef
     from mypy_boto3_organizations import ListAccountsPaginator, OrganizationsClient
@@ -38,8 +41,10 @@ if TYPE_CHECKING:
     from mypy_boto3_stepfunctions.type_defs import StartExecutionOutputTypeDef
     from mypy_boto3_sts import STSClient
 else:
+    AttributeValueTypeDef = object
     ListAccountsPaginator = object
     PutItemOutputTableTypeDef = object
+    AttributeValueTypeDef = object
     LambdaClient = object
     InvocationResponseTypeDef = object
     OrganizationsClient = object
@@ -329,10 +334,7 @@ def delete_sqs_message(session: Session, message: MessageTypeDef) -> None:
 
 
 def unmarshal_ddb_item(
-    low_level_data: Dict[
-        str,
-        Dict[Literal["S", "N", "B", "SS", "NS", "BS", "NULL", "BOOL", "M", "L"], Any],
-    ]
+    low_level_data: Dict[str, AttributeValueTypeDef]
 ) -> Dict[str, Any]:
     # To go from low-level format to python
 
@@ -388,7 +390,7 @@ def get_account_email_from_id(ct_management_session: Session, id: str) -> str:
 def build_sfn_arn(session: Session, sfn_name: str) -> str:
     account_info = get_session_info(session)
     sfn_arn = (
-        "arn:aws:states:"
+        f"arn:{get_aws_partition(session)}:states:"
         + account_info["region"]
         + ":"
         + account_info["account"]
@@ -585,3 +587,11 @@ def get_session_info(session: Session) -> Dict[str, str]:
     account_info = {"region": session.region_name, "account": response["Account"]}
 
     return account_info
+
+
+def get_aws_partition(session: Session, region: Optional[str] = None) -> str:
+    if region is None:
+        region = session.region_name
+
+    partition = session.get_partition_for_region(region)  # type: ignore
+    return cast(str, partition)

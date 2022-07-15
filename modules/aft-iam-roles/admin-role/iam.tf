@@ -26,7 +26,7 @@ resource "aws_iam_role" "role" {
 
 resource "aws_iam_role_policy_attachment" "administrator-access-attachment" {
   role       = aws_iam_role.role.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AdministratorAccess"
 }
 
 output "arn" {

@@ -1,18 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-data "aws_caller_identity" "aft_management" {
-  provider = aws.aft_management
-}
 
 resource "aws_iam_role" "aft_admin_role" {
   provider = aws.aft_management
   name     = "AWSAFTAdmin"
-  assume_role_policy = templatefile("${path.module}/iam/aft_admin_role_trust_policy.tpl",
-    {
-      aft_account_id = data.aws_caller_identity.aft_management.account_id
-    }
-  )
+  assume_role_policy = templatefile("${path.module}/iam/aft_admin_role_trust_policy.tpl", {
+    aft_account_id                       = data.aws_caller_identity.aft_management.account_id
+    data_aws_partition_current_partition = data.aws_partition.current.partition
+  })
 }
 
 resource "aws_iam_role_policy" "aft_admin_role" {
@@ -20,7 +16,9 @@ resource "aws_iam_role_policy" "aft_admin_role" {
   name     = "aft_admin_role_policy"
   role     = aws_iam_role.aft_admin_role.id
 
-  policy = file("${path.module}/iam/aft_admin_role_policy.tpl")
+  policy = templatefile("${path.module}/iam/aft_admin_role_policy.tpl", {
+    data_aws_partition_current_partition = data.aws_partition.current.partition
+  })
 }
 
 module "ct_management_exec_role" {

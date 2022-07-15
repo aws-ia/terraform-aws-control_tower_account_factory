@@ -36,6 +36,7 @@ resource "aws_iam_role_policy" "aft_account_request_audit_trigger" {
   role = aws_iam_role.aft_account_request_audit_trigger.id
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-account-request-audit-trigger.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft-management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
     aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
@@ -65,6 +66,7 @@ resource "aws_iam_role_policy" "aft_account_request_action_trigger" {
   role = aws_iam_role.aft_account_request_action_trigger.id
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-account-request-action-trigger.tpl", {
+    data_aws_partition_current_partition                              = data.aws_partition.current.partition
     data_aws_region_aft-management_name                               = data.aws_region.aft-management.name
     data_aws_caller_identity_aft-management_account_id                = data.aws_caller_identity.aft-management.account_id
     aws_sns_topic_aft_notifications_arn                               = aws_sns_topic.aft_notifications.arn
@@ -96,6 +98,7 @@ resource "aws_iam_role_policy" "aft_controltower_event_logger" {
   role = aws_iam_role.aft_controltower_event_logger.id
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-controltower-event-logger.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft-management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
     aws_dynamodb_table_controltower-events_name        = aws_dynamodb_table.aft_controltower_events.name
@@ -122,6 +125,7 @@ resource "aws_iam_role_policy" "aft_account_request_processor" {
   role = aws_iam_role.aft_account_request_processor.id
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-account-request-processor.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft-management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
     aws_kms_key_aft_arn                                = aws_kms_key.aft.arn
@@ -150,6 +154,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework" {
   role = aws_iam_role.aft_invoke_aft_account_provisioning_framework.id
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-invoke-aft-account-provisioning-framework.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft-management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
     aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
@@ -169,5 +174,5 @@ resource "aws_iam_role" "aft_aws_backup" {
 }
 resource "aws_iam_role_policy_attachment" "aft_aws_backup_service_role" {
   role       = aws_iam_role.aft_aws_backup.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
 }

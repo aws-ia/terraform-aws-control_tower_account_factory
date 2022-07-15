@@ -459,9 +459,11 @@ class AccountRequest:
             ct_management_session=self.ct_management_session,
         )
 
+        self.partition = utils.get_aws_partition(self.ct_management_session)
+
     @property
     def service_role_arn(self) -> str:
-        return f"arn:aws:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
+        return f"arn:{self.partition}:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
 
     @cached_property
     def account_factory_portfolio_id(self) -> str:
@@ -490,7 +492,7 @@ class AccountRequest:
         Associates the AWSAFTService role with the Control Tower Account Factory Service Catalog portfolio
         """
         client = self.ct_management_session.client("servicecatalog")
-        aft_service_role_arn = f"arn:aws:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
+        aft_service_role_arn = f"arn:{self.partition}:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
         client.associate_principal_with_portfolio(
             PortfolioId=self.account_factory_portfolio_id,
             PrincipalARN=aft_service_role_arn,
@@ -498,6 +500,12 @@ class AccountRequest:
         )
 
     def validate_service_role_associated_with_account_factory(self) -> None:
+        if not self.service_role_associated_with_account_factory():
+            raise ServiceRoleNotAssociated(
+                f"{ProvisionRoles.SERVICE_ROLE_NAME} Role not associated with portfolio {self.account_factory_portfolio_id}"
+            )
+
+    def service_role_associated_with_account_factory(self) -> bool:
         client = self.ct_management_session.client("servicecatalog")
         paginator = client.get_paginator("list_principals_for_portfolio")
         for response in paginator.paginate(
@@ -506,10 +514,8 @@ class AccountRequest:
             if self.service_role_arn in [
                 principal["PrincipalARN"] for principal in response["Principals"]
             ]:
-                return None
-        raise ServiceRoleNotAssociated(
-            f"{ProvisionRoles.SERVICE_ROLE_NAME} Role not associated with portfolio {self.account_factory_portfolio_id}"
-        )
+                return True
+        return False
 
     def provisioning_in_progress(self) -> bool:
         client: ServiceCatalogClient = self.ct_management_session.client(

@@ -19,6 +19,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework_va
   name = "aft-lambda-invoke-aft-account-provisioning-framework-validate-request-policy"
   role = aws_iam_role.aft_lambda_aft_account_provisioning_framework_validate_request.id
   policy = templatefile("${path.module}/iam/role-policies/lambda-aft-account-provisioning-framework.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft_management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
     aft_sns_topic_arn                                  = var.aft_sns_topic_arn
@@ -43,6 +44,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework_ge
   name = "aft-lambda-invoke-aft-account-provisioning-framework-get-account-info-policy"
   role = aws_iam_role.aft_lambda_aft_account_provisioning_framework_get_account_info.id
   policy = templatefile("${path.module}/iam/role-policies/lambda-aft-account-provisioning-framework.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft_management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
     aft_sns_topic_arn                                  = var.aft_sns_topic_arn
@@ -67,6 +69,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework_cr
   name = "aft-lambda-invoke-aft_account_provisioning_framework-create-role-policy"
   role = aws_iam_role.aft_lambda_aft_account_provisioning_framework_create_role.id
   policy = templatefile("${path.module}/iam/role-policies/lambda-aft-account-provisioning-framework.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft_management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
     aft_sns_topic_arn                                  = var.aft_sns_topic_arn
@@ -91,6 +94,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework_ta
   name = "aft-lambda-invoke-aft-account-provisioning-framework-tag-account-policy"
   role = aws_iam_role.aft_lambda_aft_account_provisioning_framework_tag_account.id
   policy = templatefile("${path.module}/iam/role-policies/lambda-aft-account-provisioning-framework.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft_management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
     aft_sns_topic_arn                                  = var.aft_sns_topic_arn
@@ -115,6 +119,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework_pe
   name = "aft-lambda-invoke-aft-account-provisioning-framework-persist-metadata-policy"
   role = aws_iam_role.aft_lambda_aft_account_provisioning_framework_persist_metadata.id
   policy = templatefile("${path.module}/iam/role-policies/lambda-aft-account-provisioning-framework.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft_management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
     aft_sns_topic_arn                                  = var.aft_sns_topic_arn
@@ -135,6 +140,7 @@ resource "aws_iam_role_policy" "aft_states" {
   role = aws_iam_role.aft_states.id
 
   policy = templatefile("${path.module}/iam/role-policies/iam-aft-states.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft_management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
   })

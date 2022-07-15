@@ -35,7 +35,6 @@ class AuthClient:
     def __init__(self, aft_management_session: Optional[Session] = None) -> None:
         if aft_management_session is None:
             aft_management_session = Session()
-
         if self._is_aft_management_session(session=aft_management_session):
             self.aft_management_account_id = aft_management_session.client(
                 "sts"
@@ -172,6 +171,7 @@ class AuthClient:
         role_name: Optional[str] = None,
         region: Optional[str] = None,
         session_policy: Optional[str] = None,
+        session_duration: int = 900,
     ) -> Session:
         account_id = get_ssm_parameter_value(
             session=self.aft_management_session,
@@ -182,6 +182,7 @@ class AuthClient:
             role_name=role_name,
             region=region,
             session_policy=session_policy,
+            session_duration=session_duration,
         )
 
     def get_log_archive_session(
@@ -189,6 +190,7 @@ class AuthClient:
         role_name: Optional[str] = None,
         region: Optional[str] = None,
         session_policy: Optional[str] = None,
+        session_duration: int = 900,
     ) -> Session:
         account_id = get_ssm_parameter_value(
             session=self.aft_management_session,
@@ -199,6 +201,7 @@ class AuthClient:
             role_name=role_name,
             region=region,
             session_policy=session_policy,
+            session_duration=session_duration,
         )
 
     @staticmethod

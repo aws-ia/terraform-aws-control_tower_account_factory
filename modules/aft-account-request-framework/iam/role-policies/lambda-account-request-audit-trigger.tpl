@@ -11,7 +11,7 @@
 				  "dynamodb:ListStreams"
         ],
         "Resource" : [
-          "arn:aws:dynamodb:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:table/${aws_dynamodb_table_aft-request_name}/stream/*"
+          "arn:${data_aws_partition_current_partition}:dynamodb:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:table/${aws_dynamodb_table_aft-request_name}/stream/*"
         ]
       },
     {
@@ -20,7 +20,7 @@
             "dynamodb:Query",
             "dynamodb:PutItem"
         ],
-        "Resource": "arn:aws:dynamodb:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:table/${aws_dynamodb_table_aft-request-audit_name}"
+        "Resource": "arn:${data_aws_partition_current_partition}:dynamodb:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:table/${aws_dynamodb_table_aft-request-audit_name}"
     },
       {
         "Effect" : "Allow",
@@ -36,7 +36,7 @@
         "Effect" : "Allow",
         "Action" : "ssm:GetParameter",
         "Resource" : [
-          "arn:aws:ssm:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:parameter/aft/*"
+          "arn:${data_aws_partition_current_partition}:ssm:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:parameter/aft/*"
         ]
       },
       {
@@ -48,7 +48,7 @@
         ],
         "Resource" : [
           "${aws_kms_key_aft_arn}",
-          "arn:aws:kms:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:alias/aws/sns"
+          "arn:${data_aws_partition_current_partition}:kms:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:alias/aws/sns"
         ]
       },
       {

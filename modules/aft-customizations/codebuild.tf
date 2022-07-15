@@ -22,6 +22,12 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
   }
 
   logs_config {
@@ -80,6 +86,11 @@ resource "aws_codebuild_project" "aft_account_customizations_terraform" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
   }
 
   logs_config {
@@ -184,6 +195,12 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
     environment_variable {
       name  = "SSM_TF_VERSION"
       value = var.aft_tf_version_ssm_path
+      type  = "PLAINTEXT"
+    }
+
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
       type  = "PLAINTEXT"
     }
   }

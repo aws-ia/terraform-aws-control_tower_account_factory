@@ -43,7 +43,7 @@
                 "events:RemoveTargets",
                 "events:ListTargetsByRule"
             ],
-            "Resource": "arn:aws:events:*:*:rule/codecommit*"
+            "Resource": "arn:${data_aws_partition_current_partition}:events:*:*:rule/codecommit*"
         },
         {
             "Sid": "SNSTopicAndSubscriptionAccess",
@@ -52,7 +52,7 @@
                 "sns:Subscribe",
                 "sns:Unsubscribe"
             ],
-            "Resource": "arn:aws:sns:*:*:codecommit*"
+            "Resource": "arn:${data_aws_partition_current_partition}:sns:*:*:codecommit*"
         },
         {
             "Sid": "SNSTopicAndSubscriptionReadAccess",
@@ -88,7 +88,7 @@
                 "iam:ListSSHPublicKeys",
                 "iam:ListServiceSpecificCredentials"
             ],
-            "Resource": "arn:aws:iam::*:user/${data_aws_caller_identity_aft-management_user_id}"
+            "Resource": "arn:${data_aws_partition_current_partition}:iam::*:user/${data_aws_caller_identity_aft-management_user_id}"
         },
         {
             "Sid": "IAMUserSSHKeys",
@@ -100,7 +100,7 @@
                 "iam:UpdateSSHPublicKey",
                 "iam:UploadSSHPublicKey"
             ],
-            "Resource": "arn:aws:iam::*:user/${data_aws_caller_identity_aft-management_user_id}"
+            "Resource": "arn:${data_aws_partition_current_partition}:iam::*:user/${data_aws_caller_identity_aft-management_user_id}"
         },
         {
             "Sid": "IAMSelfManageServiceSpecificCredentials",
@@ -111,7 +111,7 @@
                 "iam:DeleteServiceSpecificCredential",
                 "iam:ResetServiceSpecificCredential"
             ],
-            "Resource": "arn:aws:iam::*:user/${data_aws_caller_identity_aft-management_user_id}"
+            "Resource": "arn:${data_aws_partition_current_partition}:iam::*:user/${data_aws_caller_identity_aft-management_user_id}"
         },
         {
             "Sid": "CodeStarNotificationsReadWriteAccess",
@@ -126,7 +126,7 @@
             "Resource": "*",
             "Condition": {
                 "StringLike": {
-                    "codestar-notifications:NotificationsForResource": "arn:aws:codecommit:*"
+                    "codestar-notifications:NotificationsForResource": "arn:${data_aws_partition_current_partition}:codecommit:*"
                 }
             }
         },
@@ -158,7 +158,7 @@
             "Sid": "AmazonCodeGuruReviewerSLRCreation",
             "Action": "iam:CreateServiceLinkedRole",
             "Effect": "Allow",
-            "Resource": "arn:aws:iam::*:role/aws-service-role/codeguru-reviewer.amazonaws.com/AWSServiceRoleForAmazonCodeGuruReviewer",
+            "Resource": "arn:${data_aws_partition_current_partition}:iam::*:role/aws-service-role/codeguru-reviewer.amazonaws.com/AWSServiceRoleForAmazonCodeGuruReviewer",
             "Condition": {
                 "StringLike": {
                     "iam:AWSServiceName": "codeguru-reviewer.amazonaws.com"
@@ -196,7 +196,7 @@
                 "codestar-connections:ListConnections",
                 "codestar-connections:GetConnection"
             ],
-            "Resource": "arn:aws:codestar-connections:*:*:connection/*"
+            "Resource": "arn:${data_aws_partition_current_partition}:codestar-connections:*:*:connection/*"
         }
     ]
 }

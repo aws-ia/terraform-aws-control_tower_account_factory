@@ -27,7 +27,7 @@
         "States": {
           "Invoke Account provisioning Step Function": {
             "Type": "Task",
-            "Resource": "arn:aws:states:::states:startExecution.sync:2",
+            "Resource": "arn:${current_partition}:states:::states:startExecution.sync:2",
             "Parameters": {
               "StateMachineArn": "${invoke_account_provisioning_sfn_arn}",
               "Input.$": "$.info" 
@@ -91,7 +91,7 @@
     },
     "Notify Success": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish",
+      "Resource": "arn:${current_partition}:states:::sns:publish",
       "Parameters": {
         "TopicArn": "${aft_notification_arn}",
         "Message.$": "$"
@@ -100,7 +100,7 @@
     },
     "Notify Failure": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish",
+      "Resource": "arn:${current_partition}:states:::sns:publish",
       "Parameters": {
         "TopicArn": "${aft_failure_notification_arn}",
         "Message.$": "$.Cause"

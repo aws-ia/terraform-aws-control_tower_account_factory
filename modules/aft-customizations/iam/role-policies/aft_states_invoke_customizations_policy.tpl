@@ -7,7 +7,7 @@
                 "lambda:InvokeFunction"
             ],
             "Resource": [
-                "arn:aws:lambda:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:function:aft-*"
+                "arn:${data_aws_partition_current_partition}:lambda:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:function:aft-*"
             ]
         },
         {
@@ -16,7 +16,7 @@
                 "sns:Publish"
             ],
             "Resource": [
-                "arn:aws:sns:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:aft-*"
+                "arn:${data_aws_partition_current_partition}:sns:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:aft-*"
             ]
         },
         {
@@ -27,7 +27,7 @@
                 "states:StopExecution"
             ],
             "Resource": [
-                "arn:aws:states:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:stateMachine:aft-*"
+                "arn:${data_aws_partition_current_partition}:states:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:stateMachine:aft-*"
             ]
         },
         {
@@ -38,7 +38,7 @@
                 "events:DescribeRule"
             ],
             "Resource": [
-                "arn:aws:events:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:*"
+                "arn:${data_aws_partition_current_partition}:events:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:*"
             ]
         }
     ]

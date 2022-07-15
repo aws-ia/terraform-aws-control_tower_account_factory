@@ -35,14 +35,19 @@ SSM_PARAMETER_PATH = "/aft/account-request/custom-fields/"
 
 
 class ProvisionRoles:
-    ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN = (
-        "arn:aws:iam::aws:policy/AdministratorAccess"
-    )
+
     SERVICE_ROLE_NAME = "AWSAFTService"
 
     def __init__(self, auth: AuthClient, account_id: str) -> None:
         self.auth = auth
         self.target_account_id = account_id
+
+        temp_session = self.auth.get_ct_management_session()
+        self.partition = utils.get_aws_partition(temp_session)
+
+        self.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN = (
+            f"arn:{self.partition}:iam::aws:policy/AdministratorAccess"
+        )
 
     def generate_aft_trust_policy(self) -> str:
         return json.dumps(
@@ -52,7 +57,7 @@ class ProvisionRoles:
                     {
                         "Effect": "Allow",
                         "Principal": {
-                            "AWS": f"arn:aws:iam::{self.auth.aft_management_account_id}:assumed-role/AWSAFTAdmin/AWSAFT-Session"
+                            "AWS": f"arn:{self.partition}:iam::{self.auth.aft_management_account_id}:assumed-role/AWSAFTAdmin/AWSAFT-Session"
                         },
                         "Action": "sts:AssumeRole",
                     }
@@ -208,7 +213,7 @@ class ProvisionRoles:
             self._deploy_role_in_target_account(
                 role_name=role_name,
                 trust_policy=trust_policy,
-                policy_arn=ProvisionRoles.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN,
+                policy_arn=self.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN,
             )
             logger.info(f"Deployed {role_name} role")
 

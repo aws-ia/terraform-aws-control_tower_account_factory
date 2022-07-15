@@ -4,6 +4,7 @@
 locals {
   state_machine_source = "${path.module}/states/aft_features.asl.json"
   replacements_map = {
+    current_partition                   = data.aws_partition.current.partition
     aft_delete_default_vpc_function_arn = aws_lambda_function.aft_delete_default_vpc.arn
     aft_enroll_support_function_arn     = aws_lambda_function.aft_enroll_support.arn
     aft_enable_cloudtrail_function_arn  = aws_lambda_function.aft_enable_cloudtrail.arn
