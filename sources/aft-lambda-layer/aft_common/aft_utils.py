@@ -63,7 +63,7 @@ else:
     STSClient = object
 
 
-from aft_common.types import AftAccountInfo
+from aft_common.aft_types import AftAccountInfo
 
 from .logger import Logger
 
@@ -128,6 +128,12 @@ SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID = "/aft/account/ct-management/account
 SSM_PARAM_ACCOUNT_AUDIT_ACCOUNT_ID = "/aft/account/audit/account-id"
 SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID = "/aft/account/log-archive/account-id"
 SSM_PARAM_ACCOUNT_AFT_MANAGEMENT_ACCOUNT_ID = "/aft/account/aft-management/account-id"
+
+SSM_PARAM_ACCOUNT_AFT_VERSION = "/aft/config/aft/version"
+SSM_PARAM_ACCOUNT_TERRAFORM_VERSION = "/aft/config/terraform/version"
+
+SSM_PARAM_AFT_METRICS_REPORTING = "/aft/config/metrics-reporting"
+SSM_PARAM_AFT_METRICS_REPORTING_UUID = "/aft/config/metrics-reporting-uuid"
 
 
 # INIT

@@ -243,4 +243,5 @@ module "aft_ssm_parameters" {
   account_provisioning_customizations_repo_branch             = var.account_provisioning_customizations_repo_branch
   maximum_concurrent_customizations                           = var.maximum_concurrent_customizations
   github_enterprise_url                                       = var.github_enterprise_url
+  aft_metrics_reporting                                       = var.aft_metrics_reporting
 }

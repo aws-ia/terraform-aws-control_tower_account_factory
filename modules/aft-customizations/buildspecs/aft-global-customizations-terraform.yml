@@ -69,7 +69,7 @@ phases:
       - unset AWS_PROFILE
 
   build:
-    on-failure: ABORT
+    on-failure: CONTINUE
     commands:
       # Apply customizations
       - source $DEFAULT_PATH/aft-venv/bin/activate
@@ -115,6 +115,14 @@ phases:
   post_build:
     on-failure: ABORT
     commands:
+      - export PYTHONPATH="$DEFAULT_PATH/aws-aft-core-framework/sources/aft-lambda-layer:$PYTHONPATH"
+      - export AWS_PROFILE=aft-management
+      - python3 $DEFAULT_PATH/aws-aft-core-framework/sources/aft-lambda-layer/aft_common/report_metrics.py --codebuild-name "aft-global-customizations" --codebuild-status $CODEBUILD_BUILD_SUCCEEDING
+      - unset AWS_PROFILE
+      - |
+        if [[ $CODEBUILD_BUILD_SUCCEEDING == 0 ]]; then
+          exit 1
+        fi
       - source $DEFAULT_PATH/api-helpers-venv/bin/activate
       - export AWS_PROFILE=aft-target
       - $DEFAULT_PATH/api_helpers/post-api-helpers.sh

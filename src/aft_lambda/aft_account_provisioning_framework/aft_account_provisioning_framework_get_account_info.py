@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Any, Dict
 from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import ProvisionRoles, get_account_info
+from aft_common.aft_types import AftAccountInfo
 from aft_common.auth import AuthClient
-from aft_common.types import AftAccountInfo
 from boto3.session import Session
 
 if TYPE_CHECKING:

@@ -362,3 +362,17 @@ variable "aft_vpc_public_subnet_02_cidr" {
     error_message = "Variable var: aft_vpc_public_subnet_02_cidr value must be a valid network CIDR, x.x.x.x/y."
   }
 }
+
+#########################################
+# AFT Metrics Reporting Variables
+#########################################
+
+variable "aft_metrics_reporting" {
+  description = "Flag toggling reporting of operational metrics"
+  type        = bool
+  default     = true
+  validation {
+    condition     = contains([true, false], var.aft_metrics_reporting)
+    error_message = "Valid values for var: aft_metrics_reporting are (true, false)."
+  }
+}

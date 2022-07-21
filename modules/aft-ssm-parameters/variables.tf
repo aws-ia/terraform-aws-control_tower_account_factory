@@ -249,3 +249,7 @@ variable "maximum_concurrent_customizations" {
 variable "aft_version" {
   type = string
 }
+
+variable "aft_metrics_reporting" {
+  type = string
+}

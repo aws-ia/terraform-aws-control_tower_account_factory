@@ -26,6 +26,7 @@ logger = utils.get_logger()
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     session = Session()
     auth = AuthClient()
+
     try:
         ct_management_session = auth.get_ct_management_session(
             role_name=ProvisionRoles.SERVICE_ROLE_NAME

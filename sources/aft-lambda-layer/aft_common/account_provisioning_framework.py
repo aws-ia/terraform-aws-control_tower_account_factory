@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Sequence
 
 import aft_common.aft_utils as utils
 import jsonschema
+from aft_common.aft_types import AftAccountInfo
 from aft_common.auth import AuthClient
-from aft_common.types import AftAccountInfo
 from boto3.session import Session
 from botocore.exceptions import ClientError
 
