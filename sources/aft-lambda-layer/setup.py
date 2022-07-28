@@ -81,6 +81,7 @@ setuptools.setup(
             "aws_lambda_powertools == 1.25.9",
             "autoflake == 1.4",
             "prospector == 1.7.7",
+            "types-requests == 2.27.5",
         ]
     },
 )

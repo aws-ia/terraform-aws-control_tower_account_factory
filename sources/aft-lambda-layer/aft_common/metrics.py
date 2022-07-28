@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from typing import Any, Dict, Optional, TypedDict
 
-import requests  # type: ignore
+import requests
 from aft_common import aft_utils as utils
 from aft_common.auth import AuthClient
 from boto3.session import Session

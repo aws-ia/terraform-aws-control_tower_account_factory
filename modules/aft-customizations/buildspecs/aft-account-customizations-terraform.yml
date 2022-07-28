@@ -136,10 +136,13 @@ phases:
   post_build:
     on-failure: ABORT
     commands:
-      - export PYTHONPATH="$DEFAULT_PATH/aws-aft-core-framework/sources/aft-lambda-layer:$PYTHONPATH"
-      - export AWS_PROFILE=aft-management
-      - python3 $DEFAULT_PATH/aws-aft-core-framework/sources/aft-lambda-layer/aft_common/report_metrics.py --codebuild-name "aft-account-customizations" --codebuild-status $CODEBUILD_BUILD_SUCCEEDING
-      - unset AWS_PROFILE
+      - |
+        if [[ ! -z "$CUSTOMIZATION" ]]; then
+          export PYTHONPATH="$DEFAULT_PATH/aws-aft-core-framework/sources/aft-lambda-layer:$PYTHONPATH"
+          export AWS_PROFILE=aft-management
+          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/aft-lambda-layer/aft_common/report_metrics.py --codebuild-name "aft-account-customizations" --codebuild-status $CODEBUILD_BUILD_SUCCEEDING
+          unset AWS_PROFILE
+        fi
       - |
         if [[ $CODEBUILD_BUILD_SUCCEEDING == 0 ]]; then
           exit 1
