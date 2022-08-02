@@ -146,7 +146,6 @@ def get_logger() -> Logger:
         log_level = "info"
     logger = Logger(loglevel=log_level)
     logger.info("Logger started.")
-    logger.info(str(os.environ))
     return logger
 
 
