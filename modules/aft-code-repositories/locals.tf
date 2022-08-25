@@ -4,6 +4,7 @@
 locals {
   vcs = {
     is_codecommit        = lower(var.vcs_provider) == "codecommit" ? true : false
+    is_s3                = lower(var.vcs_provider) == "s3" ? true : false
     is_bitbucket         = lower(var.vcs_provider) == "bitbucket" ? true : false
     is_github            = lower(var.vcs_provider) == "github" ? true : false
     is_github_enterprise = lower(var.vcs_provider) == "githubenterprise" ? true : false
