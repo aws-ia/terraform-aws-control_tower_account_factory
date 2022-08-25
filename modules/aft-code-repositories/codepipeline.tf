@@ -140,7 +140,7 @@ resource "aws_codepipeline" "s3_account_request" {
       output_artifacts = ["account-request"]
 
       configuration = {
-        S3Bucket             = "aft"
+        S3Bucket             = "aws-aft"
         S3ObjectKey          = "aft-account-request"
         PollForSourceChanges = false
       }
@@ -194,10 +194,10 @@ resource "aws_cloudwatch_event_rule" "s3_account_request" {
     ],
     "requestParameters": {
       "bucketName": [
-        "aft"
+        "aws-aft"
       ],
       "key": [
-        "my-files.zip"
+        "aft-account-request.zip"
       ]
     }
   }
@@ -484,7 +484,7 @@ resource "aws_codepipeline" "s3_account_provisioning_customizations" {
       output_artifacts = ["account-provisioning-customizations"]
 
       configuration = {
-        S3Bucket             = "aft"
+        S3Bucket             = "aws-aft"
         S3ObjectKey          = "account-provisioning-customizations"
         PollForSourceChanges = false
       }
@@ -538,10 +538,10 @@ resource "aws_cloudwatch_event_rule" "s3_account_provisioning_customizations" {
     ],
     "requestParameters": {
       "bucketName": [
-        "aft"
+        "aws-aft"
       ],
       "key": [
-        "my-files.zip"
+        "account-provisioning-customizations.zip"
       ]
     }
   }
