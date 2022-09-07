@@ -167,9 +167,13 @@ resource "aws_internet_gateway" "aft-vpc-igw" {
   }
 }
 
-resource "aws_eip" "aft-vpc-natgw-01" {}
+resource "aws_eip" "aft-vpc-natgw-01" {
+  vpc = true
+}
 
-resource "aws_eip" "aft-vpc-natgw-02" {}
+resource "aws_eip" "aft-vpc-natgw-02" {
+  vpc = true
+}
 
 resource "aws_nat_gateway" "aft-vpc-natgw-01" {
   depends_on = [aws_internet_gateway.aft-vpc-igw]
