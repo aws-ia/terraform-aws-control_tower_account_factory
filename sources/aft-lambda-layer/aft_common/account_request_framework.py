@@ -85,13 +85,15 @@ def get_healthy_ct_product_batch(
             PageSize=100,
             PageToken=response["NextPageToken"],
         )
-
+        provisioned_products = response["ProvisionedProducts"]
         healthy_products = [
             product
             for product in provisioned_products
             if product["Status"] in sc_product_allowed_status
         ]
         yield healthy_products
+
+    return
 
 
 def provisioned_product_exists(record: Dict[str, Any]) -> bool:
