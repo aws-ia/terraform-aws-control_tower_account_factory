@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 
 import aft_common.aft_utils as utils
 import jsonschema
+from aft_common.organizations import OrganizationsAgent
 from boto3.session import Session
 
 CUSTOMIZATIONS_PIPELINE_PATTERN = "^\d\d\d\d\d\d\d\d\d\d\d\d-.*$"
@@ -201,11 +202,10 @@ def get_included_accounts(
             core_accounts = get_core_accounts(session)
             included_accounts.extend(core_accounts)
         if d["type"] == "ous":
-            ou_accounts = utils.get_account_ids_in_ous(
-                ct_mgmt_session, d["target_value"]
+            orgs_agent = OrganizationsAgent(ct_mgmt_session)
+            included_accounts.extend(
+                orgs_agent.get_account_ids_in_ous(ou_names=d["target_value"])
             )
-            if ou_accounts is not None:
-                included_accounts.extend(ou_accounts)
         if d["type"] == "tags":
             tag_accounts = utils.get_accounts_by_tags(
                 session, ct_mgmt_session, d["target_value"]
@@ -234,11 +234,10 @@ def get_excluded_accounts(
             core_accounts = get_core_accounts(session)
             excluded_accounts.extend(core_accounts)
         if d["type"] == "ous":
-            ou_accounts = utils.get_account_ids_in_ous(
-                ct_mgmt_session, d["target_value"]
+            orgs_agent = OrganizationsAgent(ct_mgmt_session)
+            excluded_accounts.extend(
+                orgs_agent.get_account_ids_in_ous(ou_names=d["target_value"])
             )
-            if ou_accounts is not None:
-                excluded_accounts.extend(ou_accounts)
         if d["type"] == "tags":
             tag_accounts = utils.get_accounts_by_tags(
                 session, ct_mgmt_session, d["target_value"]

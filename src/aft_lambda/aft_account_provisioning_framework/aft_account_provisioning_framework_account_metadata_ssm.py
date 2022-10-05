@@ -11,9 +11,9 @@ from aft_common import notifications
 from aft_common.account_provisioning_framework import (
     SSM_PARAMETER_PATH,
     ProvisionRoles,
-    create_ssm_parameters,
     delete_ssm_parameters,
     get_ssm_parameters_names_by_path,
+    put_ssm_parameters,
 )
 from aft_common.auth import AuthClient
 
@@ -71,7 +71,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
         # Update / Add SSM parameters for custom fields provided
         logger.info(message=f"Adding/Updating SSM params: {custom_fields}")
-        create_ssm_parameters(target_account_session, custom_fields)
+        put_ssm_parameters(target_account_session, custom_fields)
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(

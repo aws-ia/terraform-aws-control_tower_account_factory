@@ -298,12 +298,12 @@ def persist_metadata(
 def get_ssm_parameters_names_by_path(session: Session, path: str) -> List[str]:
 
     client = session.client("ssm")
-    response = client.get_parameters_by_path(Path=path, Recursive=True)
-    logger.debug(response)
+    paginator = client.get_paginator("get_parameters_by_path")
+    pages = paginator.paginate(Path=path, Recursive=True)
 
     parameter_names = []
-    for p in response["Parameters"]:
-        parameter_names.append(p["Name"])
+    for page in pages:
+        parameter_names.extend([param["Name"] for param in page["Parameters"]])
 
     return parameter_names
 
@@ -313,10 +313,9 @@ def delete_ssm_parameters(session: Session, parameters: Sequence[str]) -> None:
     if len(parameters) > 0:
         client = session.client("ssm")
         response = client.delete_parameters(Names=parameters)
-        logger.info(response)
 
 
-def create_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:
+def put_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:
 
     client = session.client("ssm")
 
@@ -324,7 +323,6 @@ def create_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:
         response = client.put_parameter(
             Name=SSM_PARAMETER_PATH + key, Value=value, Type="String", Overwrite=True
         )
-        logger.info(response)
 
 
 def tag_account(
