@@ -3,6 +3,7 @@
 #
 import re
 from copy import deepcopy
+from tokenize import String
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from aft_common.aft_utils import get_logger
@@ -73,6 +74,10 @@ class OrganizationsAgent:
         # the whitespace between the name and ID
         name = nested_ou_name[: first_id_idx - 1]
         return (name, id)
+
+    @staticmethod
+    def get_nested_ou_format_from_name_and_id(ou_name: str, ou_id: str) -> str:
+        return f"{ou_name} ({ou_id})"
 
     def get_root_ou_id(self) -> str:
         return self.orgs_client.list_roots()["Roots"][0]["Id"]

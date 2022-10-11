@@ -309,10 +309,12 @@ def get_ssm_parameters_names_by_path(session: Session, path: str) -> List[str]:
 
 
 def delete_ssm_parameters(session: Session, parameters: Sequence[str]) -> None:
-
-    if len(parameters) > 0:
+    batches = utils.yield_batches_from_list(
+        parameters, batch_size=10
+    )  # Max batch size for API
+    for batched_names in batches:
         client = session.client("ssm")
-        response = client.delete_parameters(Names=parameters)
+        response = client.delete_parameters(Names=batched_names)
 
 
 def put_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:

@@ -9,8 +9,8 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    Iterable,
     List,
-    Literal,
     Optional,
     Sequence,
     Union,
@@ -534,3 +534,15 @@ def get_aws_partition(session: Session, region: Optional[str] = None) -> str:
 
     partition = session.get_partition_for_region(region)  # type: ignore
     return cast(str, partition)
+
+
+def yield_batches_from_list(
+    input: Sequence[Any], batch_size: int
+) -> Iterable[Sequence[Any]]:
+    if batch_size <= 0:
+        return []
+
+    idx = 0
+    while idx < len(input):
+        yield input[idx : idx + batch_size]
+        idx += batch_size
