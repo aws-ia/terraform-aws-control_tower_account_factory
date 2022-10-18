@@ -48,10 +48,13 @@ resource "aws_codebuild_project" "account_request" {
     buildspec = data.local_file.account_request_buildspec.content
   }
 
-  vpc_config {
-    vpc_id             = var.vpc_id
-    subnets            = var.subnet_ids
-    security_group_ids = var.security_group_ids
+  dynamic "vpc_config" {
+    for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
+    content {
+      vpc_id = var.vpc_id
+      subnets            = var.subnet_ids
+      security_group_ids = var.security_group_ids
+    }
   }
 
 }
@@ -97,10 +100,13 @@ resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" 
     buildspec = data.local_file.account_provisioning_customizations_buildspec.content
   }
 
-  vpc_config {
-    vpc_id             = var.vpc_id
-    subnets            = var.subnet_ids
-    security_group_ids = var.security_group_ids
+  dynamic "vpc_config" {
+    for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
+    content {
+      vpc_id = var.vpc_id
+      subnets            = var.subnet_ids
+      security_group_ids = var.security_group_ids
+    }
   }
 
 }

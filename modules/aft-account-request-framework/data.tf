@@ -41,7 +41,7 @@ data "aws_subnets" "codebuild" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -64,7 +64,7 @@ data "aws_subnets" "codecommit" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -88,7 +88,7 @@ data "aws_subnets" "git-codecommit" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -112,7 +112,7 @@ data "aws_subnets" "codepipeline" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -135,7 +135,7 @@ data "aws_subnets" "servicecatalog" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -157,7 +157,7 @@ data "aws_subnets" "lambda" {
   }
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -180,7 +180,7 @@ data "aws_subnets" "kms" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -203,7 +203,7 @@ data "aws_subnets" "logs" {
   }
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -226,7 +226,7 @@ data "aws_subnets" "events" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -248,7 +248,7 @@ data "aws_subnets" "states" {
   }
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -272,7 +272,7 @@ data "aws_subnets" "ssm" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -295,7 +295,7 @@ data "aws_subnets" "sns" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -318,7 +318,7 @@ data "aws_subnets" "sqs" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {
@@ -341,7 +341,7 @@ data "aws_subnets" "sts" {
 
   filter {
     name   = "subnet-id"
-    values = [aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id]
+    values = local.vpc_endpoint_subnet_ids
   }
 
   filter {

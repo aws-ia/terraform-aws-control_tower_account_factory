@@ -92,3 +92,7 @@ variable "account_provisioning_customizations_repo_branch" {
 variable "global_codebuild_timeout" {
   type = number
 }
+
+variable "aft_feature_disable_private_networking" {
+  type = bool
+}

@@ -41,6 +41,10 @@ variable "aft_vpc_endpoints" {
   type = bool
 }
 
+variable "aft_feature_disable_private_networking" {
+  type = bool
+}
+
 variable "request_framework_archive_path" {
   type = string
 }

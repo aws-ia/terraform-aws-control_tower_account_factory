@@ -85,7 +85,7 @@ output "aft_vpc_public_subnets" {
 }
 
 output "aft_vpc_private_subnets" {
-  value = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
+  value = tolist(var.aft_feature_disable_private_networking ? [] : [aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
 }
 
 output "aft_vpc_default_sg" {
