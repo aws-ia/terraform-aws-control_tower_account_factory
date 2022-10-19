@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+
 data "local_file" "account_request_buildspec" {
   filename = "${path.module}/buildspecs/ct-aft-account-request.yml"
 }
@@ -54,6 +55,10 @@ resource "aws_codebuild_project" "account_request" {
     security_group_ids = var.security_group_ids
   }
 
+  lifecycle {
+    ignore_changes = [project_visibility]
+  }
+
 }
 
 resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" {
@@ -101,6 +106,10 @@ resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" 
     vpc_id             = var.vpc_id
     subnets            = var.subnet_ids
     security_group_ids = var.security_group_ids
+  }
+
+  lifecycle {
+    ignore_changes = [project_visibility]
   }
 
 }

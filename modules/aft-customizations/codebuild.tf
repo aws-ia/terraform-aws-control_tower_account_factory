@@ -52,6 +52,10 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
     security_group_ids = var.aft_vpc_default_sg
   }
 
+  lifecycle {
+    ignore_changes = [project_visibility]
+  }
+
 }
 
 # Maintain this log group for log retention reasons. This is no longer used by AFT
@@ -113,6 +117,10 @@ resource "aws_codebuild_project" "aft_account_customizations_terraform" {
     vpc_id             = var.aft_vpc_id
     subnets            = var.aft_vpc_private_subnets
     security_group_ids = var.aft_vpc_default_sg
+  }
+
+  lifecycle {
+    ignore_changes = [project_visibility]
   }
 
 }
@@ -225,6 +233,10 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
     vpc_id             = var.aft_vpc_id
     subnets            = var.aft_vpc_private_subnets
     security_group_ids = var.aft_vpc_default_sg
+  }
+
+  lifecycle {
+    ignore_changes = [project_visibility]
   }
 
 }

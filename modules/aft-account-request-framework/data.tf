@@ -30,10 +30,13 @@ data "aws_availability_zones" "available" {
 #### CodeBuild ####
 
 data "aws_vpc_endpoint_service" "codebuild" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "codebuild"
 }
 
 data "aws_subnets" "codebuild" {
+  count = var.aft_vpc_endpoints ? 1 : 0
+
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -46,17 +49,19 @@ data "aws_subnets" "codebuild" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.codebuild.availability_zones
+    values = data.aws_vpc_endpoint_service.codebuild[0].availability_zones
   }
 }
 
 #### CodeCommit ####
 
 data "aws_vpc_endpoint_service" "codecommit" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "codecommit"
 }
 
 data "aws_subnets" "codecommit" {
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -69,18 +74,20 @@ data "aws_subnets" "codecommit" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.codecommit.availability_zones
+    values = data.aws_vpc_endpoint_service.codecommit[0].availability_zones
   }
 }
 
 #### git-codecommit ####
 
 data "aws_vpc_endpoint_service" "git-codecommit" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "git-codecommit"
 }
 
 data "aws_subnets" "git-codecommit" {
 
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -93,17 +100,19 @@ data "aws_subnets" "git-codecommit" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.git-codecommit.availability_zones
+    values = data.aws_vpc_endpoint_service.git-codecommit[0].availability_zones
   }
 }
 
 #### codepipeline ####
 
 data "aws_vpc_endpoint_service" "codepipeline" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "codepipeline"
 }
 
 data "aws_subnets" "codepipeline" {
+  count = var.aft_vpc_endpoints ? 1 : 0
 
   filter {
     name   = "vpc-id"
@@ -117,17 +126,19 @@ data "aws_subnets" "codepipeline" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.codepipeline.availability_zones
+    values = data.aws_vpc_endpoint_service.codepipeline[0].availability_zones
   }
 }
 
 #### servicecatalog ####
 
 data "aws_vpc_endpoint_service" "servicecatalog" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "servicecatalog"
 }
 
 data "aws_subnets" "servicecatalog" {
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -140,17 +151,19 @@ data "aws_subnets" "servicecatalog" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.servicecatalog.availability_zones
+    values = data.aws_vpc_endpoint_service.servicecatalog[0].availability_zones
   }
 }
 
 #### lambda ####
 
 data "aws_vpc_endpoint_service" "lambda" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "lambda"
 }
 
 data "aws_subnets" "lambda" {
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -162,17 +175,19 @@ data "aws_subnets" "lambda" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.lambda.availability_zones
+    values = data.aws_vpc_endpoint_service.lambda[0].availability_zones
   }
 }
 
 #### kms ####
 
 data "aws_vpc_endpoint_service" "kms" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "kms"
 }
 
 data "aws_subnets" "kms" {
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -185,18 +200,20 @@ data "aws_subnets" "kms" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.kms.availability_zones
+    values = data.aws_vpc_endpoint_service.kms[0].availability_zones
   }
 }
 
 #### logs ####
 
 data "aws_vpc_endpoint_service" "logs" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "logs"
 }
 
 data "aws_subnets" "logs" {
 
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -208,17 +225,19 @@ data "aws_subnets" "logs" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.logs.availability_zones
+    values = data.aws_vpc_endpoint_service.logs[0].availability_zones
   }
 }
 
 #### events ####
 
 data "aws_vpc_endpoint_service" "events" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "events"
 }
 
 data "aws_subnets" "events" {
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -231,17 +250,19 @@ data "aws_subnets" "events" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.events.availability_zones
+    values = data.aws_vpc_endpoint_service.events[0].availability_zones
   }
 }
 
 #### states ####
 
 data "aws_vpc_endpoint_service" "states" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "states"
 }
 
 data "aws_subnets" "states" {
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -253,18 +274,20 @@ data "aws_subnets" "states" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.states.availability_zones
+    values = data.aws_vpc_endpoint_service.states[0].availability_zones
   }
 }
 
 #### ssm ####
 
 data "aws_vpc_endpoint_service" "ssm" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "ssm"
 }
 
 data "aws_subnets" "ssm" {
 
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -277,17 +300,19 @@ data "aws_subnets" "ssm" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.ssm.availability_zones
+    values = data.aws_vpc_endpoint_service.ssm[0].availability_zones
   }
 }
 
 #### sns ####
 
 data "aws_vpc_endpoint_service" "sns" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "sns"
 }
 
 data "aws_subnets" "sns" {
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -300,17 +325,19 @@ data "aws_subnets" "sns" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.sns.availability_zones
+    values = data.aws_vpc_endpoint_service.sns[0].availability_zones
   }
 }
 
 #### sqs ####
 
 data "aws_vpc_endpoint_service" "sqs" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "sqs"
 }
 
 data "aws_subnets" "sqs" {
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -323,17 +350,19 @@ data "aws_subnets" "sqs" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.sqs.availability_zones
+    values = data.aws_vpc_endpoint_service.sqs[0].availability_zones
   }
 }
 
 #### sts ####
 
 data "aws_vpc_endpoint_service" "sts" {
+  count   = var.aft_vpc_endpoints ? 1 : 0
   service = "sts"
 }
 
 data "aws_subnets" "sts" {
+  count = var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [aws_vpc.aft_vpc.id]
@@ -346,6 +375,6 @@ data "aws_subnets" "sts" {
 
   filter {
     name   = "availability-zone"
-    values = data.aws_vpc_endpoint_service.sts.availability_zones
+    values = data.aws_vpc_endpoint_service.sts[0].availability_zones
   }
 }

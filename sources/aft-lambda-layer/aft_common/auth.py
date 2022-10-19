@@ -8,6 +8,7 @@ from aft_common.aft_utils import (
     SSM_PARAM_ACCOUNT_AFT_MANAGEMENT_ACCOUNT_ID,
     SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID,
     SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID,
+    get_aws_partition,
     get_logger,
     get_ssm_parameter_value,
 )
@@ -66,8 +67,8 @@ class AuthClient:
                 raise error
 
     @staticmethod
-    def _build_role_arn(account_id: str, role_name: str) -> str:
-        return f"arn:aws:iam::{account_id}:role/{role_name}"
+    def _build_role_arn(partition: str, account_id: str, role_name: str) -> str:
+        return f"arn:{partition}:iam::{account_id}:role/{role_name}"
 
     @staticmethod
     def _get_session(
@@ -110,7 +111,9 @@ class AuthClient:
             param=AuthClient.SSM_PARAM_AFT_ADMIN_ROLE_NAME,
         )
         role_arn = AuthClient._build_role_arn(
-            account_id=self.aft_management_account_id, role_name=role_name
+            partition=get_aws_partition(session=self.aft_management_session),
+            account_id=self.aft_management_account_id,
+            role_name=role_name,
         )
         return AuthClient._get_session(
             session=self.aft_management_session,
@@ -151,7 +154,9 @@ class AuthClient:
             )
 
         spoke_role_arn = AuthClient._build_role_arn(
-            account_id=account_id, role_name=role_name
+            partition=get_aws_partition(session=self.aft_management_session),
+            account_id=account_id,
+            role_name=role_name,
         )
 
         logger.info(
