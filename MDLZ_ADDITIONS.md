@@ -1,5 +1,5 @@
 # Mondelez Modifications to AFT
-## Application Request Table
+## Application/Network Request Table
 ### AFT Enhancement Request
 IAM permissions for the ct-aft-codebuild-account-request-role should be able to be supplemented by user input.
 ### Purpose
