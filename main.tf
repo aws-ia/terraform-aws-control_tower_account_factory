@@ -67,8 +67,9 @@ module "aft_code_repositories" {
   aft_config_backend_table_id                     = module.aft_backend.table_id
   aft_config_backend_kms_key_id                   = module.aft_backend.kms_key_id
   account_request_table_name                      = module.aft_account_request_framework.request_table_name
-  application_request_table_arn                   = module.aft_account_request_framework.application_request_table_arn # MDLZ CUSTOMIZATION
-  network_request_table_arn                       = module.aft_account_request_framework.network_request_table_arn     # MDLZ CUSTOMIZATION
+  application_request_table_arn                   = module.aft_account_request_framework.application_request_table_arn           # MDLZ CUSTOMIZATION
+  network_request_configuration_table_arn         = module.aft_account_request_framework.network_request_configuration_table_arn # MDLZ CUSTOMIZATION
+  network_request_grant_table_arn                 = module.aft_account_request_framework.network_request_grant_table_arn         # MDLZ CUSTOMIZATION
   codepipeline_s3_bucket_arn                      = module.aft_customizations.aft_codepipeline_customizations_bucket_arn
   codepipeline_s3_bucket_name                     = module.aft_customizations.aft_codepipeline_customizations_bucket_name
   security_group_ids                              = module.aft_account_request_framework.aft_vpc_default_sg
