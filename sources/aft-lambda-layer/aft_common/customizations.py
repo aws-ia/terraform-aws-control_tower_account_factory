@@ -137,8 +137,8 @@ def get_running_pipeline_count(session: Session, names: List[str]) -> int:
     return pipeline_counter
 
 
-def validate_request(payload: Dict[str, Any]) -> bool:
-    logger.info("Function Start - validate_request")
+def validate_identify_targets_request(payload: Dict[str, Any]) -> bool:
+    logger.info("Function Start - validate_identify_targets_request")
     schema_path = os.path.join(
         os.path.dirname(__file__), "schemas/identify_targets_request_schema.json"
     )
@@ -177,11 +177,13 @@ def filter_non_aft_accounts(
     return account_list
 
 
-def get_core_accounts(session: Session) -> List[str]:
+def get_core_accounts(aft_management_session: Session) -> List[str]:
     core_accounts = []
     logger.info("Getting core accounts -")
     for a in AFT_PIPELINE_ACCOUNTS:
-        id = utils.get_ssm_parameter_value(session, "/aft/account/" + a + "/account-id")
+        id = utils.get_ssm_parameter_value(
+            aft_management_session, "/aft/account/" + a + "/account-id"
+        )
         logger.info("Account ID for " + a + " is " + id)
         core_accounts.append(id)
     logger.info("Core accounts: " + str(core_accounts))
@@ -189,9 +191,12 @@ def get_core_accounts(session: Session) -> List[str]:
 
 
 def get_included_accounts(
-    session: Session, ct_mgmt_session: Session, included: List[Dict[str, Any]]
+    aft_management_session: Session,
+    ct_mgmt_session: Session,
+    orgs_agent: OrganizationsAgent,
+    included: List[Dict[str, Any]],
 ) -> List[str]:
-    all_aft_accounts = utils.get_all_aft_account_ids(session)
+    all_aft_accounts = utils.get_all_aft_account_ids(aft_management_session)
     logger.info("All AFT accounts: " + str(all_aft_accounts))
     included_accounts = []
     for d in included:
@@ -199,16 +204,15 @@ def get_included_accounts(
             if all_aft_accounts is not None:
                 included_accounts.extend(all_aft_accounts)
         if d["type"] == "core":
-            core_accounts = get_core_accounts(session)
+            core_accounts = get_core_accounts(aft_management_session)
             included_accounts.extend(core_accounts)
         if d["type"] == "ous":
-            orgs_agent = OrganizationsAgent(ct_mgmt_session)
             included_accounts.extend(
                 orgs_agent.get_account_ids_in_ous(ou_names=d["target_value"])
             )
         if d["type"] == "tags":
             tag_accounts = utils.get_accounts_by_tags(
-                session, ct_mgmt_session, d["target_value"]
+                aft_management_session, ct_mgmt_session, d["target_value"]
             )
             if tag_accounts is not None:
                 included_accounts.extend(tag_accounts)
@@ -219,28 +223,32 @@ def get_included_accounts(
     logger.info("Included Accounts (pre-AFT filter): " + str(included_accounts))
 
     # Filter non-AFT accounts
-    included_accounts = filter_non_aft_accounts(session, included_accounts)
+    included_accounts = filter_non_aft_accounts(
+        aft_management_session, included_accounts
+    )
 
     logger.info("Included Accounts (post-AFT filter): " + str(included_accounts))
     return included_accounts
 
 
 def get_excluded_accounts(
-    session: Session, ct_mgmt_session: Session, excluded: List[Dict[str, Any]]
+    aft_management_session: Session,
+    ct_mgmt_session: Session,
+    orgs_agent: OrganizationsAgent,
+    excluded: List[Dict[str, Any]],
 ) -> List[str]:
     excluded_accounts = []
     for d in excluded:
         if d["type"] == "core":
-            core_accounts = get_core_accounts(session)
+            core_accounts = get_core_accounts(aft_management_session)
             excluded_accounts.extend(core_accounts)
         if d["type"] == "ous":
-            orgs_agent = OrganizationsAgent(ct_mgmt_session)
             excluded_accounts.extend(
                 orgs_agent.get_account_ids_in_ous(ou_names=d["target_value"])
             )
         if d["type"] == "tags":
             tag_accounts = utils.get_accounts_by_tags(
-                session, ct_mgmt_session, d["target_value"]
+                aft_management_session, ct_mgmt_session, d["target_value"]
             )
             if tag_accounts is not None:
                 excluded_accounts.extend(tag_accounts)
@@ -251,7 +259,9 @@ def get_excluded_accounts(
     logger.info("Excluded Accounts (pre-AFT filter): " + str(excluded_accounts))
 
     # Filter non-AFT accounts
-    excluded_accounts = filter_non_aft_accounts(session, excluded_accounts, "exclude")
+    excluded_accounts = filter_non_aft_accounts(
+        aft_management_session, excluded_accounts, "exclude"
+    )
 
     logger.info("Excluded Accounts (post-AFT filter): " + str(excluded_accounts))
     return excluded_accounts
@@ -277,52 +287,3 @@ def get_account_metadata_record(
     item: Dict[str, Any] = response["Item"]
     logger.info(item)
     return item
-
-
-def get_account_request_record(
-    session: Session, table_name: str, email_address: str
-) -> Dict[str, Any]:
-    dynamodb = session.resource("dynamodb")
-    table = dynamodb.Table(table_name)
-    logger.info("Getting account request record for " + email_address)
-    response = table.get_item(Key={"id": email_address})
-    item: Dict[str, Any] = response["Item"]
-    logger.info(item)
-    return item
-
-
-def build_invoke_event(account_request_record: Dict[str, Any]) -> Dict[str, Any]:
-    logger.info("Building invoke event for " + str(account_request_record))
-    account_request_record["account_tags"] = json.loads(
-        account_request_record["account_tags"]
-    )
-    invoke_event: Dict[str, Any]
-    invoke_event = {
-        "account_request": account_request_record,
-        "control_tower_event": {},
-        "account_provisioning": {},
-    }
-    invoke_event["account_provisioning"]["run_create_pipeline"] = "true"
-
-    logger.info(str(invoke_event))
-    return invoke_event
-
-
-def build_customization_invoke_event_for_target_account(
-    aft_management_session: Session,
-    account_metadata_table: str,
-    account_id: str,
-    account_request_table: str,
-) -> Dict[str, Any]:
-    account_metadata_record = get_account_metadata_record(
-        session=aft_management_session,
-        table_name=account_metadata_table,
-        account_id=account_id,
-    )
-    account_request_email = account_metadata_record["email"]
-    account_request_record = get_account_request_record(
-        session=aft_management_session,
-        table_name=account_request_table,
-        email_address=account_request_email,
-    )
-    return build_invoke_event(account_request_record)

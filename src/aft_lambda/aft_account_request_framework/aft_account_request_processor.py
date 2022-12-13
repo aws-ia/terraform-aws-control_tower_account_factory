@@ -7,7 +7,7 @@ import time
 from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
-from aft_common import notifications
+from aft_common import notifications, sqs
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.account_request_framework import (
     AccountRequest,
@@ -50,7 +50,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             logger.info("Exiting due to provisioning in progress")
             return None
         else:
-            sqs_message = utils.receive_sqs_message(
+            sqs_message = sqs.receive_sqs_message(
                 aft_management_session,
                 utils.get_ssm_parameter_value(
                     aft_management_session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
@@ -106,7 +106,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                 else:
                     logger.info("Unknown operation received in message")
 
-                utils.delete_sqs_message(aft_management_session, sqs_message)
+                sqs.delete_sqs_message(aft_management_session, sqs_message)
                 if not ct_request_is_valid:
                     logger.exception("CT Request is not valid")
                     assert ct_request_is_valid

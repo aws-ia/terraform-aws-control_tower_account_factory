@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Dict, List, Sequence
 
 import aft_common.aft_utils as utils
-import jsonschema
-from aft_common.aft_types import AftAccountInfo
+from aft_common import ddb
 from aft_common.auth import AuthClient
+from aft_common.organizations import OrganizationsAgent
 from boto3.session import Session
 from botocore.exceptions import ClientError
 
@@ -222,42 +222,6 @@ class ProvisionRoles:
             logger.info(f"Can assume {role_name} role")
 
 
-def get_account_info(
-    payload: Dict[str, Any], ct_management_session: Session
-) -> AftAccountInfo:
-    logger.info("Function Start - get_account_info")
-
-    account_id = None
-
-    # Handle a Control Tower Event
-    if "account" in payload["control_tower_event"]:
-        if (
-            payload["control_tower_event"]["detail"]["eventName"]
-            == "CreateManagedAccount"
-        ):
-            account_id = payload["control_tower_event"]["detail"][
-                "serviceEventDetails"
-            ]["createManagedAccountStatus"]["account"]["accountId"]
-        elif (
-            payload["control_tower_event"]["detail"]["eventName"]
-            == "UpdateManagedAccount"
-        ):
-            account_id = payload["control_tower_event"]["detail"][
-                "serviceEventDetails"
-            ]["updateManagedAccountStatus"]["account"]["accountId"]
-        if account_id:
-            logger.info(f"Account Id [{account_id}] found in control_tower_event")
-            return utils.get_account_info(ct_management_session, account_id)
-
-    elif "id" in payload["account_request"]:
-        email = payload["account_request"]["id"]
-        logger.info("Account Email: " + email)
-        account_id = utils.get_account_id_from_email(ct_management_session, email)
-        return utils.get_account_info(ct_management_session, account_id)
-
-    raise Exception("Account was not found")
-
-
 # From persist-metadata Lambda
 def persist_metadata(
     payload: Dict[str, Any], account_info: Dict[str, str], session: Session
@@ -289,7 +253,7 @@ def persist_metadata(
     logger.info("Writing item to " + metadata_table_name)
     logger.info(item)
 
-    response = utils.put_ddb_item(session, metadata_table_name, item)
+    response = ddb.put_ddb_item(session, metadata_table_name, item)
 
     logger.info(response)
     return response
@@ -338,22 +302,6 @@ def tag_account(
 
     tags = payload["account_request"]["account_tags"]
     tag_list: List[TagTypeDef] = [{"Key": k, "Value": v} for k, v in tags.items()]
-    utils.tag_org_resource(
-        ct_management_session, account_info["id"], tag_list, rollback
-    )
 
-
-def validate_request(payload: Dict[str, Any]) -> bool:
-    logger.info("Function Start - validate_request")
-    schema_path = os.path.join(
-        os.path.dirname(__file__), "schemas/valid_account_request_schema.json"
-    )
-    with open(schema_path) as schema_file:
-        schema_object = json.load(schema_file)
-    logger.info("Schema Loaded:" + json.dumps(schema_object))
-    validated = jsonschema.validate(payload, schema_object)
-    if validated is None:
-        logger.info("Request Validated")
-        return True
-    else:
-        raise Exception("Failure validating request.\n{validated}")
+    orgs_agent = OrganizationsAgent(ct_management_session)
+    orgs_agent.tag_org_resource(account_info["id"], tag_list, rollback)

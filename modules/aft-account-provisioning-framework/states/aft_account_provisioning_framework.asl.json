@@ -1,48 +1,6 @@
 {
-  "StartAt": "aft_account_provisioning_framework_validate",
+  "StartAt": "aft_account_provisioning_framework_persist_metadata",
   "States": {
-    "aft_account_provisioning_framework_validate": {
-      "Next": "aft_account_provisioning_framework_get_account_info",
-      "Type": "Task",
-      "Resource": "arn:${current_partition}:states:::lambda:invoke",
-      "ResultPath": "$.validated",
-      "ResultSelector": {"Success.$":"$.Payload"},
-      "Parameters": {
-        "FunctionName": "${validate_request_function_name}",
-        "Payload": {
-          "job_name.$": "$$.Execution.Name",
-          "payload.$": "$",
-          "action": "validate"
-        }
-      },
-      "Catch": [
-        {
-          "ErrorEquals": ["States.ALL"],
-          "Next": "aft_account_provisioning_framework_notify_error"
-        }
-      ]
-    },
-    "aft_account_provisioning_framework_get_account_info": {
-      "Next": "aft_account_provisioning_framework_persist_metadata",
-      "Type": "Task",
-      "Resource": "arn:${current_partition}:states:::lambda:invoke",
-      "ResultPath": "$.account_info",
-      "ResultSelector": {"account.$":"$.Payload"},
-      "Parameters": {
-        "FunctionName": "${get_account_info_function_name}",
-        "Payload": {
-          "job_name.$": "$$.Execution.Name",
-          "payload.$": "$",
-          "action": "get_account_info"
-        }
-      },
-      "Catch": [
-        {
-          "ErrorEquals": ["States.ALL"],
-          "Next": "aft_account_provisioning_framework_notify_error"
-        }
-      ]
-    },
     "aft_account_provisioning_framework_persist_metadata": {
       "Next": "aft_account_provisioning_framework_create_role",
       "Type": "Task",

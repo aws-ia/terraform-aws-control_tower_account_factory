@@ -106,7 +106,7 @@ phases:
             mkdir -p /opt/aft/bin
             unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip 
             mv terraform /opt/aft/bin
-            /opt/aft/bin/terraform --version
+            /opt/aft/bin/terraform -no-color --version
 
             cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
             for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID >> ./$(basename $f .jinja).tf; done
@@ -114,8 +114,8 @@ phases:
             
             cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
             export AWS_PROFILE=aft-management-admin
-            /opt/aft/bin/terraform init
-            /opt/aft/bin/terraform apply --auto-approve
+            /opt/aft/bin/terraform init -no-color
+            /opt/aft/bin/terraform apply -no-color --auto-approve
           else
             TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
             TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
@@ -140,7 +140,7 @@ phases:
         if [[ ! -z "$CUSTOMIZATION" ]]; then
           export PYTHONPATH="$DEFAULT_PATH/aws-aft-core-framework/sources/aft-lambda-layer:$PYTHONPATH"
           export AWS_PROFILE=aft-management
-          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/aft-lambda-layer/aft_common/report_metrics.py --codebuild-name "aft-account-customizations" --codebuild-status $CODEBUILD_BUILD_SUCCEEDING
+          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/aft-lambda-layer/aft_common/metrics.py --codebuild-name "aft-account-customizations" --codebuild-status $CODEBUILD_BUILD_SUCCEEDING
           unset AWS_PROFILE
         fi
       - |

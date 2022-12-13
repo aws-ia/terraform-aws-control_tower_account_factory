@@ -196,8 +196,6 @@ module "aft_ssm_parameters" {
   request_processor_function_arn                              = module.aft_account_request_framework.request_processor_function_arn
   control_tower_event_logger_function_arn                     = module.aft_account_request_framework.control_tower_event_logger_function_arn
   invoke_aft_account_provisioning_framework_function_arn      = module.aft_account_request_framework.invoke_aft_account_provisioning_framework_function_arn
-  validate_request_function_arn                               = module.aft_account_provisioning_framework.validate_request_function_arn
-  get_account_info_function_arn                               = module.aft_account_provisioning_framework.get_account_info_function_arn
   create_role_function_arn                                    = module.aft_account_provisioning_framework.create_role_function_arn
   tag_account_function_arn                                    = module.aft_account_provisioning_framework.tag_account_function_arn
   persist_metadata_function_arn                               = module.aft_account_provisioning_framework.persist_metadata_function_arn

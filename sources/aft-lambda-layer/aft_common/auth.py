@@ -101,6 +101,10 @@ class AuthClient:
             region_name=region if region is not None else session.region_name,
         )
 
+    @staticmethod
+    def get_account_id_from_session(session: Session) -> str:
+        return session.client("sts").get_caller_identity()["Account"]
+
     def _get_hub_session(self, session_duration: int = 900) -> Session:
         """
         Assumes a hub role, "AWSAFTAdmin" in the AFT Management account
@@ -208,7 +212,3 @@ class AuthClient:
             session_policy=session_policy,
             session_duration=session_duration,
         )
-
-    @staticmethod
-    def get_account_id_from_session(session: Session) -> str:
-        return session.client("sts").get_caller_identity()["Account"]

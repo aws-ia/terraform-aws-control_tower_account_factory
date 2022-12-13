@@ -91,18 +91,6 @@ resource "aws_ssm_parameter" "invoke_aft_account_provisioning_framework_function
   value = var.invoke_aft_account_provisioning_framework_function_arn
 }
 
-resource "aws_ssm_parameter" "validate_request_function_arn" {
-  name  = "/aft/resources/lambda/aft-account-provisioning-framework-validate-request-function-arn"
-  type  = "String"
-  value = var.validate_request_function_arn
-}
-
-resource "aws_ssm_parameter" "get_account_info_function_arn" {
-  name  = "/aft/resources/lambda/aft-account-provisioning-framework-get-account-info-function-arn"
-  type  = "String"
-  value = var.get_account_info_function_arn
-}
-
 resource "aws_ssm_parameter" "create_role_function_arn" {
   name  = "/aft/resources/lambda/aft-account-provisioning-framework-create-role-function-arn"
   type  = "String"

@@ -3,9 +3,9 @@
 #
 import re
 from copy import deepcopy
-from tokenize import String
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, cast
 
+from aft_common.aft_types import AftAccountInfo
 from aft_common.aft_utils import get_logger
 from boto3.session import Session
 
@@ -13,13 +13,13 @@ if TYPE_CHECKING:
     from mypy_boto3_organizations import OrganizationsClient
     from mypy_boto3_organizations.type_defs import (
         AccountTypeDef,
-        DescribeOrganizationalUnitResponseTypeDef,
+        DescribeAccountResponseTypeDef,
         OrganizationalUnitTypeDef,
         TagTypeDef,
     )
 
 else:
-    DescribeOrganizationalUnitResponseTypeDef = object
+    DescribeAccountResponseTypeDef = object
     OrganizationsClient = object
     TagTypeDef = object
     OrganizationalUnitTypeDef = object
@@ -43,8 +43,9 @@ class OrganizationsAgent:
             "organizations"
         )
 
-        # Memoize expensive all-org traversal
+        # Memoize expensive all-org traversals
         self.org_ous: Optional[List[OrganizationalUnitTypeDef]] = None
+        self.org_accounts: Optional[List[AccountTypeDef]] = None
 
     @staticmethod
     def ou_name_is_nested_format(ou_name: str) -> bool:
@@ -85,9 +86,23 @@ class OrganizationsAgent:
     def get_ous_for_root(self) -> List[OrganizationalUnitTypeDef]:
         return self.get_children_ous_from_parent_id(parent_id=self.get_root_ou_id())
 
+    def get_all_org_accounts(self) -> List[AccountTypeDef]:
+        # Memoize calls / cache previous results
+        # Cache is not shared between AFT invocations so staleness due to org updates is unlikely
+        if self.org_accounts is not None:
+            return self.org_accounts
+
+        paginator = self.orgs_client.get_paginator("list_accounts")
+        accounts = []
+        for page in paginator.paginate():
+            accounts.extend(page["Accounts"])
+
+        self.org_accounts = accounts
+        return self.org_accounts
+
     def get_all_org_ous(self) -> List[OrganizationalUnitTypeDef]:
         # Memoize calls / cache previous results
-        # Cache is not shared between invocations so staleness due to org updates is unlikely
+        # Cache is not shared between AFT invocations so staleness due to org updates is unlikely
         if self.org_ous is not None:
             return self.org_ous
 
@@ -207,5 +222,58 @@ class OrganizationsAgent:
                 return True
         return False
 
+    def tag_org_resource(
+        self,
+        resource: str,
+        tags: Sequence[TagTypeDef],
+        rollback: bool = False,
+    ) -> None:
+        if rollback:
+            current_tags = self.orgs_client.list_tags_for_resource(ResourceId=resource)
+            self.orgs_client.untag_resource(
+                ResourceId=resource, TagKeys=[tag["Key"] for tag in tags]
+            )
+            self.orgs_client.tag_resource(
+                ResourceId=resource, Tags=cast(Sequence[TagTypeDef], current_tags)
+            )
+
+        else:
+            self.orgs_client.tag_resource(ResourceId=resource, Tags=tags)
+
     def list_tags_for_resource(self, resource: str) -> List[TagTypeDef]:
         return self.orgs_client.list_tags_for_resource(ResourceId=resource)["Tags"]
+
+    def get_account_email_from_id(self, account_id: str) -> str:
+        response: DescribeAccountResponseTypeDef = self.orgs_client.describe_account(
+            AccountId=account_id
+        )
+        return response["Account"]["Email"]
+
+    def get_account_id_from_email(self, email: str) -> str:
+        for account in self.get_all_org_accounts():
+            if account["Email"] == email:
+                return account["Id"]
+
+        raise Exception(f"Account email {email} not found in Organization")
+
+    def get_aft_account_info(self, account_id: str) -> AftAccountInfo:
+        logger.info(f"Getting details for {account_id}")
+
+        describe_response = self.orgs_client.describe_account(AccountId=account_id)
+        account = describe_response["Account"]
+
+        list_response = self.orgs_client.list_parents(ChildId=account["Id"])
+        parents = list_response["Parents"]
+
+        return AftAccountInfo(
+            id=account["Id"],
+            email=account["Email"],
+            name=account["Name"],
+            joined_method=account["JoinedMethod"],
+            joined_date=str(account["JoinedTimestamp"]),
+            status=account["Status"],
+            parent_id=parents[0]["Id"],
+            parent_type=parents[0]["Type"],
+            type="account",
+            vendor="aws",
+        )

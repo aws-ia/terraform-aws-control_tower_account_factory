@@ -45,10 +45,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             return None
 
         # If it is a shared account update request, invoke the Account Provisioning Framework Lambda
-        if shared_account_request(
-            aft_management_session=auth.get_aft_management_session(),
-            event_record=event_record,
-        ):
+        if shared_account_request(event_record=event_record):
             logger.info("Shared Account Update Request Received")
             payload = build_aft_account_provisioning_framework_event(event_record)
             lambda_name = utils.get_ssm_parameter_value(

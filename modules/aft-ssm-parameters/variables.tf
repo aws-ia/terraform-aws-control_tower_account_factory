@@ -61,14 +61,6 @@ variable "invoke_aft_account_provisioning_framework_function_arn" {
   type = string
 }
 
-variable "validate_request_function_arn" {
-  type = string
-}
-
-variable "get_account_info_function_arn" {
-  type = string
-}
-
 variable "create_role_function_arn" {
   type = string
 }

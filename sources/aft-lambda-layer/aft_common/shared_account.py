@@ -4,6 +4,7 @@
 from typing import Any, Dict, List
 
 from aft_common import aft_utils as utils
+from aft_common import ddb
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.aft_utils import (
     SSM_PARAM_ACCOUNT_AUDIT_ACCOUNT_ID,
@@ -17,10 +18,8 @@ from boto3.session import Session
 logger = utils.get_logger()
 
 
-def shared_account_request(
-    aft_management_session: Session, event_record: Dict[str, Any]
-) -> bool:
-    ct_params = utils.unmarshal_ddb_item(event_record["dynamodb"]["NewImage"])[
+def shared_account_request(event_record: Dict[str, Any]) -> bool:
+    ct_params = ddb.unmarshal_ddb_item(event_record["dynamodb"]["NewImage"])[
         "control_tower_parameters"
     ]
     account_email = ct_params["AccountEmail"]
