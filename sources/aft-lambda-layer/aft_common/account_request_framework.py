@@ -10,6 +10,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    Iterable,
     Iterator,
     List,
     Literal,
@@ -55,9 +56,17 @@ else:
 logger = utils.get_logger()
 
 
+def ct_account_product_is_healthy(product: ProvisionedProductAttributeTypeDef) -> bool:
+    aft_sc_product_allowed_status = ["AVAILABLE", "TAINTED"]
+    # If LastSuccessfulProvisioningRecordId does not exist, the account was never successfully provisioned
+    return product["Status"] in aft_sc_product_allowed_status and bool(
+        product.get("LastSuccessfulProvisioningRecordId")
+    )
+
+
 def get_healthy_ct_product_batch(
     ct_management_session: Session,
-) -> Iterator[List[ProvisionedProductAttributeTypeDef]]:
+) -> Iterator[Iterable[ProvisionedProductAttributeTypeDef]]:
     sc_product_search_filter: Mapping[Literal["SearchQuery"], Sequence[str]] = {
         "SearchQuery": [
             "type:CONTROL_TOWER_ACCOUNT",
@@ -74,12 +83,10 @@ def get_healthy_ct_product_batch(
         )
     )
     provisioned_products = response["ProvisionedProducts"]
-    sc_product_allowed_status = ["AVAILABLE", "TAINTED"]
-    healthy_products = [
-        product
-        for product in provisioned_products
-        if product["Status"] in sc_product_allowed_status
-    ]
+    healthy_products: Iterable[ProvisionedProductAttributeTypeDef] = filter(
+        ct_account_product_is_healthy, provisioned_products
+    )
+
     yield healthy_products
 
     while response.get("NextPageToken") is not None:
@@ -89,11 +96,8 @@ def get_healthy_ct_product_batch(
             PageToken=response["NextPageToken"],
         )
         provisioned_products = response["ProvisionedProducts"]
-        healthy_products = [
-            product
-            for product in provisioned_products
-            if product["Status"] in sc_product_allowed_status
-        ]
+        healthy_products = filter(ct_account_product_is_healthy, provisioned_products)
+
         yield healthy_products
 
     return
@@ -134,7 +138,7 @@ def email_exists_in_batch(
         pp_email = sc_client.get_provisioned_product_outputs(
             ProvisionedProductId=pp, OutputKeys=["AccountEmail"]
         )["Outputs"][0]["OutputValue"]
-        if target_email.lower() == pp_email.lower():
+        if utils.emails_are_equal(target_email, pp_email):
             logger.info("Account email match found; provisioned product exists.")
             return True
     return False
@@ -149,12 +153,6 @@ def insert_msg_into_acc_req_queue(
     sqs_queue = sqs.build_sqs_url(session=session, queue_name=sqs_queue)
     message = build_sqs_message(record=event_record, new_account=new_account)
     sqs.send_sqs_message(session=session, sqs_url=sqs_queue, message=message)
-
-
-def delete_account_request(record: Dict[str, Any]) -> bool:
-    if record["eventName"] == "REMOVE":
-        return True
-    return False
 
 
 def control_tower_param_changed(record: Dict[str, Any]) -> bool:
@@ -227,7 +225,7 @@ def account_name_or_email_in_use(
                     f"Account Name: {account_name} already used in Organizations"
                 )
                 return True
-            if account_email == account["Email"]:
+            if utils.emails_are_equal(account_email, account["Email"]):
                 logger.error(
                     f"Account Email: {account_email} already used in Organizations"
                 )
@@ -338,9 +336,8 @@ def update_existing_account(
                 "OutputValue"
             ]
 
-            if (
-                provisioned_product_email.lower()
-                == control_tower_email_parameter.lower()
+            if utils.emails_are_equal(
+                provisioned_product_email, control_tower_email_parameter
             ):
                 target_product = product
                 break
@@ -379,21 +376,23 @@ def update_existing_account(
 
 
 def get_account_request_record(
-    aft_management_session: Session, table_id: str
+    aft_management_session: Session, request_table_id: str
 ) -> Dict[str, Any]:
     table_name = utils.get_ssm_parameter_value(
         aft_management_session, utils.SSM_PARAM_AFT_DDB_REQ_TABLE
     )
-    dynamodb = aft_management_session.resource("dynamodb")
-    table = dynamodb.Table(table_name)
-    logger.info("Getting record for id " + table_id + " in DDB table " + table_name)
-    response = table.get_item(Key={"id": table_id})
-    logger.info(response)
-    if "Item" in response:
-        logger.info("Record found, returning item")
-        logger.info(response["Item"])
-        response_item: Dict[str, Any] = response["Item"]
-        return response_item
+    logger.info(
+        "Getting record for id " + request_table_id + " in DDB table " + table_name
+    )
+    item = ddb.get_ddb_item(
+        session=aft_management_session,
+        table_name=table_name,
+        primary_key={"id": request_table_id},
+    )
+    if item:
+        logger.info("Record found")
+        logger.info(item)
+        return item
     else:
         logger.info("Record not found in DDB table, exiting")
         sys.exit(1)

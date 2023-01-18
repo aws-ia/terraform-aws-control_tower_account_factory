@@ -37,6 +37,7 @@ SSM_PARAMETER_PATH = "/aft/account-request/custom-fields/"
 class ProvisionRoles:
 
     SERVICE_ROLE_NAME = "AWSAFTService"
+    EXECUTION_ROLE_NAME = "AWSAFTExecution"
 
     def __init__(self, auth: AuthClient, account_id: str) -> None:
         self.auth = auth
@@ -57,7 +58,11 @@ class ProvisionRoles:
                     {
                         "Effect": "Allow",
                         "Principal": {
-                            "AWS": f"arn:{self.partition}:iam::{self.auth.aft_management_account_id}:assumed-role/AWSAFTAdmin/AWSAFT-Session"
+                            "AWS": [
+                                # TODO: Do we still need role/AWSAFTAdmin
+                                f"arn:{self.partition}:iam::{self.auth.aft_management_account_id}:role/AWSAFTAdmin",
+                                f"arn:{self.partition}:sts::{self.auth.aft_management_account_id}:assumed-role/AWSAFTAdmin/AWSAFT-Session",
+                            ]
                         },
                         "Action": "sts:AssumeRole",
                     }
@@ -202,13 +207,11 @@ class ProvisionRoles:
     def deploy_aws_aft_roles(self) -> None:
         trust_policy = self.generate_aft_trust_policy()
 
-        aft_execution_role_name = utils.get_ssm_parameter_value(
-            session=self.auth.get_aft_management_session(),
-            param=AuthClient.SSM_PARAM_AFT_EXEC_ROLE_NAME,
-        )
-        aft_execution_role_name = aft_execution_role_name.split("/")[-1]
+        aft_role_names = [
+            ProvisionRoles.SERVICE_ROLE_NAME,
+            ProvisionRoles.EXECUTION_ROLE_NAME,
+        ]
 
-        aft_role_names = [ProvisionRoles.SERVICE_ROLE_NAME, aft_execution_role_name]
         for role_name in aft_role_names:
             self._deploy_role_in_target_account(
                 role_name=role_name,

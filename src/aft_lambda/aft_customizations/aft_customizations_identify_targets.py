@@ -19,6 +19,7 @@ from aft_common.customizations import (
     validate_identify_targets_request,
 )
 from aft_common.organizations import OrganizationsAgent
+from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from aws_lambda_powertools.utilities.typing import LambdaContext
@@ -61,20 +62,32 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
             target_account_info = []
             for account_id in target_accounts:
 
-                account_email = orgs_agent.get_account_email_from_id(account_id)
+                logger.info(f"Building customization payload for {account_id}")
+
+                try:
+                    account_email = orgs_agent.get_account_email_from_id(account_id)
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "AccountNotFoundException":
+                        logger.info(
+                            f"Account with ID {account_id} does not exist or is suspended - ignoring"
+                        )
+                        target_accounts.remove(account_id)
+                        continue
+                    else:
+                        raise error
+
                 account_request = get_account_request_record(
                     aft_management_session=aft_management_session,
-                    table_id=account_email,
+                    request_table_id=account_email,
                 )
-
-                target_account_info.append(
-                    build_account_customization_payload(
-                        ct_management_session=ct_mgmt_session,
-                        account_id=account_id,
-                        account_request=account_request,
-                        control_tower_event={},
-                    )
+                account_payload = build_account_customization_payload(
+                    ct_management_session=ct_mgmt_session,
+                    account_id=account_id,
+                    account_request=account_request,
+                    control_tower_event={},
                 )
+                logger.info(f"Successfully generated payload: {account_payload}")
+                target_account_info.append(account_payload)
 
             return {
                 "number_pending_accounts": len(target_accounts),

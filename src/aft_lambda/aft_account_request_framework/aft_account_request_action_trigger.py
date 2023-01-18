@@ -6,15 +6,15 @@ import json
 from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
-from aft_common import notifications
+from aft_common import codepipeline, ddb, notifications
 from aft_common.account_request_framework import (
     build_aft_account_provisioning_framework_event,
     control_tower_param_changed,
-    delete_account_request,
     insert_msg_into_acc_req_queue,
     provisioned_product_exists,
 )
 from aft_common.auth import AuthClient
+from aft_common.organizations import OrganizationsAgent
 from aft_common.shared_account import shared_account_request
 
 if TYPE_CHECKING:
@@ -27,6 +27,7 @@ logger = utils.get_logger()
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     auth = AuthClient()
+    aft_management_session = auth.get_aft_management_session()
     try:
         # validate event
         if "Records" not in event:
@@ -38,10 +39,25 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             return None
 
         logger.info("DynamoDB Event Record Received")
-        if delete_account_request(event_record):
-            # Terraform handles removing the request record from DynamoDB
-            # AWS does not support automated deletion of accounts
+        logger.info(event_record)
+
+        # Account record was deleted from `aft-request` repo
+        if event_record["eventName"] == "REMOVE":
             logger.info("Delete account request received")
+            account_request = ddb.unmarshal_ddb_item(
+                event_record["dynamodb"]["OldImage"]
+            )
+            payload = {"account_request": account_request}
+
+            lambda_name = utils.get_ssm_parameter_value(
+                aft_management_session,
+                utils.SSM_PARAM_AFT_CLEANUP_RESOURCES_LAMBDA,
+            )
+            utils.invoke_lambda(
+                aft_management_session,
+                lambda_name,
+                json.dumps(payload).encode(),
+            )
             return None
 
         # If it is a shared account update request, invoke the Account Provisioning Framework Lambda
@@ -49,11 +65,11 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             logger.info("Shared Account Update Request Received")
             payload = build_aft_account_provisioning_framework_event(event_record)
             lambda_name = utils.get_ssm_parameter_value(
-                auth.get_aft_management_session(),
+                aft_management_session,
                 utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
             )
             utils.invoke_lambda(
-                auth.get_aft_management_session(),
+                aft_management_session,
                 lambda_name,
                 json.dumps(payload).encode(),
             )
@@ -67,7 +83,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             insert_msg_into_acc_req_queue(
                 event_record=event_record,
                 new_account=True,
-                session=auth.get_aft_management_session(),
+                session=aft_management_session,
             )
         elif not new_account and control_tower_updates:
             logger.info("Modify account request received")
@@ -75,17 +91,17 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             insert_msg_into_acc_req_queue(
                 event_record=event_record,
                 new_account=False,
-                session=auth.get_aft_management_session(),
+                session=aft_management_session,
             )
         elif not new_account and not control_tower_updates:
             logger.info("NON-Control Tower Parameter Update Request Received")
             payload = build_aft_account_provisioning_framework_event(event_record)
             lambda_name = utils.get_ssm_parameter_value(
-                auth.get_aft_management_session(),
+                aft_management_session,
                 utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
             )
             utils.invoke_lambda(
-                auth.get_aft_management_session(),
+                aft_management_session,
                 lambda_name,
                 json.dumps(payload).encode(),
             )
@@ -94,7 +110,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=auth.get_aft_management_session(),
+            session=aft_management_session,
             message=str(error),
             context=context,
             subject="AFT account request failed",

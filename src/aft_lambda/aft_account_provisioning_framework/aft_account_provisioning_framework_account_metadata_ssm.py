@@ -47,7 +47,14 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                     ],
                     "Effect": "Allow",
                     "Resource": f"arn:{utils.get_aws_partition(session)}:ssm:{target_region}:{target_account_id}:parameter{SSM_PARAMETER_PATH}*",
-                }
+                },
+                {
+                    "Action": [
+                        "sts:AssumeRole",
+                    ],
+                    "Effect": "Allow",
+                    "Resource": f"arn:{utils.get_aws_partition(session)}:iam::{target_account_id}:role/${ProvisionRoles.EXECUTION_ROLE_NAME}",
+                },
             ],
         }
 

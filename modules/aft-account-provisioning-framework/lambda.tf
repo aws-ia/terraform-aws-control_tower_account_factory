@@ -3,7 +3,7 @@
 #
 
 ###  CREATE ROLE FUNCTION
-
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "create_role" {
   filename         = var.provisioning_framework_archive_path
   function_name    = "aft-account-provisioning-framework-create-aft-execution-role"
@@ -22,6 +22,7 @@ resource "aws_lambda_function" "create_role" {
   }
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "create_role" {
   name              = "/aws/lambda/${aws_lambda_function.create_role.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
@@ -29,7 +30,7 @@ resource "aws_cloudwatch_log_group" "create_role" {
 
 
 ###  TAG ACCOUNT FUNCTION
-
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "tag_account" {
   filename         = var.provisioning_framework_archive_path
   function_name    = "aft-account-provisioning-framework-tag-account"
@@ -48,13 +49,14 @@ resource "aws_lambda_function" "tag_account" {
   }
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "tag_account" {
   name              = "/aws/lambda/${aws_lambda_function.tag_account.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
 }
 
 ###  PERSIST METADATA FUNCTION
-
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "persist_metadata" {
   filename         = var.provisioning_framework_archive_path
   function_name    = "aft-account-provisioning-framework-persist-metadata"
@@ -73,6 +75,7 @@ resource "aws_lambda_function" "persist_metadata" {
   }
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "persist_metadata" {
   name              = "/aws/lambda/${aws_lambda_function.persist_metadata.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
@@ -81,7 +84,7 @@ resource "aws_cloudwatch_log_group" "persist_metadata" {
 ###  Account Metadata SSM Function
 
 
-
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "account_metadata_ssm" {
   filename         = var.provisioning_framework_archive_path
   function_name    = "aft-account-provisioning-framework-account-metadata-ssm"
@@ -100,6 +103,7 @@ resource "aws_lambda_function" "account_metadata_ssm" {
   }
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "account_metadata_ssm" {
   name              = "/aws/lambda/${aws_lambda_function.account_metadata_ssm.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention

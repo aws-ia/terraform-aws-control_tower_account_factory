@@ -29,6 +29,10 @@ variable "aft_invoke_aft_account_provisioning_framework_function_name" {
   type = string
 }
 
+variable "aft_cleanup_resources_function_name" {
+  type = string
+}
+
 variable "aft_account_provisioning_framework_sfn_name" {
   type = string
 }

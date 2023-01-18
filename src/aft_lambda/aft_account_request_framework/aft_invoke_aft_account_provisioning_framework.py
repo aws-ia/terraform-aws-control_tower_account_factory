@@ -69,12 +69,18 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             logger.info("Account Customizations Event Detected")
 
             # Customization-only event does not contain ID
+            # Contains OU, and if OU-move was requested, would be completed
+            # by this step, so can optimize with OU-only search
+            account_request = event["account_request"]
+            account_ou = account_request["control_tower_parameters"][
+                "ManagedOrganizationalUnit"
+            ]
             account_id = orgs_agent.get_account_id_from_email(
                 email=event["account_request"][
                     "id"
-                ]  # `id` field of ddb table is the account email
+                ],  # `id` field of ddb table is the account email
+                ou_name=account_ou,
             )
-            account_request = event["account_request"]
 
         else:
             raise RuntimeError("Invoked with unrecognized event type")

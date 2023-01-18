@@ -52,6 +52,16 @@
             "Resource": [
                 "arn:${data_aws_partition_current_partition}:events:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:rule/StepFunctionsGetEventForCodeBuildStartBuildRule"
             ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "states:DescribeExecution"
+            ],
+            "Resource": [
+                "arn:${data_aws_partition_current_partition}:states:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:execution:aft-*"
+            ]
         }
+
     ]
 }

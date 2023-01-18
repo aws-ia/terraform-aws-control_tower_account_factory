@@ -43,6 +43,12 @@ resource "aws_ssm_parameter" "aft_invoke_aft_account_provisioning_framework_lamb
   value = var.aft_invoke_aft_account_provisioning_framework_function_name
 }
 
+resource "aws_ssm_parameter" "aft_invoke_aft_cleanup_resources_lambda_function_name" {
+  name  = "/aft/resources/lambda/aft-cleanup-resources"
+  type  = "String"
+  value = var.aft_cleanup_resources_function_name
+}
+
 resource "aws_ssm_parameter" "aft_account_provisioning_framework_sfn_name" {
   name  = "/aft/account/aft-management/sfn/aft-account-provisioning-framework-sfn-name"
   type  = "String"

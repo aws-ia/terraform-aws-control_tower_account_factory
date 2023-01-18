@@ -6,7 +6,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, cast
 
 from aft_common.aft_types import AftAccountInfo
-from aft_common.aft_utils import get_logger
+from aft_common.aft_utils import emails_are_equal, get_logger
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
         AccountTypeDef,
         DescribeAccountResponseTypeDef,
         OrganizationalUnitTypeDef,
+        ParentTypeDef,
         TagTypeDef,
     )
 
@@ -24,6 +25,7 @@ else:
     TagTypeDef = object
     OrganizationalUnitTypeDef = object
     AccountTypeDef = object
+    ParentTypeDef = object
 
 logger = get_logger()
 
@@ -43,7 +45,9 @@ class OrganizationsAgent:
             "organizations"
         )
 
-        # Memoize expensive all-org traversals
+        # Memoization - cache org query results
+        # Cache is not shared between AFT invocations so staleness due to org updates is unlikely
+        self.org_root_ou_id: Optional[str] = None
         self.org_ous: Optional[List[OrganizationalUnitTypeDef]] = None
         self.org_accounts: Optional[List[AccountTypeDef]] = None
 
@@ -81,14 +85,17 @@ class OrganizationsAgent:
         return f"{ou_name} ({ou_id})"
 
     def get_root_ou_id(self) -> str:
-        return self.orgs_client.list_roots()["Roots"][0]["Id"]
+        if self.org_root_ou_id is not None:
+            return self.org_root_ou_id
+
+        # Assumes single-root organizations
+        self.org_root_ou_id = self.orgs_client.list_roots()["Roots"][0]["Id"]
+        return self.org_root_ou_id
 
     def get_ous_for_root(self) -> List[OrganizationalUnitTypeDef]:
         return self.get_children_ous_from_parent_id(parent_id=self.get_root_ou_id())
 
     def get_all_org_accounts(self) -> List[AccountTypeDef]:
-        # Memoize calls / cache previous results
-        # Cache is not shared between AFT invocations so staleness due to org updates is unlikely
         if self.org_accounts is not None:
             return self.org_accounts
 
@@ -101,8 +108,6 @@ class OrganizationsAgent:
         return self.org_accounts
 
     def get_all_org_ous(self) -> List[OrganizationalUnitTypeDef]:
-        # Memoize calls / cache previous results
-        # Cache is not shared between AFT invocations so staleness due to org updates is unlikely
         if self.org_ous is not None:
             return self.org_ous
 
@@ -133,6 +138,14 @@ class OrganizationsAgent:
         self.org_ous = org_ous
 
         return self.org_ous
+
+    def get_parents_from_account_id(self, account_id: str) -> List[ParentTypeDef]:
+        paginator = self.orgs_client.get_paginator("list_parents")
+        pages = paginator.paginate(ChildId=account_id)
+        parents = []
+        for page in pages:
+            parents.extend(page["Parents"])
+        return parents
 
     def get_children_ous_from_parent_id(
         self, parent_id: str
@@ -172,11 +185,15 @@ class OrganizationsAgent:
 
         return matched_ou_ids
 
-    def get_ou_from_account_id(
-        self, account_id: str
-    ) -> Optional[OrganizationalUnitTypeDef]:
-        if self.account_id_is_member_of_root(account_id=account_id):
+    def get_ou_from_account_id(self, account_id: str) -> OrganizationalUnitTypeDef:
+        # NOTE: Assumes single-parent accounts
+        parents = self.get_parents_from_account_id(account_id=account_id)
+        parent = parents[0]
+
+        # Child of Root
+        if parent["Type"] == "ROOT":
             list_root_response = self.orgs_client.list_roots()
+            # NOTE: Assumes single root structure
             root_ou: OrganizationalUnitTypeDef = {
                 "Id": list_root_response["Roots"][0]["Id"],
                 "Arn": list_root_response["Roots"][0]["Arn"],
@@ -184,12 +201,14 @@ class OrganizationsAgent:
             }
             return root_ou
 
-        ous = self.get_all_org_ous()
-        for ou in ous:
-            account_ids = [acct["Id"] for acct in self.get_accounts_for_ou(ou["Id"])]
-            if account_id in account_ids:
-                return ou
-        return None
+        # Child of non-Root OU
+        describe_ou_response = self.orgs_client.describe_organizational_unit(
+            OrganizationalUnitId=parent["Id"]
+        )
+        parent_ou: OrganizationalUnitTypeDef = describe_ou_response[
+            "OrganizationalUnit"
+        ]
+        return parent_ou
 
     def get_accounts_for_ou(self, ou_id: str) -> List[AccountTypeDef]:
         paginator = self.orgs_client.get_paginator("list_accounts_for_parent")
@@ -208,14 +227,13 @@ class OrganizationsAgent:
             )
         return account_ids
 
-    def account_id_is_member_of_root(self, account_id: str) -> bool:
-        root_id = self.get_root_ou_id()
-        accounts_under_root = self.get_accounts_for_ou(ou_id=root_id)
-        return account_id in [account["Id"] for account in accounts_under_root]
+    def account_is_member_of_root(self, account_id: str) -> bool:
+        # Handles (future) multi-parent case
+        account_parents = self.get_parents_from_account_id(account_id=account_id)
+        return any([parent["Type"] == "ROOT" for parent in account_parents])
 
     def ou_contains_account(self, ou_name: str, account_id: str) -> bool:
-        if ou_name == OrganizationsAgent.ROOT_OU:
-            return self.account_id_is_member_of_root(account_id=account_id)
+        # NOTE: Assumes single-parent accounts
         current_ou = self.get_ou_from_account_id(account_id=account_id)
         if current_ou:
             if ou_name == current_ou["Name"]:
@@ -249,9 +267,21 @@ class OrganizationsAgent:
         )
         return response["Account"]["Email"]
 
-    def get_account_id_from_email(self, email: str) -> str:
+    def get_account_id_from_email(
+        self, email: str, ou_name: Optional[str] = None
+    ) -> str:
+        if ou_name is not None:
+            # If OU known, search it instead of the entire org; supports nested OU format
+            # NOTE: Be careful using this parameter as the OU in account request is
+            # NOT always equal to the OU an account is currently in (move-OU requests)
+            account_ids_in_ou = self.get_account_ids_in_ous(ou_names=[ou_name])
+            for account_id in account_ids_in_ou:
+                account_email = self.get_account_email_from_id(account_id=account_id)
+                if emails_are_equal(account_email, email):
+                    return account_id
+
         for account in self.get_all_org_accounts():
-            if account["Email"] == email:
+            if emails_are_equal(account["Email"], email):
                 return account["Id"]
 
         raise Exception(f"Account email {email} not found in Organization")
@@ -262,18 +292,23 @@ class OrganizationsAgent:
         describe_response = self.orgs_client.describe_account(AccountId=account_id)
         account = describe_response["Account"]
 
-        list_response = self.orgs_client.list_parents(ChildId=account["Id"])
-        parents = list_response["Parents"]
+        # NOTE: Assumes single-parent accounts
+        parents = self.get_parents_from_account_id(account_id=account_id)
+        parent = parents[0]
 
-        return AftAccountInfo(
+        aft_account_info = AftAccountInfo(
             id=account["Id"],
             email=account["Email"],
             name=account["Name"],
             joined_method=account["JoinedMethod"],
             joined_date=str(account["JoinedTimestamp"]),
             status=account["Status"],
-            parent_id=parents[0]["Id"],
-            parent_type=parents[0]["Type"],
+            parent_id=parent["Id"],
+            parent_type=parent["Type"],
             type="account",
             vendor="aws",
         )
+
+        logger.info(f"Account details: {aft_account_info}")
+
+        return aft_account_info

@@ -105,11 +105,12 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                             )
                 else:
                     logger.info("Unknown operation received in message")
+                    raise RuntimeError("Unknown operation received in message")
 
                 sqs.delete_sqs_message(aft_management_session, sqs_message)
                 if not ct_request_is_valid:
                     logger.exception("CT Request is not valid")
-                    assert ct_request_is_valid
+                    raise RuntimeError("CT Request is not valid")
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(

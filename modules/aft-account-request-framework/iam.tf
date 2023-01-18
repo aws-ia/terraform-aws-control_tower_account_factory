@@ -71,9 +71,8 @@ resource "aws_iam_role_policy" "aft_account_request_action_trigger" {
     data_aws_caller_identity_aft-management_account_id                = data.aws_caller_identity.aft-management.account_id
     aws_sns_topic_aft_notifications_arn                               = aws_sns_topic.aft_notifications.arn
     aws_sns_topic_aft_failure_notifications_arn                       = aws_sns_topic.aft_failure_notifications.arn
-    data_aws_region_aft-management_name                               = data.aws_region.aft-management.name
-    data_aws_caller_identity_aft-management_account_id                = data.aws_caller_identity.aft-management.account_id
     aws_lambda_function_invoke_aft_account_provisioning_framework_arn = aws_lambda_function.aft_invoke_aft_account_provisioning_framework.arn
+    aws_lambda_function_cleanup_resources_arn                         = aws_lambda_function.aft_cleanup_resources.arn
     aws_sqs_queue_aft_account_request_arn                             = aws_sqs_queue.aft_account_request.arn
     aws_kms_key_aft_arn                                               = aws_kms_key.aft.arn
     aws_dynamodb_table_aft-request_name                               = aws_dynamodb_table.aft_request.name
@@ -150,7 +149,7 @@ resource "aws_iam_role_policy_attachment" "aft_invoke_aft_account_provisioning_f
 }
 
 resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework" {
-  name = "aft-account-request-action-trigger"
+  name = "aft-invoke-account-provisioning-framework"
   role = aws_iam_role.aft_invoke_aft_account_provisioning_framework.id
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-invoke-aft-account-provisioning-framework.tpl", {
@@ -165,6 +164,32 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework" {
   })
 }
 
+######### cleanup-aft-resourcess #########
+resource "aws_iam_role" "aft_cleanup_resources" {
+  name               = "aft-lambda-cleanup-resources"
+  assume_role_policy = templatefile("${path.module}/iam/trust-policies/lambda.tpl", { none = "none" })
+}
+
+resource "aws_iam_role_policy_attachment" "aft_cleanup_resources" {
+  count      = length(local.lambda_managed_policies)
+  role       = aws_iam_role.aft_cleanup_resources.name
+  policy_arn = local.lambda_managed_policies[count.index]
+}
+
+resource "aws_iam_role_policy" "aft_cleanup_resources" {
+  name = "aft-cleanup-resources"
+  role = aws_iam_role.aft_cleanup_resources.id
+
+  policy = templatefile("${path.module}/iam/role-policies/lambda-aft-cleanup-resources.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
+    data_aws_region_aft-management_name                = data.aws_region.aft-management.name
+    data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
+    aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
+    aws_sns_topic_aft_failure_notifications_arn        = aws_sns_topic.aft_failure_notifications.arn
+    aws_dynamodb_table_aft-request-metadata_name       = aws_dynamodb_table.aft_request_metadata.name
+    aws_kms_key_aft_arn                                = aws_kms_key.aft.arn
+  })
+}
 
 ######### aft_aws_backup #########
 

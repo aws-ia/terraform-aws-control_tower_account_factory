@@ -26,7 +26,9 @@ module "ct_management_exec_role" {
   providers = {
     aws = aws.ct_management
   }
-  trusted_entity = aws_iam_role.aft_admin_role.arn
+  trusted_entity        = aws_iam_role.aft_admin_role.arn
+  aft_admin_session_arn = local.aft_admin_assumed_role_arn
+
 }
 
 module "log_archive_exec_role" {
@@ -34,7 +36,9 @@ module "log_archive_exec_role" {
   providers = {
     aws = aws.log_archive
   }
-  trusted_entity = aws_iam_role.aft_admin_role.arn
+  trusted_entity        = aws_iam_role.aft_admin_role.arn
+  aft_admin_session_arn = local.aft_admin_assumed_role_arn
+
 }
 
 module "audit_exec_role" {
@@ -42,7 +46,9 @@ module "audit_exec_role" {
   providers = {
     aws = aws.audit
   }
-  trusted_entity = aws_iam_role.aft_admin_role.arn
+  trusted_entity        = aws_iam_role.aft_admin_role.arn
+  aft_admin_session_arn = local.aft_admin_assumed_role_arn
+
 }
 
 module "aft_exec_role" {
@@ -50,7 +56,9 @@ module "aft_exec_role" {
   providers = {
     aws = aws.aft_management
   }
-  trusted_entity = aws_iam_role.aft_admin_role.arn
+  trusted_entity        = aws_iam_role.aft_admin_role.arn
+  aft_admin_session_arn = local.aft_admin_assumed_role_arn
+
 }
 
 
@@ -59,7 +67,9 @@ module "ct_management_service_role" {
   providers = {
     aws = aws.ct_management
   }
-  trusted_entity = aws_iam_role.aft_admin_role.arn
+  trusted_entity        = aws_iam_role.aft_admin_role.arn
+  aft_admin_session_arn = local.aft_admin_assumed_role_arn
+
 }
 
 module "log_archive_service_role" {
@@ -67,7 +77,8 @@ module "log_archive_service_role" {
   providers = {
     aws = aws.log_archive
   }
-  trusted_entity = aws_iam_role.aft_admin_role.arn
+  trusted_entity        = aws_iam_role.aft_admin_role.arn
+  aft_admin_session_arn = local.aft_admin_assumed_role_arn
 }
 
 module "audit_service_role" {
@@ -75,7 +86,9 @@ module "audit_service_role" {
   providers = {
     aws = aws.audit
   }
-  trusted_entity = aws_iam_role.aft_admin_role.arn
+  trusted_entity        = aws_iam_role.aft_admin_role.arn
+  aft_admin_session_arn = local.aft_admin_assumed_role_arn
+
 }
 
 module "aft_service_role" {
@@ -83,5 +96,7 @@ module "aft_service_role" {
   providers = {
     aws = aws.aft_management
   }
-  trusted_entity = aws_iam_role.aft_admin_role.arn
+  trusted_entity        = aws_iam_role.aft_admin_role.arn
+  aft_admin_session_arn = local.aft_admin_assumed_role_arn
+
 }

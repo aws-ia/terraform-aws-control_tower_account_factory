@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
-from aft_common.customizations import execute_pipeline
+from aft_common.codepipeline import execute_pipeline
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -30,9 +30,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
         pipelines_to_run = maximum_concurrent_pipelines - running_pipelines
         accounts = event["targets"]["pending_accounts"]
         logger.info("Accounts submitted for execution: " + str(len(accounts)))
-        for p in accounts[:pipelines_to_run]:
-            execute_pipeline(session, str(p))
-            accounts.remove(p)
+        for account_id in accounts[:pipelines_to_run]:
+            execute_pipeline(session, str(account_id))
+            accounts.remove(account_id)
         logger.info("Accounts remaining to be executed - ")
         logger.info(accounts)
         return {"number_pending_accounts": len(accounts), "pending_accounts": accounts}

@@ -48,6 +48,7 @@ SSM_PARAM_ACCOUNT_REQUEST_QUEUE = "/aft/resources/sqs/aft-request-queue-name"
 SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA = (
     "/aft/resources/lambda/aft-invoke-aft-account-provisioning-framework"
 )
+SSM_PARAM_AFT_CLEANUP_RESOURCES_LAMBDA = "/aft/resources/lambda/aft-cleanup-resources"
 SSM_PARAM_AFT_EVENTS_TABLE = "/aft/resources/ddb/aft-controltower-events-table-name"
 SSM_PARAM_AFT_SFN_NAME = (
     "/aft/account/aft-management/sfn/aft-account-provisioning-framework-sfn-name"
@@ -113,11 +114,14 @@ def get_logger() -> Logger:
         # presumed local debugging
         log_level = "info"
     logger = Logger(loglevel=log_level)
-    logger.info("Logger started.")
     return logger
 
 
 logger = get_logger()
+
+
+def emails_are_equal(first_email: str, second_email: str) -> bool:
+    return first_email.lower() == second_email.lower()
 
 
 def get_ssm_parameter_value(session: Session, param: str, decrypt: bool = False) -> str:
@@ -188,7 +192,7 @@ def invoke_lambda(
     payload: Union[bytes, IO[bytes], StreamingBody],
 ) -> InvocationResponseTypeDef:
     client: LambdaClient = session.client("lambda")
-    logger.info("Invoking AFT Account Provisioning Framework Lambda")
+    logger.info(f"Invoking Lambda: {function_name}")
     response = client.invoke(
         FunctionName=function_name,
         InvocationType="Event",
@@ -312,8 +316,8 @@ def get_aws_partition(session: Session, region: Optional[str] = None) -> str:
     if region is None:
         region = session.region_name
 
-    partition = session.get_partition_for_region(region)  # type: ignore
-    return cast(str, partition)
+    partition = session.get_partition_for_region(region)
+    return partition
 
 
 def yield_batches_from_list(

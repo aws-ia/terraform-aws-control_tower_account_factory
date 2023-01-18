@@ -1,6 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "codebuild_invoker" {
   filename         = var.builder_archive_path
   function_name    = local.codebuild_invoker_function_name

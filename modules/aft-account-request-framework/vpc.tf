@@ -1,6 +1,9 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+
+# TODO: Remove this tfsec-ignore when VPC flow logs are enabled
+#tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
 resource "aws_vpc" "aft_vpc" {
   cidr_block           = var.aft_vpc_cidr
   enable_dns_support   = true
@@ -118,12 +121,14 @@ resource "aws_security_group" "aft_vpc_default_sg" {
   description = "Allow outbound traffic"
   vpc_id      = aws_vpc.aft_vpc.id
 
+  # Open egress required to download dependencies
   egress {
+    description      = "Allow outbound traffic to internet"
     from_port        = 0
     to_port          = 0
     protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+    cidr_blocks      = ["0.0.0.0/0"] #tfsec:ignore:aws-ec2-no-public-egress-sgr
+    ipv6_cidr_blocks = ["::/0"]      #tfsec:ignore:aws-ec2-no-public-egress-sgr
   }
 }
 
@@ -133,6 +138,7 @@ resource "aws_security_group" "aft_vpc_endpoint_sg" {
   vpc_id      = aws_vpc.aft_vpc.id
 
   ingress {
+    description = "Allow inbound TLS"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -140,18 +146,21 @@ resource "aws_security_group" "aft_vpc_endpoint_sg" {
   }
 
   ingress {
+    description = "Allow inbound SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.aft_vpc_cidr]
   }
 
+  # Open egress required to download dependencies
   egress {
+    description      = "Allow outbound traffic to internet"
     from_port        = 0
     to_port          = 0
     protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+    cidr_blocks      = ["0.0.0.0/0"] #tfsec:ignore:aws-ec2-no-public-egress-sgr
+    ipv6_cidr_blocks = ["::/0"]      #tfsec:ignore:aws-ec2-no-public-egress-sgr
   }
 }
 

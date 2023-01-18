@@ -1,8 +1,19 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+
+#tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "aft_codepipeline_customizations_bucket" {
   bucket = "aft-customizations-pipeline-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket_public_access_block" "aft-codepipeline-customizations-block-public-access" {
+  bucket = aws_s3_bucket.aft_codepipeline_customizations_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket_versioning" "aft-codepipeline-customizations-bucket-versioning" {

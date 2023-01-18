@@ -9,10 +9,19 @@
 			],
 			"Resource": "arn:${data_aws_partition_current_partition}:dynamodb:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:table/${aws_dynamodb_table_aft-request-audit_name}"
 		},
+        {
+            "Effect": "Allow",
+			"Action": [
+				"lambda:InvokeFunction"
+			],
+			"Resource": [
+				"${aws_lambda_function_invoke_aft_account_provisioning_framework_arn}",
+                "${aws_lambda_function_cleanup_resources_arn}"
+			]
+        },
 		{
 			"Effect": "Allow",
 			"Action": [
-				"lambda:InvokeFunction",
 				"dynamodb:GetShardIterator",
 				"dynamodb:DescribeStream",
 				"dynamodb:GetRecords",
@@ -22,7 +31,6 @@
 			],
 			"Resource": [
 				"arn:${data_aws_partition_current_partition}:dynamodb:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:table/${aws_dynamodb_table_aft-request_name}/stream/*",
-				"${aws_lambda_function_invoke_aft_account_provisioning_framework_arn}",
                 "${aws_sqs_queue_aft_account_request_arn}"
 			]
 		},
