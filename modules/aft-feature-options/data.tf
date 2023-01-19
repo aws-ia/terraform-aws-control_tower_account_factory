@@ -1,7 +1,9 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-data "aws_partition" "current" {}
+data "aws_partition" "current" {
+  provider = aws.aft_management
+}
 
 data "aws_region" "current" {
   provider = aws.aft_management

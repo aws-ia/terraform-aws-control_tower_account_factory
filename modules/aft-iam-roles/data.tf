@@ -5,4 +5,6 @@ data "aws_caller_identity" "aft_management" {
   provider = aws.aft_management
 }
 
-data "aws_partition" "current" {}
+data "aws_partition" "current" {
+  provider = aws.aft_management
+}

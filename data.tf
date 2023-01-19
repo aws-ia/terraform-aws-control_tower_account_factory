@@ -5,4 +5,6 @@ data "local_file" "version" {
   filename = "${path.module}/VERSION"
 }
 
-data "aws_partition" "current" {}
+data "aws_partition" "current" {
+  provider = aws.ct_management
+}
