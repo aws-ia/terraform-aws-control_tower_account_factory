@@ -254,9 +254,9 @@ resource "aws_vpc_endpoint" "codebuild" {
   count = var.aft_vpc_endpoints ? 1 : 0
 
   vpc_id             = aws_vpc.aft_vpc.id
-  service_name       = data.aws_vpc_endpoint_service.codebuild.service_name
+  service_name       = data.aws_vpc_endpoint_service.codebuild[0].service_name
   vpc_endpoint_type  = "Interface"
-  subnet_ids         = data.aws_subnets.codebuild.ids
+  subnet_ids         = data.aws_subnets.codebuild[0].ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
@@ -268,9 +268,9 @@ resource "aws_vpc_endpoint" "codecommit" {
   count = var.aft_vpc_endpoints ? 1 : 0
 
   vpc_id             = aws_vpc.aft_vpc.id
-  service_name       = data.aws_vpc_endpoint_service.codecommit.service_name
+  service_name       = data.aws_vpc_endpoint_service.codecommit[0].service_name
   vpc_endpoint_type  = "Interface"
-  subnet_ids         = data.aws_subnets.codecommit.ids
+  subnet_ids         = data.aws_subnets.codecommit[0].ids
   security_group_ids = [
     aws_security_group.aft_vpc_endpoint_sg.id,
   ]
