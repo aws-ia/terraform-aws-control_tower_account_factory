@@ -21,7 +21,7 @@ resource "aws_lambda_function" "aft_account_request_audit_trigger" {
     dynamic "vpc_config" {
     for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
+      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg.id])
     }
   }
@@ -68,7 +68,7 @@ resource "aws_lambda_function" "aft_account_request_action_trigger" {
     dynamic "vpc_config" {
     for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
+      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg.id])
     }
   }
@@ -109,7 +109,7 @@ resource "aws_lambda_function" "aft_controltower_event_logger" {
     dynamic "vpc_config" {
     for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
+      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg.id])
     }
   }
@@ -149,7 +149,7 @@ resource "aws_lambda_function" "aft_account_request_processor" {
     dynamic "vpc_config" {
     for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
+      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg.id])
     }
   }
@@ -190,7 +190,7 @@ resource "aws_lambda_function" "aft_invoke_aft_account_provisioning_framework" {
     dynamic "vpc_config" {
     for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
+      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg.id])
     }
   }
@@ -231,7 +231,7 @@ resource "aws_lambda_function" "aft_cleanup_resources" {
     dynamic "vpc_config" {
     for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
+      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg.id])
     }
   }
