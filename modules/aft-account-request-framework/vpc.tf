@@ -65,7 +65,7 @@ resource "aws_route_table" "aft_vpc_private_subnet_01" {
   vpc_id = aws_vpc.aft_vpc.id
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.aft-vpc-natgw-01.id
+    nat_gateway_id = aws_nat_gateway.aft-vpc-natgw-01[0].id
   }
   tags = {
     Name = "aft-vpc-private-subnet-01"
@@ -77,7 +77,7 @@ resource "aws_route_table" "aft_vpc_private_subnet_02" {
   vpc_id = aws_vpc.aft_vpc.id
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.aft-vpc-natgw-02.id
+    nat_gateway_id = aws_nat_gateway.aft-vpc-natgw-02[0].id
   }
   tags = {
     Name = "aft-vpc-private-subnet-02"
@@ -96,15 +96,15 @@ resource "aws_route_table" "aft_vpc_public_subnet_01" {
 }
 
 resource "aws_route_table_association" "aft_vpc_private_subnet_01" {
-  count             = var.aft_feature_disable_private_networking ? 0 : 1
-  subnet_id      = aws_subnet.aft_vpc_private_subnet_01.id
-  route_table_id = aws_route_table.aft_vpc_private_subnet_01.id
+  count          = var.aft_feature_disable_private_networking ? 0 : 1
+  subnet_id      = aws_subnet.aft_vpc_private_subnet_01[0].id
+  route_table_id = aws_route_table.aft_vpc_private_subnet_01[0].id
 }
 
 resource "aws_route_table_association" "aft_vpc_private_subnet_02" {
-  count             = var.aft_feature_disable_private_networking ? 0 : 1
-  subnet_id      = aws_subnet.aft_vpc_private_subnet_02.id
-  route_table_id = aws_route_table.aft_vpc_private_subnet_02.id
+  count          = var.aft_feature_disable_private_networking ? 0 : 1
+  subnet_id      = aws_subnet.aft_vpc_private_subnet_02[0].id
+  route_table_id = aws_route_table.aft_vpc_private_subnet_02[0].id
 }
 
 resource "aws_route_table_association" "aft_vpc_public_subnet_01" {
