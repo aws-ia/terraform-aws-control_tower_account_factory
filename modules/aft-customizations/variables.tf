@@ -108,3 +108,7 @@ variable "customizations_archive_hash" {
 variable "global_codebuild_timeout" {
   type = number
 }
+
+variable "aft_feature_disable_private_networking" {
+  type = bool
+}

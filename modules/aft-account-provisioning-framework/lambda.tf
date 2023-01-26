@@ -16,9 +16,12 @@ resource "aws_lambda_function" "create_role" {
   timeout          = 300
   layers           = [var.aft_common_layer_arn]
 
-  vpc_config {
-    subnet_ids         = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+    dynamic "vpc_config" {
+    for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
+    content {
+      subnet_ids            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 }
 
@@ -43,9 +46,12 @@ resource "aws_lambda_function" "tag_account" {
   timeout          = 300
   layers           = [var.aft_common_layer_arn]
 
-  vpc_config {
-    subnet_ids         = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+    dynamic "vpc_config" {
+    for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
+    content {
+      subnet_ids            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 }
 
@@ -69,9 +75,12 @@ resource "aws_lambda_function" "persist_metadata" {
   timeout          = 300
   layers           = [var.aft_common_layer_arn]
 
-  vpc_config {
-    subnet_ids         = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+    dynamic "vpc_config" {
+    for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
+    content {
+      subnet_ids            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 }
 
@@ -97,9 +106,12 @@ resource "aws_lambda_function" "account_metadata_ssm" {
   timeout          = 300
   layers           = [var.aft_common_layer_arn]
 
-  vpc_config {
-    subnet_ids         = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+    dynamic "vpc_config" {
+    for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
+    content {
+      subnet_ids            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 }
 

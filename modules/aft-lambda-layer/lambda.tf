@@ -14,9 +14,12 @@ resource "aws_lambda_function" "codebuild_invoker" {
   runtime          = "python3.8"
   timeout          = 900
 
-  vpc_config {
-    subnet_ids         = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_feature_disable_private_networking ? {} : { k = "v" }
+    content {
+      subnet_ids         = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 }
 

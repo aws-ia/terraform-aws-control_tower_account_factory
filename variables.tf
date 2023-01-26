@@ -143,6 +143,16 @@ variable "aft_feature_delete_default_vpcs_enabled" {
   }
 }
 
+variable "aft_feature_disable_private_networking" {
+  description = "Feature flag toggling disabling private networking on/off"
+  type        = bool
+  default     = false
+  validation {
+    condition     = contains([true, false], var.aft_feature_disable_private_networking)
+    error_message = "Valid values for var: aft_feature_disable_private_networking are (true, false)."
+  }
+}
+
 #########################################
 # AFT Customer VCS Variables
 #########################################

@@ -14,11 +14,13 @@ module "aft_account_provisioning_framework" {
   aft_account_provisioning_customizations_sfn_name = local.aft_account_provisioning_customizations_sfn_name
   trigger_customizations_sfn_name                  = local.trigger_customizations_sfn_name
   aft_features_sfn_name                            = local.aft_features_sfn_name
+  aft_feature_disable_private_networking           = var.aft_feature_disable_private_networking
   aft_sns_topic_arn                                = module.aft_account_request_framework.aft_sns_topic_arn
   aft_failure_sns_topic_arn                        = module.aft_account_request_framework.aft_failure_sns_topic_arn
   aft_common_layer_arn                             = module.aft_lambda_layer.layer_version_arn
   aft_kms_key_arn                                  = module.aft_account_request_framework.aft_kms_key_arn
   aft_vpc_private_subnets                          = module.aft_account_request_framework.aft_vpc_private_subnets
+  aft_vpc_public_subnets                           = module.aft_account_request_framework.aft_vpc_public_subnets
   aft_vpc_default_sg                               = module.aft_account_request_framework.aft_vpc_default_sg
   cloudwatch_log_group_retention                   = var.cloudwatch_log_group_retention
   provisioning_framework_archive_path              = module.packaging.provisioning_framework_archive_path
@@ -41,6 +43,7 @@ module "aft_account_request_framework" {
   aft_vpc_public_subnet_01_cidr               = var.aft_vpc_public_subnet_01_cidr
   aft_vpc_public_subnet_02_cidr               = var.aft_vpc_public_subnet_02_cidr
   aft_vpc_endpoints                           = var.aft_vpc_endpoints
+  aft_feature_disable_private_networking      = var.aft_feature_disable_private_networking
   request_framework_archive_path              = module.packaging.request_framework_archive_path
   request_framework_archive_hash              = module.packaging.request_framework_archive_hash
 }
@@ -85,6 +88,7 @@ module "aft_code_repositories" {
   global_customizations_repo_branch               = var.global_customizations_repo_branch
   log_group_retention                             = var.cloudwatch_log_group_retention
   global_codebuild_timeout                        = var.global_codebuild_timeout
+  aft_feature_disable_private_networking          = var.aft_feature_disable_private_networking
 }
 
 module "aft_customizations" {
@@ -119,6 +123,7 @@ module "aft_customizations" {
   customizations_archive_path                       = module.packaging.customizations_archive_path
   customizations_archive_hash                       = module.packaging.customizations_archive_hash
   global_codebuild_timeout                          = var.global_codebuild_timeout
+  aft_feature_disable_private_networking            = var.aft_feature_disable_private_networking
 }
 
 module "aft_feature_options" {
@@ -137,12 +142,14 @@ module "aft_feature_options" {
   aft_common_layer_arn                      = module.aft_lambda_layer.layer_version_arn
   aft_sns_topic_arn                         = module.aft_account_request_framework.sns_topic_arn
   aft_failure_sns_topic_arn                 = module.aft_account_request_framework.failure_sns_topic_arn
+  aft_vpc_public_subnets                    = module.aft_account_request_framework.aft_vpc_public_subnets
   aft_vpc_private_subnets                   = module.aft_account_request_framework.aft_vpc_private_subnets
   aft_vpc_default_sg                        = module.aft_account_request_framework.aft_vpc_default_sg
   log_archive_account_id                    = var.log_archive_account_id
   cloudwatch_log_group_retention            = var.cloudwatch_log_group_retention
   feature_options_archive_path              = module.packaging.feature_options_archive_path
   feature_options_archive_hash              = module.packaging.feature_options_archive_hash
+  aft_feature_disable_private_networking    = var.aft_feature_disable_private_networking
 }
 
 module "aft_iam_roles" {
@@ -169,11 +176,13 @@ module "aft_lambda_layer" {
   aws_region                                        = var.ct_home_region
   aft_kms_key_arn                                   = module.aft_account_request_framework.aft_kms_key_arn
   aft_vpc_id                                        = module.aft_account_request_framework.aft_vpc_id
+  aft_vpc_public_subnets                            = module.aft_account_request_framework.aft_vpc_public_subnets
   aft_vpc_private_subnets                           = module.aft_account_request_framework.aft_vpc_private_subnets
   aft_vpc_default_sg                                = module.aft_account_request_framework.aft_vpc_default_sg
   s3_bucket_name                                    = module.aft_customizations.aft_codepipeline_customizations_bucket_name
   builder_archive_path                              = module.packaging.builder_archive_path
   builder_archive_hash                              = module.packaging.builder_archive_hash
+  aft_feature_disable_private_networking            = var.aft_feature_disable_private_networking
 }
 
 module "aft_ssm_parameters" {
