@@ -4,7 +4,7 @@
         {
             "Effect": "Allow",
             "Action": "sts:AssumeRole",
-            "Resource": "arn:aws:iam::*:role/AWSControlTowerExecution"
+            "Resource": "arn:${data_aws_partition_current_partition}:iam::*:role/AWSControlTowerExecution"
         }
     ]
 }

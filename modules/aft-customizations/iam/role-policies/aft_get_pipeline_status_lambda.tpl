@@ -4,7 +4,7 @@
         {
             "Effect": "Allow",
             "Action": "codepipeline:ListPipelineExecutions",
-            "Resource": "arn:aws:codepipeline:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*"
+            "Resource": "arn:${data_aws_partition_current_partition}:codepipeline:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*"
         },
         {
             "Effect": "Allow",

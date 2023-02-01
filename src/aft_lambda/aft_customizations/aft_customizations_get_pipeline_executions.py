@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
-from aft_common.customizations import get_running_pipeline_count, list_pipelines
+from aft_common.codepipeline import get_running_pipeline_count, list_pipelines
 from boto3.session import Session
 
 if TYPE_CHECKING:

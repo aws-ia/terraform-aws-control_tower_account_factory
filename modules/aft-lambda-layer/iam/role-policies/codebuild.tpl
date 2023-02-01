@@ -8,7 +8,7 @@
         "lambda:PublishLayerVersion"
       ],
       "Effect": "Allow",
-      "Resource": "arn:aws:lambda:${aws_region}:${account_id}:layer:${layer_name}:*"
+      "Resource": "arn:${data_aws_partition_current_partition}:lambda:${aws_region}:${account_id}:layer:${layer_name}:*"
     },
     {
       "Effect": "Allow",
@@ -43,8 +43,8 @@
         "s3:*"
       ],
       "Resource": [
-        "arn:aws:s3:::${s3_bucket_name}",
-        "arn:aws:s3:::${s3_bucket_name}/*"
+        "arn:${data_aws_partition_current_partition}:s3:::${s3_bucket_name}",
+        "arn:${data_aws_partition_current_partition}:s3:::${s3_bucket_name}/*"
       ]
     },
     {
@@ -66,7 +66,7 @@
         "ec2:CreateNetworkInterfacePermission"
       ],
       "Resource": [
-        "arn:aws:ec2:${aws_region}:${account_id}:network-interface/*"
+        "arn:${data_aws_partition_current_partition}:ec2:${aws_region}:${account_id}:network-interface/*"
       ]
     },
     {
@@ -76,7 +76,7 @@
         "ssm:GetParameter"
       ],
       "Resource": [
-        "arn:aws:ssm:${aws_region}:${account_id}:parameter/aft/*"
+        "arn:${data_aws_partition_current_partition}:ssm:${aws_region}:${account_id}:parameter/aft/*"
       ]
     },
     {

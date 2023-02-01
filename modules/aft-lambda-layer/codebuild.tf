@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+
 resource "aws_codebuild_project" "codebuild" {
   name           = local.common_name
   description    = "Codebuild project to create lambda layer ${var.lambda_layer_name}"
@@ -48,6 +49,13 @@ resource "aws_codebuild_project" "codebuild" {
       value = var.aft_tf_aws_customizations_module_git_ref_ssm_path
       type  = "PLAINTEXT"
     }
+
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
+
   }
 
   logs_config {
@@ -71,6 +79,10 @@ resource "aws_codebuild_project" "codebuild" {
     vpc_id             = var.aft_vpc_id
     subnets            = var.aft_vpc_private_subnets
     security_group_ids = var.aft_vpc_default_sg
+  }
+
+  lifecycle {
+    ignore_changes = [project_visibility]
   }
 
 }

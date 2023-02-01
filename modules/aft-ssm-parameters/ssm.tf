@@ -43,6 +43,12 @@ resource "aws_ssm_parameter" "aft_invoke_aft_account_provisioning_framework_lamb
   value = var.aft_invoke_aft_account_provisioning_framework_function_name
 }
 
+resource "aws_ssm_parameter" "aft_invoke_aft_cleanup_resources_lambda_function_name" {
+  name  = "/aft/resources/lambda/aft-cleanup-resources"
+  type  = "String"
+  value = var.aft_cleanup_resources_function_name
+}
+
 resource "aws_ssm_parameter" "aft_account_provisioning_framework_sfn_name" {
   name  = "/aft/account/aft-management/sfn/aft-account-provisioning-framework-sfn-name"
   type  = "String"
@@ -89,18 +95,6 @@ resource "aws_ssm_parameter" "invoke_aft_account_provisioning_framework_function
   name  = "/aft/resources/lambda/aft-invoke-aft-account-provisioning-framework-function-arn"
   type  = "String"
   value = var.invoke_aft_account_provisioning_framework_function_arn
-}
-
-resource "aws_ssm_parameter" "validate_request_function_arn" {
-  name  = "/aft/resources/lambda/aft-account-provisioning-framework-validate-request-function-arn"
-  type  = "String"
-  value = var.validate_request_function_arn
-}
-
-resource "aws_ssm_parameter" "get_account_info_function_arn" {
-  name  = "/aft/resources/lambda/aft-account-provisioning-framework-get-account-info-function-arn"
-  type  = "String"
-  value = var.get_account_info_function_arn
 }
 
 resource "aws_ssm_parameter" "create_role_function_arn" {
@@ -366,5 +360,20 @@ resource "aws_ssm_parameter" "aft_log_key_arn" {
 resource "aws_ssm_parameter" "aft_maximum_concurrent_customizations" {
   name  = "/aft/config/customizations/maximum_concurrent_customizations"
   value = var.maximum_concurrent_customizations
+  type  = "String"
+}
+
+resource "aws_ssm_parameter" "aft_metrics_reporting" {
+  name  = "/aft/config/metrics-reporting"
+  value = var.aft_metrics_reporting
+  type  = "String"
+}
+
+resource "random_uuid" "metrics_reporting_uuid" {
+}
+
+resource "aws_ssm_parameter" "aft_metrics_reporting_uuid" {
+  name  = "/aft/config/metrics-reporting-uuid"
+  value = random_uuid.metrics_reporting_uuid.result
   type  = "String"
 }

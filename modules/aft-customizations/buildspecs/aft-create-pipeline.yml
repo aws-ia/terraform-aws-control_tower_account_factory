@@ -68,5 +68,5 @@ phases:
     on-failure: ABORT
     commands:
       - export AWS_PROFILE=aft-management-admin
-      - terraform init
-      - terraform apply -var="account_id=$VENDED_ACCOUNT_ID" --auto-approve
+      - terraform init -no-color
+      - terraform apply -var="account_id=$VENDED_ACCOUNT_ID" -no-color --auto-approve

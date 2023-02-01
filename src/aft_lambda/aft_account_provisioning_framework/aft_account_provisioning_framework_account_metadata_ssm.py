@@ -11,9 +11,9 @@ from aft_common import notifications
 from aft_common.account_provisioning_framework import (
     SSM_PARAMETER_PATH,
     ProvisionRoles,
-    create_ssm_parameters,
     delete_ssm_parameters,
     get_ssm_parameters_names_by_path,
+    put_ssm_parameters,
 )
 from aft_common.auth import AuthClient
 
@@ -33,7 +33,8 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
         target_account_id = event["payload"]["account_info"]["account"]["id"]
 
         # Create the custom field parameters in the AFT home region
-        target_region = auth.get_aft_management_session().region_name
+        session = auth.get_aft_management_session()
+        target_region = session.region_name
 
         aft_ssm_session_policy = {
             "Version": "2012-10-17",
@@ -45,8 +46,15 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                         "ssm:DeleteParameters",
                     ],
                     "Effect": "Allow",
-                    "Resource": f"arn:aws:ssm:{target_region}:{target_account_id}:parameter{SSM_PARAMETER_PATH}*",
-                }
+                    "Resource": f"arn:{utils.get_aws_partition(session)}:ssm:{target_region}:{target_account_id}:parameter{SSM_PARAMETER_PATH}*",
+                },
+                {
+                    "Action": [
+                        "sts:AssumeRole",
+                    ],
+                    "Effect": "Allow",
+                    "Resource": f"arn:{utils.get_aws_partition(session)}:iam::{target_account_id}:role/${ProvisionRoles.EXECUTION_ROLE_NAME}",
+                },
             ],
         }
 
@@ -70,7 +78,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
         # Update / Add SSM parameters for custom fields provided
         logger.info(message=f"Adding/Updating SSM params: {custom_fields}")
-        create_ssm_parameters(target_account_session, custom_fields)
+        put_ssm_parameters(target_account_session, custom_fields)
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(

@@ -12,8 +12,16 @@
                 "lambda:InvokeFunction"
             ],
             "Resource": [
-                "arn:aws:lambda:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:function:aft_*"
+                "arn:${data_aws_partition_current_partition}:lambda:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:function:aft_*"
             ]
+        },
+         {
+            "Effect": "Allow",
+            "Action": [
+                "states:DescribeExecution"
+            ],
+            "Resource": "${aft_account_provisioning_customizations_sfn_name}"
         }
+
     ]
 }

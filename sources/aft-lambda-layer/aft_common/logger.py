@@ -46,7 +46,7 @@ class Logger(object):
         """
         try:
             message = json.loads(message)
-        except Exception:
+        except Exception:  # nosec try_except_pass
             pass
         try:
             return json.dumps(message, indent=4, cls=DateTimeEncoder)

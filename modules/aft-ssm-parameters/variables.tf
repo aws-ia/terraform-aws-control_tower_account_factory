@@ -29,6 +29,10 @@ variable "aft_invoke_aft_account_provisioning_framework_function_name" {
   type = string
 }
 
+variable "aft_cleanup_resources_function_name" {
+  type = string
+}
+
 variable "aft_account_provisioning_framework_sfn_name" {
   type = string
 }
@@ -58,14 +62,6 @@ variable "control_tower_event_logger_function_arn" {
 }
 
 variable "invoke_aft_account_provisioning_framework_function_arn" {
-  type = string
-}
-
-variable "validate_request_function_arn" {
-  type = string
-}
-
-variable "get_account_info_function_arn" {
   type = string
 }
 
@@ -247,5 +243,9 @@ variable "maximum_concurrent_customizations" {
 }
 
 variable "aft_version" {
+  type = string
+}
+
+variable "aft_metrics_reporting" {
   type = string
 }

@@ -4,11 +4,13 @@
 from typing import Any, Dict, List
 
 from aft_common import aft_utils as utils
+from aft_common import ddb
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.aft_utils import (
     SSM_PARAM_ACCOUNT_AUDIT_ACCOUNT_ID,
     SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID,
     SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID,
+    emails_are_equal,
 )
 from aft_common.auth import AuthClient
 from aft_common.organizations import OrganizationsAgent
@@ -17,10 +19,8 @@ from boto3.session import Session
 logger = utils.get_logger()
 
 
-def shared_account_request(
-    aft_management_session: Session, event_record: Dict[str, Any]
-) -> bool:
-    ct_params = utils.unmarshal_ddb_item(event_record["dynamodb"]["NewImage"])[
+def shared_account_request(event_record: Dict[str, Any]) -> bool:
+    ct_params = ddb.unmarshal_ddb_item(event_record["dynamodb"]["NewImage"])[
         "control_tower_parameters"
     ]
     account_email = ct_params["AccountEmail"]
@@ -37,7 +37,7 @@ def shared_account_request(
     for shared_account_id in shared_account_ids:
         response = orgs_client.describe_account(AccountId=shared_account_id)
         if (
-            response["Account"]["Email"] == account_email
+            emails_are_equal(response["Account"]["Email"], account_email)
             and response["Account"]["Name"] == account_name
         ):
             orgs_agent = OrganizationsAgent(ct_management_session=ct_management_session)
@@ -49,15 +49,14 @@ def shared_account_request(
                 )
             return True
         elif (
-            response["Account"]["Email"] == account_email
+            emails_are_equal(response["Account"]["Email"], account_email)
             and response["Account"]["Name"] != account_name
         ):
             raise ValueError(
                 f"Account Email {account_email} is a shared account email, however, the Account Name {account_name} does not match"
             )
-        elif (
-            response["Account"]["Name"] == account_name
-            and response["Account"]["Email"] != account_email
+        elif response["Account"]["Name"] == account_name and not emails_are_equal(
+            response["Account"]["Email"], account_email
         ):
             raise ValueError(
                 f"Account Name {account_name} is a shared account Name, however, the Account Email {account_email} does not match"

@@ -4,6 +4,7 @@
 locals {
   state_machine_source = "${path.module}/states/invoke_customizations.asl.json"
   replacements_map = {
+    current_partition                    = data.aws_partition.current.partition
     identify_targets_function_arn        = aws_lambda_function.aft_customizations_identify_targets.arn
     execute_pipeline_function_arn        = aws_lambda_function.aft_customizations_execute_pipeline.arn
     get_pipeline_executions_function_arn = aws_lambda_function.aft_customizations_get_pipeline_executions.arn

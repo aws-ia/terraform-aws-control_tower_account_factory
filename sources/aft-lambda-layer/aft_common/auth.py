@@ -8,6 +8,7 @@ from aft_common.aft_utils import (
     SSM_PARAM_ACCOUNT_AFT_MANAGEMENT_ACCOUNT_ID,
     SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID,
     SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID,
+    get_aws_partition,
     get_logger,
     get_ssm_parameter_value,
 )
@@ -35,7 +36,6 @@ class AuthClient:
     def __init__(self, aft_management_session: Optional[Session] = None) -> None:
         if aft_management_session is None:
             aft_management_session = Session()
-
         if self._is_aft_management_session(session=aft_management_session):
             self.aft_management_account_id = aft_management_session.client(
                 "sts"
@@ -67,8 +67,8 @@ class AuthClient:
                 raise error
 
     @staticmethod
-    def _build_role_arn(account_id: str, role_name: str) -> str:
-        return f"arn:aws:iam::{account_id}:role/{role_name}"
+    def _build_role_arn(partition: str, account_id: str, role_name: str) -> str:
+        return f"arn:{partition}:iam::{account_id}:role/{role_name}"
 
     @staticmethod
     def _get_session(
@@ -101,6 +101,10 @@ class AuthClient:
             region_name=region if region is not None else session.region_name,
         )
 
+    @staticmethod
+    def get_account_id_from_session(session: Session) -> str:
+        return session.client("sts").get_caller_identity()["Account"]
+
     def _get_hub_session(self, session_duration: int = 900) -> Session:
         """
         Assumes a hub role, "AWSAFTAdmin" in the AFT Management account
@@ -111,7 +115,9 @@ class AuthClient:
             param=AuthClient.SSM_PARAM_AFT_ADMIN_ROLE_NAME,
         )
         role_arn = AuthClient._build_role_arn(
-            account_id=self.aft_management_account_id, role_name=role_name
+            partition=get_aws_partition(session=self.aft_management_session),
+            account_id=self.aft_management_account_id,
+            role_name=role_name,
         )
         return AuthClient._get_session(
             session=self.aft_management_session,
@@ -152,7 +158,9 @@ class AuthClient:
             )
 
         spoke_role_arn = AuthClient._build_role_arn(
-            account_id=account_id, role_name=role_name
+            partition=get_aws_partition(session=self.aft_management_session),
+            account_id=account_id,
+            role_name=role_name,
         )
 
         logger.info(
@@ -172,6 +180,7 @@ class AuthClient:
         role_name: Optional[str] = None,
         region: Optional[str] = None,
         session_policy: Optional[str] = None,
+        session_duration: int = 900,
     ) -> Session:
         account_id = get_ssm_parameter_value(
             session=self.aft_management_session,
@@ -182,6 +191,7 @@ class AuthClient:
             role_name=role_name,
             region=region,
             session_policy=session_policy,
+            session_duration=session_duration,
         )
 
     def get_log_archive_session(
@@ -189,6 +199,7 @@ class AuthClient:
         role_name: Optional[str] = None,
         region: Optional[str] = None,
         session_policy: Optional[str] = None,
+        session_duration: int = 900,
     ) -> Session:
         account_id = get_ssm_parameter_value(
             session=self.aft_management_session,
@@ -199,8 +210,5 @@ class AuthClient:
             role_name=role_name,
             region=region,
             session_policy=session_policy,
+            session_duration=session_duration,
         )
-
-    @staticmethod
-    def get_account_id_from_session(session: Session) -> str:
-        return session.client("sts").get_caller_identity()["Account"]

@@ -192,6 +192,7 @@ module "aft_ssm_parameters" {
   aft_controltower_events_table_name                          = module.aft_account_request_framework.controltower_events_table_name
   account_factory_product_name                                = module.aft_account_request_framework.account_factory_product_name
   aft_invoke_aft_account_provisioning_framework_function_name = module.aft_account_request_framework.invoke_aft_account_provisioning_framework_lambda_function_name
+  aft_cleanup_resources_function_name                         = module.aft_account_request_framework.aft_cleanup_resources_function_name
   aft_account_provisioning_framework_sfn_name                 = module.aft_account_request_framework.aft_account_provisioning_framework_sfn_name
   aft_sns_topic_arn                                           = module.aft_account_request_framework.sns_topic_arn
   aft_failure_sns_topic_arn                                   = module.aft_account_request_framework.failure_sns_topic_arn
@@ -200,8 +201,6 @@ module "aft_ssm_parameters" {
   request_processor_function_arn                              = module.aft_account_request_framework.request_processor_function_arn
   control_tower_event_logger_function_arn                     = module.aft_account_request_framework.control_tower_event_logger_function_arn
   invoke_aft_account_provisioning_framework_function_arn      = module.aft_account_request_framework.invoke_aft_account_provisioning_framework_function_arn
-  validate_request_function_arn                               = module.aft_account_provisioning_framework.validate_request_function_arn
-  get_account_info_function_arn                               = module.aft_account_provisioning_framework.get_account_info_function_arn
   create_role_function_arn                                    = module.aft_account_provisioning_framework.create_role_function_arn
   tag_account_function_arn                                    = module.aft_account_provisioning_framework.tag_account_function_arn
   persist_metadata_function_arn                               = module.aft_account_provisioning_framework.persist_metadata_function_arn
@@ -233,7 +232,7 @@ module "aft_ssm_parameters" {
   aft_config_backend_secondary_region                         = var.tf_backend_secondary_region
   aft_framework_repo_url                                      = var.aft_framework_repo_url
   aft_framework_repo_git_ref                                  = local.aft_framework_repo_git_ref
-  terraform_token                                             = var.terraform_token
+  terraform_token                                             = var.terraform_token # Null default value #tfsec:ignore:general-secrets-no-plaintext-exposure
   terraform_version                                           = var.terraform_version
   terraform_org_name                                          = var.terraform_org_name
   aft_feature_cloudtrail_data_events                          = var.aft_feature_cloudtrail_data_events
@@ -247,4 +246,5 @@ module "aft_ssm_parameters" {
   account_provisioning_customizations_repo_branch             = var.account_provisioning_customizations_repo_branch
   maximum_concurrent_customizations                           = var.maximum_concurrent_customizations
   github_enterprise_url                                       = var.github_enterprise_url
+  aft_metrics_reporting                                       = var.aft_metrics_reporting
 }

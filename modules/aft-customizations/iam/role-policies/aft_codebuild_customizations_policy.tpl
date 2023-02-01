@@ -3,7 +3,7 @@
   "Statement": [
     {
       "Effect": "Allow",
-      "Resource": "arn:aws:logs:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:log-group:/aws/codebuild/aft*",
+      "Resource": "arn:${data_aws_partition_current_partition}:logs:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:log-group:/aws/codebuild/aft*",
       "Action": [
         "logs:CreateLogStream",
         "logs:PutLogEvents"
@@ -28,7 +28,7 @@
         "ec2:CreateNetworkInterfacePermission"
       ],
       "Resource": [
-        "arn:aws:ec2:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:network-interface/*"
+        "arn:${data_aws_partition_current_partition}:ec2:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:network-interface/*"
       ]
     },
     {
@@ -62,7 +62,7 @@
         "ssm:GetParameter"
       ],
       "Resource": [
-        "arn:aws:ssm:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:parameter/aft/*"
+        "arn:${data_aws_partition_current_partition}:ssm:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:parameter/aft/*"
       ]
     },
     {
@@ -76,7 +76,7 @@
         "codecommit:GetUploadArchiveStatus",
         "codecommit:CancelUploadArchive"
       ],
-      "Resource": "arn:aws:codecommit:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*customizations*"
+      "Resource": "arn:${data_aws_partition_current_partition}:codecommit:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*customizations*"
     },
     {
       "Effect": "Allow",
@@ -84,7 +84,7 @@
         "dynamodb:*Item"
       ],
       "Resource": [
-        "arn:aws:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/${data_aws_dynamo_account_metadata_table}"
+        "arn:${data_aws_partition_current_partition}:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/${data_aws_dynamo_account_metadata_table}"
       ]
     },
     {
@@ -93,7 +93,7 @@
         "sts:AssumeRole"
       ],
       "Resource": [
-        "arn:aws:iam::${data_aws_caller_identity_current_account_id}:role/AWSAFTAdmin"
+        "arn:${data_aws_partition_current_partition}:iam::${data_aws_caller_identity_current_account_id}:role/AWSAFTAdmin"
       ]
     },
       {
@@ -102,7 +102,7 @@
         "dynamodb:GetItem"
       ],
         "Resource" : [
-          "arn:aws:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/aft*"
+          "arn:${data_aws_partition_current_partition}:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/aft*"
         ]
       }
   ]

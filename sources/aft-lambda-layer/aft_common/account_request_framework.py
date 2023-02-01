@@ -10,6 +10,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    Iterable,
     Iterator,
     List,
     Literal,
@@ -20,12 +21,15 @@ from typing import (
 )
 
 from aft_common import aft_utils as utils
+from aft_common import ddb, sqs
 from aft_common.account_provisioning_framework import ProvisionRoles
+from aft_common.aft_types import AftInvokeAccountCustomizationPayload
 from aft_common.auth import AuthClient
 from aft_common.exceptions import (
     NoAccountFactoryPortfolioFound,
     ServiceRoleNotAssociated,
 )
+from aft_common.organizations import OrganizationsAgent
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -52,9 +56,17 @@ else:
 logger = utils.get_logger()
 
 
+def ct_account_product_is_healthy(product: ProvisionedProductAttributeTypeDef) -> bool:
+    aft_sc_product_allowed_status = ["AVAILABLE", "TAINTED"]
+    # If LastSuccessfulProvisioningRecordId does not exist, the account was never successfully provisioned
+    return product["Status"] in aft_sc_product_allowed_status and bool(
+        product.get("LastSuccessfulProvisioningRecordId")
+    )
+
+
 def get_healthy_ct_product_batch(
     ct_management_session: Session,
-) -> Iterator[List[ProvisionedProductAttributeTypeDef]]:
+) -> Iterator[Iterable[ProvisionedProductAttributeTypeDef]]:
     sc_product_search_filter: Mapping[Literal["SearchQuery"], Sequence[str]] = {
         "SearchQuery": [
             "type:CONTROL_TOWER_ACCOUNT",
@@ -71,12 +83,10 @@ def get_healthy_ct_product_batch(
         )
     )
     provisioned_products = response["ProvisionedProducts"]
-    sc_product_allowed_status = ["AVAILABLE", "TAINTED"]
-    healthy_products = [
-        product
-        for product in provisioned_products
-        if product["Status"] in sc_product_allowed_status
-    ]
+    healthy_products: Iterable[ProvisionedProductAttributeTypeDef] = filter(
+        ct_account_product_is_healthy, provisioned_products
+    )
+
     yield healthy_products
 
     while response.get("NextPageToken") is not None:
@@ -85,13 +95,12 @@ def get_healthy_ct_product_batch(
             PageSize=100,
             PageToken=response["NextPageToken"],
         )
+        provisioned_products = response["ProvisionedProducts"]
+        healthy_products = filter(ct_account_product_is_healthy, provisioned_products)
 
-        healthy_products = [
-            product
-            for product in provisioned_products
-            if product["Status"] in sc_product_allowed_status
-        ]
         yield healthy_products
+
+    return
 
 
 def provisioned_product_exists(record: Dict[str, Any]) -> bool:
@@ -100,7 +109,7 @@ def provisioned_product_exists(record: Dict[str, Any]) -> bool:
     ct_management_session = auth.get_ct_management_session(
         role_name=ProvisionRoles.SERVICE_ROLE_NAME
     )
-    account_email = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
+    account_email = ddb.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
         "control_tower_parameters"
     ]["AccountEmail"]
 
@@ -129,7 +138,7 @@ def email_exists_in_batch(
         pp_email = sc_client.get_provisioned_product_outputs(
             ProvisionedProductId=pp, OutputKeys=["AccountEmail"]
         )["Outputs"][0]["OutputValue"]
-        if target_email.lower() == pp_email.lower():
+        if utils.emails_are_equal(target_email, pp_email):
             logger.info("Account email match found; provisioned product exists.")
             return True
     return False
@@ -141,23 +150,17 @@ def insert_msg_into_acc_req_queue(
     sqs_queue = utils.get_ssm_parameter_value(
         session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
     )
-    sqs_queue = utils.build_sqs_url(session=session, queue_name=sqs_queue)
+    sqs_queue = sqs.build_sqs_url(session=session, queue_name=sqs_queue)
     message = build_sqs_message(record=event_record, new_account=new_account)
-    utils.send_sqs_message(session=session, sqs_url=sqs_queue, message=message)
-
-
-def delete_account_request(record: Dict[str, Any]) -> bool:
-    if record["eventName"] == "REMOVE":
-        return True
-    return False
+    sqs.send_sqs_message(session=session, sqs_url=sqs_queue, message=message)
 
 
 def control_tower_param_changed(record: Dict[str, Any]) -> bool:
     if record["eventName"] == "MODIFY":
-        old_image = utils.unmarshal_ddb_item(record["dynamodb"]["OldImage"])[
+        old_image = ddb.unmarshal_ddb_item(record["dynamodb"]["OldImage"])[
             "control_tower_parameters"
         ]
-        new_image = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
+        new_image = ddb.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
             "control_tower_parameters"
         ]
 
@@ -171,12 +174,12 @@ def build_sqs_message(record: Dict[str, Any], new_account: bool) -> Dict[str, An
     message = {}
     operation = "ADD" if new_account else "UPDATE"
 
-    new_image = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])
+    new_image = ddb.unmarshal_ddb_item(record["dynamodb"]["NewImage"])
     message["operation"] = operation
     message["control_tower_parameters"] = new_image["control_tower_parameters"]
 
     if record["eventName"] == "MODIFY":
-        old_image = utils.unmarshal_ddb_item(record["dynamodb"]["OldImage"])
+        old_image = ddb.unmarshal_ddb_item(record["dynamodb"]["OldImage"])
         message["old_control_tower_parameters"] = old_image["control_tower_parameters"]
 
     logger.info(message)
@@ -186,7 +189,7 @@ def build_sqs_message(record: Dict[str, Any], new_account: bool) -> Dict[str, An
 def build_aft_account_provisioning_framework_event(
     record: Dict[str, Any]
 ) -> Dict[str, Any]:
-    account_request = utils.unmarshal_ddb_item(record["dynamodb"]["NewImage"])
+    account_request = ddb.unmarshal_ddb_item(record["dynamodb"]["NewImage"])
     aft_account_provisioning_framework_event = {
         "account_request": account_request,
         "control_tower_event": {},
@@ -222,7 +225,7 @@ def account_name_or_email_in_use(
                     f"Account Name: {account_name} already used in Organizations"
                 )
                 return True
-            if account_email == account["Email"]:
+            if utils.emails_are_equal(account_email, account["Email"]):
                 logger.error(
                     f"Account Email: {account_email} already used in Organizations"
                 )
@@ -333,9 +336,8 @@ def update_existing_account(
                 "OutputValue"
             ]
 
-            if (
-                provisioned_product_email.lower()
-                == control_tower_email_parameter.lower()
+            if utils.emails_are_equal(
+                provisioned_product_email, control_tower_email_parameter
             ):
                 target_product = product
                 break
@@ -373,74 +375,53 @@ def update_existing_account(
     logger.info(update_response)
 
 
-def get_account_request_record(session: Session, id: str) -> Dict[str, Any]:
+def get_account_request_record(
+    aft_management_session: Session, request_table_id: str
+) -> Dict[str, Any]:
     table_name = utils.get_ssm_parameter_value(
-        session, utils.SSM_PARAM_AFT_DDB_REQ_TABLE
+        aft_management_session, utils.SSM_PARAM_AFT_DDB_REQ_TABLE
     )
-    dynamodb = session.resource("dynamodb")
-    table = dynamodb.Table(table_name)
-    logger.info("Getting record for id " + id + " in DDB table " + table_name)
-    response = table.get_item(Key={"id": id})
-    logger.info(response)
-    if "Item" in response:
-        logger.info("Record found, returning item")
-        logger.info(response["Item"])
-        response_item: Dict[str, Any] = response["Item"]
-        return response_item
+    logger.info(
+        "Getting record for id " + request_table_id + " in DDB table " + table_name
+    )
+    item = ddb.get_ddb_item(
+        session=aft_management_session,
+        table_name=table_name,
+        primary_key={"id": request_table_id},
+    )
+    if item:
+        logger.info("Record found")
+        logger.info(item)
+        return item
     else:
         logger.info("Record not found in DDB table, exiting")
         sys.exit(1)
 
 
-def is_customizations_event(event: Dict[str, Any]) -> bool:
-    if "account_request" in event.keys():
-        return True
-    else:
-        return False
-
-
-def build_invoke_event(
-    session: Session,
+def build_account_customization_payload(
     ct_management_session: Session,
-    event: Dict[str, Any],
-    event_type: str,
-) -> Dict[str, Any]:
-    account_id: str = ""
-    if event_type == "ControlTower":
-        if event["detail"]["eventName"] == "CreateManagedAccount":
-            account_id = event["detail"]["serviceEventDetails"][
-                "createManagedAccountStatus"
-            ]["account"]["accountId"]
-        elif event["detail"]["eventName"] == "UpdateManagedAccount":
-            account_id = event["detail"]["serviceEventDetails"][
-                "updateManagedAccountStatus"
-            ]["account"]["accountId"]
-        account_email = utils.get_account_email_from_id(
-            ct_management_session, account_id
-        )
-        ddb_record = get_account_request_record(session, account_email)
-        invoke_event = {"control_tower_event": event, "account_request": ddb_record}
-        # convert ddb strings into proper data type for json validation
-        account_tags = json.loads(ddb_record["account_tags"])
-        invoke_event["account_request"]["account_tags"] = account_tags
-        invoke_event["account_provisioning"] = {}
-        invoke_event["account_provisioning"]["run_create_pipeline"] = "true"
-        logger.info("Invoking SFN with Event - ")
-        logger.info(invoke_event)
-        return invoke_event
+    account_id: str,
+    account_request: Dict[str, Any],
+    control_tower_event: Optional[Dict[str, Any]],
+) -> AftInvokeAccountCustomizationPayload:
 
-    elif event_type == "Customizations":
-        invoke_event = event
-        # convert ddb strings into proper data type for json validation
-        account_tags = json.loads(event["account_request"]["account_tags"])
-        invoke_event["account_request"]["account_tags"] = account_tags
-        invoke_event["account_provisioning"] = {}
-        invoke_event["account_provisioning"]["run_create_pipeline"] = "true"
-        logger.info("Invoking SFN with Event - ")
-        logger.info(invoke_event)
-        return invoke_event
+    orgs_agent = OrganizationsAgent(ct_management_session)
 
-    raise Exception("Unsupported event type")
+    # convert ddb strings into proper data type
+    account_request["account_tags"] = json.loads(account_request["account_tags"])
+    account_info = orgs_agent.get_aft_account_info(account_id=account_id)
+
+    if control_tower_event is None:
+        control_tower_event = {}
+
+    account_customization_payload: AftInvokeAccountCustomizationPayload = {
+        "account_info": {"account": account_info},
+        "control_tower_event": control_tower_event,  # Unused by AFT but kept for aft-account-provisioning-customizations backwards compatibility
+        "account_request": account_request,
+        "account_provisioning": {"run_create_pipeline": "true"},
+    }
+
+    return account_customization_payload
 
 
 class AccountRequest:
@@ -459,9 +440,11 @@ class AccountRequest:
             ct_management_session=self.ct_management_session,
         )
 
+        self.partition = utils.get_aws_partition(self.ct_management_session)
+
     @property
     def service_role_arn(self) -> str:
-        return f"arn:aws:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
+        return f"arn:{self.partition}:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
 
     @cached_property
     def account_factory_portfolio_id(self) -> str:
@@ -490,7 +473,7 @@ class AccountRequest:
         Associates the AWSAFTService role with the Control Tower Account Factory Service Catalog portfolio
         """
         client = self.ct_management_session.client("servicecatalog")
-        aft_service_role_arn = f"arn:aws:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
+        aft_service_role_arn = f"arn:{self.partition}:iam::{self.ct_management_account_id}:role/{ProvisionRoles.SERVICE_ROLE_NAME}"
         client.associate_principal_with_portfolio(
             PortfolioId=self.account_factory_portfolio_id,
             PrincipalARN=aft_service_role_arn,
@@ -498,6 +481,12 @@ class AccountRequest:
         )
 
     def validate_service_role_associated_with_account_factory(self) -> None:
+        if not self.service_role_associated_with_account_factory():
+            raise ServiceRoleNotAssociated(
+                f"{ProvisionRoles.SERVICE_ROLE_NAME} Role not associated with portfolio {self.account_factory_portfolio_id}"
+            )
+
+    def service_role_associated_with_account_factory(self) -> bool:
         client = self.ct_management_session.client("servicecatalog")
         paginator = client.get_paginator("list_principals_for_portfolio")
         for response in paginator.paginate(
@@ -506,10 +495,8 @@ class AccountRequest:
             if self.service_role_arn in [
                 principal["PrincipalARN"] for principal in response["Principals"]
             ]:
-                return None
-        raise ServiceRoleNotAssociated(
-            f"{ProvisionRoles.SERVICE_ROLE_NAME} Role not associated with portfolio {self.account_factory_portfolio_id}"
-        )
+                return True
+        return False
 
     def provisioning_in_progress(self) -> bool:
         client: ServiceCatalogClient = self.ct_management_session.client(

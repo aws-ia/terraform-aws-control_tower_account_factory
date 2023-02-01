@@ -17,6 +17,7 @@ resource "aws_iam_role_policy" "aft_features_sfn" {
   role     = aws_iam_role.aft_features_sfn.id
 
   policy = templatefile("${path.module}/iam/role-policies/aft_features_states.tpl", {
+    data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.current.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.current.id
   })
@@ -40,6 +41,7 @@ resource "aws_iam_role_policy" "aft_delete_default_vpc_lambda" {
 
   policy = templatefile("${path.module}/iam/role-policies/aft_delete_default_vpc_lambda.tpl", {
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
+    data_aws_partition_current_partition        = data.aws_partition.current.partition
     data_aws_region_current_name                = data.aws_region.current.name
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
     aws_sns_topic_aft_notifications_arn         = var.aft_sns_topic_arn
@@ -73,6 +75,7 @@ resource "aws_iam_role_policy" "aft_enroll_support" {
 
   policy = templatefile("${path.module}/iam/role-policies/aft_enroll_support.tpl", {
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
+    data_aws_partition_current_partition        = data.aws_partition.current.partition
     data_aws_region_current_name                = data.aws_region.current.name
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
     aws_sns_topic_aft_notifications_arn         = var.aft_sns_topic_arn
@@ -105,6 +108,7 @@ resource "aws_iam_role_policy" "aft_enable_cloudtrail" {
 
   policy = templatefile("${path.module}/iam/role-policies/aft_enable_cloudtrail.tpl", {
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
+    data_aws_partition_current_partition        = data.aws_partition.current.partition
     data_aws_region_current_name                = data.aws_region.current.name
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
     aws_sns_topic_aft_notifications_arn         = var.aft_sns_topic_arn

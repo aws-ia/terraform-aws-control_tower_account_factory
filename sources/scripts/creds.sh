@@ -41,33 +41,33 @@ function main {
 
   # Assume aws-aft-Administrator Role in AFT Management account. This is a Hub role which has permissions to assume other AFT roles
   echo "Generating credentials for ${AFT_MGMT_ROLE} in aft-management account: ${AFT_MGMT_ACCOUNT}"
-  CREDENTIALS=$(aws sts assume-role --role-arn "arn:aws:iam::${AFT_MGMT_ACCOUNT}:role/${AFT_MGMT_ROLE}" --role-session-name "${ROLE_SESSION_NAME}")
+  CREDENTIALS=$(aws sts assume-role --role-arn "arn:${AWS_PARTITION}:iam::${AFT_MGMT_ACCOUNT}:role/${AFT_MGMT_ROLE}" --role-session-name "${ROLE_SESSION_NAME}")
   write_to_credentials "aft-management-admin" "${CREDENTIALS}"
 
   # Assume AWSAFTExecution in User Defined account
-  echo "Generating credentials for ${AFT_EXECUTION_ROLE} in vended account account: ${AFT_MGMT_ACCOUNT}"
-  CREDENTIALS=$(aws sts assume-role --role-arn "arn:aws:iam::${VENDED_ACCOUNT_ID}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
+  echo "Generating credentials for ${AFT_EXECUTION_ROLE} in vended account account: ${VENDED_ACCOUNT_ID}"
+  CREDENTIALS=$(aws sts assume-role --role-arn "arn:${AWS_PARTITION}:iam::${VENDED_ACCOUNT_ID}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
   write_to_credentials "aft-target" "${CREDENTIALS}"
 
   # Assume AWSAFTExecution in AFT Management account
   echo "Generating credentials for ${AFT_EXECUTION_ROLE} in aft-management account: ${AFT_MGMT_ACCOUNT}"
-  CREDENTIALS=$(aws sts assume-role --role-arn "arn:aws:iam::${AFT_MGMT_ACCOUNT}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
+  CREDENTIALS=$(aws sts assume-role --role-arn "arn:${AWS_PARTITION}:iam::${AFT_MGMT_ACCOUNT}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
   write_to_credentials "aft-management" "${CREDENTIALS}"
 
   # Assume AWSAFTExecution in CT Management account
   echo "Generating credentials for ${AFT_EXECUTION_ROLE} in ct-management account: ${CT_MGMT_ACCOUNT}"
-  CREDENTIALS=$(aws sts assume-role --role-arn "arn:aws:iam::${CT_MGMT_ACCOUNT}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
+  CREDENTIALS=$(aws sts assume-role --role-arn "arn:${AWS_PARTITION}:iam::${CT_MGMT_ACCOUNT}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
   write_to_credentials "ct-management" "${CREDENTIALS}"
 
   # Assume AWSAFTExecution in Audit account
   echo "Generating credentials for ${AFT_EXECUTION_ROLE} in Audit account: ${AUDIT_ACCOUNT}"
-  CREDENTIALS=$(aws sts assume-role --role-arn "arn:aws:iam::${AUDIT_ACCOUNT}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
+  CREDENTIALS=$(aws sts assume-role --role-arn "arn:${AWS_PARTITION}:iam::${AUDIT_ACCOUNT}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
   # Create credentials file
   write_to_credentials "ct-audit" "${CREDENTIALS}"
 
   # Assume AWSAFTExecution in Log Archive account
   echo "Generating credentials for ${AFT_EXECUTION_ROLE} in Log Archive account: ${LOG_ARCHIVE_ACCOUNT}"
-  CREDENTIALS=$(aws sts assume-role --role-arn "arn:aws:iam::${LOG_ARCHIVE_ACCOUNT}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
+  CREDENTIALS=$(aws sts assume-role --role-arn "arn:${AWS_PARTITION}:iam::${LOG_ARCHIVE_ACCOUNT}:role/${AFT_EXECUTION_ROLE}" --role-session-name "${ROLE_SESSION_NAME}" --profile aft-management-admin)
   # Create credentials file
   write_to_credentials "ct-log-archive" "${CREDENTIALS}"
 }

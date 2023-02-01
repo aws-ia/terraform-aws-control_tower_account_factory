@@ -12,21 +12,26 @@ variable "role_name" {
 variable "trusted_entity" {
 
 }
+variable "aft_admin_session_arn" {
+
+}
 
 resource "aws_iam_role" "role" {
   name = var.role_name
 
   assume_role_policy = templatefile("${path.module}/trust_policy.tpl",
     {
-      trusted_entity_type = var.trusted_entity_type
-      trusted_entity      = var.trusted_entity
+      trusted_entity_type        = var.trusted_entity_type
+      trusted_entity             = var.trusted_entity
+      aft_admin_assumed_role_arn = var.aft_admin_session_arn
+
     }
   )
 }
 
 resource "aws_iam_role_policy_attachment" "administrator-access-attachment" {
   role       = aws_iam_role.role.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AdministratorAccess"
 }
 
 output "arn" {

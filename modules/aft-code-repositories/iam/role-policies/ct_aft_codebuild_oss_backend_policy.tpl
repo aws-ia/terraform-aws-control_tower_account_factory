@@ -7,7 +7,7 @@
         "dynamodb:*Item"
       ],
       "Resource": [
-        "arn:aws:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/${data_aws_dynamo_terraform_oss_backend_table}"
+        "arn:${data_aws_partition_current_partition}:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/${data_aws_dynamo_terraform_oss_backend_table}"
       ]
     },
     {
@@ -21,8 +21,8 @@
         "s3:PutObject"
       ],
       "Resource": [
-        "arn:aws:s3:::${aws_s3_bucket_aft_terraform_oss_backend_bucket_id}",
-        "arn:aws:s3:::${aws_s3_bucket_aft_terraform_oss_backend_bucket_id}/*"
+        "arn:${data_aws_partition_current_partition}:s3:::${aws_s3_bucket_aft_terraform_oss_backend_bucket_id}",
+        "arn:${data_aws_partition_current_partition}:s3:::${aws_s3_bucket_aft_terraform_oss_backend_bucket_id}/*"
       ]
     },
     {
@@ -32,7 +32,7 @@
         "kms:Encrypt",
         "kms:GenerateDataKey"
       ],
-      "Resource": "arn:aws:kms:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:key/${aws_s3_bucket_aft_terraform_oss_kms_key_id}"
+      "Resource": "arn:${data_aws_partition_current_partition}:kms:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:key/${aws_s3_bucket_aft_terraform_oss_kms_key_id}"
     }
   ]
 }
