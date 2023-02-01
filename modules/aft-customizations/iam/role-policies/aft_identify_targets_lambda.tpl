@@ -7,7 +7,7 @@
         "sts:AssumeRole"
       ],
       "Resource": [
-        "arn:aws:iam::${data_aws_caller_identity_current_account_id}:role/AWSAFTAdmin"
+        "arn:${data_aws_partition_current_partition}:iam::${data_aws_caller_identity_current_account_id}:role/AWSAFTAdmin"
       ]
     },
     {
@@ -19,7 +19,7 @@
       "Effect": "Allow",
       "Action": "ssm:GetParameter",
       "Resource": [
-        "arn:aws:ssm:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:parameter/aft/*"
+        "arn:${data_aws_partition_current_partition}:ssm:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:parameter/aft/*"
       ]
     },
     {
@@ -40,8 +40,8 @@
         "dynamodb:Scan"
       ],
       "Resource": [
-        "arn:aws:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/${request_metadata_table_name}",
-        "arn:aws:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/${account_request_table_name}"
+        "arn:${data_aws_partition_current_partition}:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/${request_metadata_table_name}",
+        "arn:${data_aws_partition_current_partition}:dynamodb:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:table/${account_request_table_name}"
       ]
     },
     {

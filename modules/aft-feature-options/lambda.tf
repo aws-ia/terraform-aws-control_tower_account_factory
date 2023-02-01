@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 ######## aft_delete_default_vpc ########
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "aft_delete_default_vpc" {
   provider      = aws.aft_management
   filename      = var.feature_options_archive_path
@@ -22,6 +23,7 @@ resource "aws_lambda_function" "aft_delete_default_vpc" {
   }
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_delete_default_vpc" {
   provider          = aws.aft_management
   name              = "/aws/lambda/${aws_lambda_function.aft_delete_default_vpc.function_name}"
@@ -30,6 +32,7 @@ resource "aws_cloudwatch_log_group" "aft_delete_default_vpc" {
 
 
 ######## aft_enroll_support ########
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "aft_enroll_support" {
   provider      = aws.aft_management
   filename      = var.feature_options_archive_path
@@ -50,6 +53,7 @@ resource "aws_lambda_function" "aft_enroll_support" {
   }
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_enroll_support" {
   provider          = aws.aft_management
   name              = "/aws/lambda/${aws_lambda_function.aft_enroll_support.function_name}"
@@ -57,6 +61,7 @@ resource "aws_cloudwatch_log_group" "aft_enroll_support" {
 }
 
 ######## aft_enable_cloudtrail ########
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "aft_enable_cloudtrail" {
   provider      = aws.aft_management
   filename      = var.feature_options_archive_path
@@ -77,6 +82,7 @@ resource "aws_lambda_function" "aft_enable_cloudtrail" {
   }
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_enable_cloudtrail" {
   provider          = aws.aft_management
   name              = "/aws/lambda/${aws_lambda_function.aft_enable_cloudtrail.function_name}"

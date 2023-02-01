@@ -5,8 +5,8 @@
       "Effect": "Allow",
       "Action": "sts:AssumeRole",
       "Resource": [
-        "arn:aws:iam::*:role/AWSAFTExecution",
-        "arn:aws:iam::*:role/AWSAFTService"
+        "arn:${data_aws_partition_current_partition}:iam::*:role/AWSAFTExecution",
+        "arn:${data_aws_partition_current_partition}:iam::*:role/AWSAFTService"
       ]
     }
   ]

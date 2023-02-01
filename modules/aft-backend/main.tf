@@ -6,6 +6,7 @@ data "aws_caller_identity" "current" {
 }
 
 # S3 Resources
+#tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "primary-backend-bucket" {
   provider = aws.primary_region
 
@@ -73,10 +74,13 @@ resource "aws_s3_bucket_public_access_block" "primary-backend-bucket" {
 
   bucket = aws_s3_bucket.primary-backend-bucket.id
 
-  block_public_acls   = true
-  block_public_policy = true
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
+#tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "secondary-backend-bucket" {
   provider = aws.secondary_region
   bucket   = "aft-backend-${data.aws_caller_identity.current.account_id}-secondary-region"
@@ -118,8 +122,10 @@ resource "aws_s3_bucket_public_access_block" "secondary-backend-bucket" {
 
   bucket = aws_s3_bucket.secondary-backend-bucket.id
 
-  block_public_acls   = true
-  block_public_policy = true
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
 resource "aws_iam_role" "replication" {
@@ -255,6 +261,9 @@ resource "aws_iam_role_policy_attachment" "replication" {
 
 
 # DynamoDB Resources
+# TFSec incorrectly reports no DAX SSE encryption for a DDB table (SSE encryption is default-on)
+# TF locks are transient and do not require restore capabilility
+#tfsec:ignore:aws-dynamodb-enable-recovery tfsec:ignore:aws-dynamodb-table-customer-key tfsec:ignore:aws-dynamodb-enable-at-rest-encryption
 resource "aws_dynamodb_table" "lock-table" {
   provider = aws.primary_region
 

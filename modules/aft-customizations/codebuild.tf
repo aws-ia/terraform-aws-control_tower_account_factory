@@ -28,6 +28,12 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
       value = var.spacelift_api_credentials_ssm_path
       type  = "PARAMETER_STORE"
     }
+    
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
   }
 
   logs_config {
@@ -52,14 +58,20 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
     security_group_ids = var.aft_vpc_default_sg
   }
 
+  lifecycle {
+    ignore_changes = [project_visibility]
+  }
+
 }
 
 # Maintain this log group for log retention reasons. This is no longer used by AFT
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_global_customizations_api_helpers" {
   name              = "/aws/codebuild/aft-global-customizations-api-helpers"
   retention_in_days = var.cloudwatch_log_group_retention
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_global_customizations_terraform" {
   name              = "/aws/codebuild/aft-global-customizations-terraform"
   retention_in_days = var.cloudwatch_log_group_retention
@@ -86,6 +98,11 @@ resource "aws_codebuild_project" "aft_account_customizations_terraform" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
   }
 
   logs_config {
@@ -110,14 +127,20 @@ resource "aws_codebuild_project" "aft_account_customizations_terraform" {
     security_group_ids = var.aft_vpc_default_sg
   }
 
+  lifecycle {
+    ignore_changes = [project_visibility]
+  }
+
 }
 
 # Maintain this log group for log retention reasons. This is no longer used by AFT
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_account_customizations_api_helpers" {
   name              = "/aws/codebuild/aft-account-customizations-api-helpers"
   retention_in_days = var.cloudwatch_log_group_retention
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_account_customizations_terraform" {
   name              = "/aws/codebuild/aft-account-customizations-terraform"
   retention_in_days = var.cloudwatch_log_group_retention
@@ -192,6 +215,12 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
       value = var.aft_tf_version_ssm_path
       type  = "PLAINTEXT"
     }
+
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
   }
 
   logs_config {
@@ -216,8 +245,13 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
     security_group_ids = var.aft_vpc_default_sg
   }
 
+  lifecycle {
+    ignore_changes = [project_visibility]
+  }
+
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_create_pipeline" {
   name              = "/aws/codebuild/aft-create-pipeline"
   retention_in_days = var.cloudwatch_log_group_retention

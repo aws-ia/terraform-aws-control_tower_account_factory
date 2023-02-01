@@ -7,7 +7,7 @@ import time
 from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
-from aft_common import notifications
+from aft_common import notifications, sqs
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.account_request_framework import (
     AccountRequest,
@@ -18,6 +18,7 @@ from aft_common.account_request_framework import (
 )
 from aft_common.auth import AuthClient
 from aft_common.exceptions import NoAccountFactoryPortfolioFound
+from aft_common.metrics import AFTMetrics
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -31,6 +32,7 @@ logger = utils.get_logger()
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     aft_management_session = Session()
     auth = AuthClient()
+
     try:
         account_request = AccountRequest(auth=auth)
         try:
@@ -48,13 +50,16 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             logger.info("Exiting due to provisioning in progress")
             return None
         else:
-            sqs_message = utils.receive_sqs_message(
+            sqs_message = sqs.receive_sqs_message(
                 aft_management_session,
                 utils.get_ssm_parameter_value(
                     aft_management_session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
                 ),
             )
             if sqs_message is not None:
+
+                aft_metrics = AFTMetrics()
+
                 sqs_body = json.loads(sqs_message["Body"])
                 ct_request_is_valid = True
                 if sqs_body["operation"] == "ADD":
@@ -68,6 +73,17 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                             request=sqs_body,
                         )
 
+                        action = "new-account-creation-invoked"
+                        try:
+                            aft_metrics.post_event(action=action, status="SUCCEEDED")
+                            logger.info(
+                                f"Successfully logged metrics. Action: {action}"
+                            )
+                        except Exception as e:
+                            logger.info(
+                                f"Unable to report metrics. Action: {action}; Error: {e}"
+                            )
+
                 elif sqs_body["operation"] == "UPDATE":
                     ct_request_is_valid = modify_ct_request_is_valid(sqs_body)
                     if ct_request_is_valid:
@@ -76,13 +92,25 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                             ct_management_session=ct_management_session,
                             request=sqs_body,
                         )
+
+                        action = "existing-account-update-invoked"
+                        try:
+                            aft_metrics.post_event(action=action, status="SUCCEEDED")
+                            logger.info(
+                                f"Successfully logged metrics. Action: {action}"
+                            )
+                        except Exception as e:
+                            logger.info(
+                                f"Unable to report metrics. Action: {action}; Error: {e}"
+                            )
                 else:
                     logger.info("Unknown operation received in message")
+                    raise RuntimeError("Unknown operation received in message")
 
-                utils.delete_sqs_message(aft_management_session, sqs_message)
+                sqs.delete_sqs_message(aft_management_session, sqs_message)
                 if not ct_request_is_valid:
                     logger.exception("CT Request is not valid")
-                    assert ct_request_is_valid
+                    raise RuntimeError("CT Request is not valid")
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(

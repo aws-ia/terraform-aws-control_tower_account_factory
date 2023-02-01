@@ -14,9 +14,9 @@ phases:
       - TF_DISTRIBUTION=$(aws ssm get-parameter --name "/aft/config/terraform/distribution" --query "Parameter.Value" --output text)
       - CT_MGMT_REGION=$(aws ssm get-parameter --name "/aft/config/ct-management-region" --query "Parameter.Value" --output text)
       - AFT_MGMT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-      - AFT_EXEC_ROLE_ARN=arn:aws:iam::$AFT_MGMT_ACCOUNT:role/AWSAFTExecution
+      - AFT_EXEC_ROLE_ARN=arn:$AWS_PARTITION:iam::$AFT_MGMT_ACCOUNT:role/AWSAFTExecution
       - AFT_ADMIN_ROLE_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-administrator-role-name | jq --raw-output ".Parameter.Value")
-      - AFT_ADMIN_ROLE_ARN=arn:aws:iam::$AFT_MGMT_ACCOUNT:role/$AFT_ADMIN_ROLE_NAME
+      - AFT_ADMIN_ROLE_ARN=arn:$AWS_PARTITION:iam::$AFT_MGMT_ACCOUNT:role/$AFT_ADMIN_ROLE_NAME
       - ROLE_SESSION_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-session-name | jq --raw-output ".Parameter.Value")
       - aws ssm get-parameter --name /aft/config/terraform/spacelift-terraformrc --with-decryption | jq --raw-output ".Parameter.Value" > ~/.terraformrc
       - |
@@ -50,7 +50,7 @@ phases:
           echo "Installing Terraform"
           curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
           unzip -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
-          terraform --version
+          terraform -no-color --version
           cd $DEFAULT_PATH/terraform
           for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D region=$TF_BACKEND_REGION -D provider_region=$CT_MGMT_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN >> ./$(basename $f .jinja).tf; done
           for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
@@ -59,7 +59,7 @@ phases:
           export AWS_ACCESS_KEY_ID=$(echo ${JSON} | jq --raw-output ".Credentials[\"AccessKeyId\"]")
           export AWS_SECRET_ACCESS_KEY=$(echo ${JSON} | jq --raw-output ".Credentials[\"SecretAccessKey\"]")
           export AWS_SESSION_TOKEN=$(echo ${JSON} | jq --raw-output ".Credentials[\"SessionToken\"]")
-          terraform init
+          terraform init -no-color
         else
           TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
           TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
@@ -79,7 +79,7 @@ phases:
     commands:
       - |
         if [ $TF_DISTRIBUTION = "oss" ]; then
-          terraform apply --auto-approve
+          terraform apply -no-color --auto-approve
         fi
   post_build:
     commands:

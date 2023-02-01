@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Dict, List, Sequence
 
 import aft_common.aft_utils as utils
-import jsonschema
+from aft_common import ddb
 from aft_common.auth import AuthClient
-from aft_common.types import AftAccountInfo
+from aft_common.organizations import OrganizationsAgent
 from boto3.session import Session
 from botocore.exceptions import ClientError
 
@@ -35,14 +35,20 @@ SSM_PARAMETER_PATH = "/aft/account-request/custom-fields/"
 
 
 class ProvisionRoles:
-    ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN = (
-        "arn:aws:iam::aws:policy/AdministratorAccess"
-    )
+
     SERVICE_ROLE_NAME = "AWSAFTService"
+    EXECUTION_ROLE_NAME = "AWSAFTExecution"
 
     def __init__(self, auth: AuthClient, account_id: str) -> None:
         self.auth = auth
         self.target_account_id = account_id
+
+        temp_session = self.auth.get_ct_management_session()
+        self.partition = utils.get_aws_partition(temp_session)
+
+        self.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN = (
+            f"arn:{self.partition}:iam::aws:policy/AdministratorAccess"
+        )
 
     def generate_aft_trust_policy(self) -> str:
         return json.dumps(
@@ -52,7 +58,11 @@ class ProvisionRoles:
                     {
                         "Effect": "Allow",
                         "Principal": {
-                            "AWS": f"arn:aws:iam::{self.auth.aft_management_account_id}:assumed-role/AWSAFTAdmin/AWSAFT-Session"
+                            "AWS": [
+                                # TODO: Do we still need role/AWSAFTAdmin
+                                f"arn:{self.partition}:iam::{self.auth.aft_management_account_id}:role/AWSAFTAdmin",
+                                f"arn:{self.partition}:sts::{self.auth.aft_management_account_id}:assumed-role/AWSAFTAdmin/AWSAFT-Session",
+                            ]
                         },
                         "Action": "sts:AssumeRole",
                     }
@@ -197,60 +207,22 @@ class ProvisionRoles:
     def deploy_aws_aft_roles(self) -> None:
         trust_policy = self.generate_aft_trust_policy()
 
-        aft_execution_role_name = utils.get_ssm_parameter_value(
-            session=self.auth.get_aft_management_session(),
-            param=AuthClient.SSM_PARAM_AFT_EXEC_ROLE_NAME,
-        )
-        aft_execution_role_name = aft_execution_role_name.split("/")[-1]
+        aft_role_names = [
+            ProvisionRoles.SERVICE_ROLE_NAME,
+            ProvisionRoles.EXECUTION_ROLE_NAME,
+        ]
 
-        aft_role_names = [ProvisionRoles.SERVICE_ROLE_NAME, aft_execution_role_name]
         for role_name in aft_role_names:
             self._deploy_role_in_target_account(
                 role_name=role_name,
                 trust_policy=trust_policy,
-                policy_arn=ProvisionRoles.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN,
+                policy_arn=self.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN,
             )
             logger.info(f"Deployed {role_name} role")
 
         for role_name in aft_role_names:
             self._ensure_role_can_be_assumed(role_name=role_name)
             logger.info(f"Can assume {role_name} role")
-
-
-def get_account_info(
-    payload: Dict[str, Any], ct_management_session: Session
-) -> AftAccountInfo:
-    logger.info("Function Start - get_account_info")
-
-    account_id = None
-
-    # Handle a Control Tower Event
-    if "account" in payload["control_tower_event"]:
-        if (
-            payload["control_tower_event"]["detail"]["eventName"]
-            == "CreateManagedAccount"
-        ):
-            account_id = payload["control_tower_event"]["detail"][
-                "serviceEventDetails"
-            ]["createManagedAccountStatus"]["account"]["accountId"]
-        elif (
-            payload["control_tower_event"]["detail"]["eventName"]
-            == "UpdateManagedAccount"
-        ):
-            account_id = payload["control_tower_event"]["detail"][
-                "serviceEventDetails"
-            ]["updateManagedAccountStatus"]["account"]["accountId"]
-        if account_id:
-            logger.info(f"Account Id [{account_id}] found in control_tower_event")
-            return utils.get_account_info(ct_management_session, account_id)
-
-    elif "id" in payload["account_request"]:
-        email = payload["account_request"]["id"]
-        logger.info("Account Email: " + email)
-        account_id = utils.get_account_id_from_email(ct_management_session, email)
-        return utils.get_account_info(ct_management_session, account_id)
-
-    raise Exception("Account was not found")
 
 
 # From persist-metadata Lambda
@@ -284,7 +256,7 @@ def persist_metadata(
     logger.info("Writing item to " + metadata_table_name)
     logger.info(item)
 
-    response = utils.put_ddb_item(session, metadata_table_name, item)
+    response = ddb.put_ddb_item(session, metadata_table_name, item)
 
     logger.info(response)
     return response
@@ -293,25 +265,26 @@ def persist_metadata(
 def get_ssm_parameters_names_by_path(session: Session, path: str) -> List[str]:
 
     client = session.client("ssm")
-    response = client.get_parameters_by_path(Path=path, Recursive=True)
-    logger.debug(response)
+    paginator = client.get_paginator("get_parameters_by_path")
+    pages = paginator.paginate(Path=path, Recursive=True)
 
     parameter_names = []
-    for p in response["Parameters"]:
-        parameter_names.append(p["Name"])
+    for page in pages:
+        parameter_names.extend([param["Name"] for param in page["Parameters"]])
 
     return parameter_names
 
 
 def delete_ssm_parameters(session: Session, parameters: Sequence[str]) -> None:
-
-    if len(parameters) > 0:
+    batches = utils.yield_batches_from_list(
+        parameters, batch_size=10
+    )  # Max batch size for API
+    for batched_names in batches:
         client = session.client("ssm")
-        response = client.delete_parameters(Names=parameters)
-        logger.info(response)
+        response = client.delete_parameters(Names=batched_names)
 
 
-def create_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:
+def put_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:
 
     client = session.client("ssm")
 
@@ -319,7 +292,6 @@ def create_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:
         response = client.put_parameter(
             Name=SSM_PARAMETER_PATH + key, Value=value, Type="String", Overwrite=True, Tier="Intelligent-Tiering"
         )
-        logger.info(response)
 
 
 def tag_account(
@@ -333,22 +305,6 @@ def tag_account(
 
     tags = payload["account_request"]["account_tags"]
     tag_list: List[TagTypeDef] = [{"Key": k, "Value": v} for k, v in tags.items()]
-    utils.tag_org_resource(
-        ct_management_session, account_info["id"], tag_list, rollback
-    )
 
-
-def validate_request(payload: Dict[str, Any]) -> bool:
-    logger.info("Function Start - validate_request")
-    schema_path = os.path.join(
-        os.path.dirname(__file__), "schemas/valid_account_request_schema.json"
-    )
-    with open(schema_path) as schema_file:
-        schema_object = json.load(schema_file)
-    logger.info("Schema Loaded:" + json.dumps(schema_object))
-    validated = jsonschema.validate(payload, schema_object)
-    if validated is None:
-        logger.info("Request Validated")
-        return True
-    else:
-        raise Exception("Failure validating request.\n{validated}")
+    orgs_agent = OrganizationsAgent(ct_management_session)
+    orgs_agent.tag_org_resource(account_info["id"], tag_list, rollback)

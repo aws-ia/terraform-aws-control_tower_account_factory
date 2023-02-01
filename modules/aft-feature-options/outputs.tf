@@ -8,7 +8,7 @@ output "aws_aft_access_logs_s3_bucket_id" {
 
 output "aws_aft_access_logs_s3_bucket_arn" {
   value       = aws_s3_bucket.aft_access_logs.arn
-  description = "The ARN of the bucket. Will be of format arn:aws:s3:::bucketname."
+  description = "The ARN of the bucket. Will be of format arn:<partition>:s3:::bucketname."
 }
 
 output "aws_aft_access_logs_s3_bucket_region" {
@@ -23,7 +23,7 @@ output "aws_aft_logs_s3_bucket_id" {
 
 output "aws_aft_logs_s3_bucket_arn" {
   value       = aws_s3_bucket.aft_logging_bucket.arn
-  description = "The ARN of the bucket. Will be of format arn:aws:s3:::bucketname."
+  description = "The ARN of the bucket. Will be of format arn:<partition>:s3:::bucketname."
 }
 
 output "aws_aft_logs_s3_bucket_region" {

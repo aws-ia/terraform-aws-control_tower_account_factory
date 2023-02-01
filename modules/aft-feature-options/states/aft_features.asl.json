@@ -39,7 +39,7 @@
       },
         "Notify Success": {
             "Type": "Task",
-            "Resource": "arn:aws:states:::sns:publish",
+            "Resource": "arn:${current_partition}:states:::sns:publish",
             "Parameters": {
               "TopicArn": "${aft_notification_arn}",
               "Message.$": "$"
@@ -48,7 +48,7 @@
           },
           "Notify Failure": {
             "Type": "Task",
-            "Resource": "arn:aws:states:::sns:publish",
+            "Resource": "arn:${current_partition}:states:::sns:publish",
             "Parameters": {
               "TopicArn": "${aft_failure_notification_arn}",
               "Message.$": "$.Cause"

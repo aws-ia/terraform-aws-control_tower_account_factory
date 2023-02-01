@@ -4,7 +4,7 @@
         {
             "Effect": "Allow",
             "Action": "iam:GetRole",
-            "Resource": "arn:aws:iam::${data_aws_caller_identity_aft-management_account_id}:role/AWSControlTowerExecution"
+            "Resource": "arn:${data_aws_partition_current_partition}:iam::${data_aws_caller_identity_aft-management_account_id}:role/AWSControlTowerExecution"
         }
     ]
 }

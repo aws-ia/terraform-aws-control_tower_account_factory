@@ -283,6 +283,8 @@ def get_log_bucket_arns(session: Session) -> List[str]:
     response = client.list_buckets()
     bucket_arns = []
     for b in response["Buckets"]:
-        bucket_arns.append("arn:aws:s3:::" + b["Name"] + "/*")
+        bucket_arns.append(
+            f"arn:{utils.get_aws_partition(session)}:s3:::" + b["Name"] + "/*"
+        )
     logger.info(str(bucket_arns))
     return bucket_arns
