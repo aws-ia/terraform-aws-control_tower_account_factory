@@ -29,7 +29,7 @@ setuptools.setup(
         "boto3==1.26.35",
         "botocore==1.29.35",
         "cffi==1.14.6",
-        "cryptography == 3.4.7",
+        "cryptography == 39.0.1",
         "decorator == 5.0.9",
         "distlib == 0.3.2",
         "execnet == 1.9.0",
