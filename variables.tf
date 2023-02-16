@@ -83,7 +83,7 @@ variable "maximum_concurrent_customizations" {
   default     = 5
   validation {
     condition     = var.maximum_concurrent_customizations > 0
-    error_message = "Variable var: maximum_concurrent_customizations must be greater than 0."
+    error_message = "Maximum_concurrent_customizations must be greater than 0."
   }
 }
 
@@ -94,6 +94,16 @@ variable "aft_vpc_endpoints" {
   validation {
     condition     = contains([true, false], var.aft_vpc_endpoints)
     error_message = "Valid values for var: aft_vpc_endpoints are (true, false)."
+  }
+}
+
+variable "concurrent_account_factory_actions" {
+  description = "Maximum number of accounts that can be provisioned in parallel."
+  type        = number
+  default     = 5
+  validation {
+    condition     = var.concurrent_account_factory_actions > 0
+    error_message = "Maximum_concurrent_accounts_being_provisioned must be greater than 0."
   }
 }
 

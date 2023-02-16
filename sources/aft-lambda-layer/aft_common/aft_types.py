@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-from typing import Any, Dict, Literal, TypedDict
+from typing import Any, Dict, List, Literal, TypedDict, Union
 
 
 class AftAccountInfo(TypedDict):
@@ -22,3 +22,4 @@ class AftInvokeAccountCustomizationPayload(TypedDict):
     account_request: Dict[str, Any]
     control_tower_event: Dict[str, Any]
     account_provisioning: Dict[str, Any]
+    customization_request_id: str

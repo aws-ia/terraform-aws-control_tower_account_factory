@@ -4,10 +4,10 @@
 import inspect
 from typing import TYPE_CHECKING, Any, Dict
 
-from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import ProvisionRoles, tag_account
 from aft_common.auth import AuthClient
+from aft_common.logger import customization_request_logger
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -15,15 +15,22 @@ if TYPE_CHECKING:
 else:
     LambdaContext = object
 
-logger = utils.get_logger()
-
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    action = event["action"]
+    event_payload = event["payload"]
+    request_id = event_payload["customization_request_id"]
+    account_info = event_payload["account_info"]["account"]
+    target_account_id = event_payload["account_info"]["account"]["id"]
+
+    logger = customization_request_logger(
+        aws_account_id=target_account_id, customization_request_id=request_id
+    )
+
     aft_management_session = Session()
     auth = AuthClient()
-    try:
-        logger.info("AFT Account Provisioning Framework Handler Start")
 
+    try:
         rollback = False
         try:
             if event["rollback"]:
@@ -31,15 +38,13 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
         except KeyError:
             pass
 
-        payload = event["payload"]
-        action = event["action"]
         ct_management_session = auth.get_ct_management_session(
             role_name=ProvisionRoles.SERVICE_ROLE_NAME
         )
 
         if action == "tag_account":
-            account_info = payload["account_info"]["account"]
-            tag_account(payload, account_info, ct_management_session, rollback)
+            logger.info("Tag account Organization resource")
+            tag_account(event_payload, account_info, ct_management_session, rollback)
         else:
             raise Exception(
                 f"Incorrect Command Passed to Lambda Function. Input action: {action}. Expected: 'tag_account'"

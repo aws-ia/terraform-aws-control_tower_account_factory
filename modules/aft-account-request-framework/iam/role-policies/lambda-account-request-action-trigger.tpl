@@ -68,6 +68,15 @@
                 "arn:${data_aws_partition_current_partition}:kms:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:alias/aws/sns"
             ]
         },
+		{
+			"Effect": "Allow",
+			"Action": [
+				"states:StartExecution"
+			],
+			"Resource": [
+				"arn:${data_aws_partition_current_partition}:states:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:stateMachine:aft-account-provisioning-framework"
+			]
+		},
         {
             "Effect" : "Allow",
             "Action" : [

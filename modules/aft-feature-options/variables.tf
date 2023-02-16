@@ -55,3 +55,15 @@ variable "feature_options_archive_path" {
 variable "feature_options_archive_hash" {
   type = string
 }
+
+variable "delete_default_vpc_lambda_function_name" {
+  type = string
+}
+
+variable "enroll_support_lambda_function_name" {
+  type = string
+}
+
+variable "enable_cloudtrail_lambda_function_name" {
+  type = string
+}

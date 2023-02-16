@@ -52,3 +52,31 @@ variable "provisioning_framework_archive_path" {
 variable "provisioning_framework_archive_hash" {
   type = string
 }
+
+variable "create_role_lambda_function_name" {
+  type = string
+}
+
+variable "tag_account_lambda_function_name" {
+  type = string
+}
+
+variable "persist_metadata_lambda_function_name" {
+  type = string
+}
+
+variable "account_metadata_ssm_lambda_function_name" {
+  type = string
+}
+
+variable "delete_default_vpc_lambda_function_name" {
+  type = string
+}
+
+variable "enroll_support_lambda_function_name" {
+  type = string
+}
+
+variable "enable_cloudtrail_lambda_function_name" {
+  type = string
+}

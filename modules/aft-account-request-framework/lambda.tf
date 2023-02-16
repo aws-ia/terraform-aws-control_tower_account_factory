@@ -137,6 +137,12 @@ resource "aws_lambda_function" "aft_account_request_processor" {
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
+  environment {
+    variables = {
+      AFT_PROVISIONING_CONCURRENCY = var.concurrent_account_factory_actions
+    }
+  }
+
   vpc_config {
     subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
     security_group_ids = tolist([aws_security_group.aft_vpc_default_sg.id])

@@ -31,6 +31,16 @@
             "${aft_sns_topic_arn}",
             "${aft_failure_sns_topic_arn}"
         ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+            "ssm:GetParameter"
+        ],
+        "Resource" : [
+            "arn:${data_aws_partition_current_partition}:ssm:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:parameter/aft/*"
+
+        ]
       }
     ]
 }

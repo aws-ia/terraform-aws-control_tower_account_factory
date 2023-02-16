@@ -4,34 +4,35 @@
 import inspect
 from typing import TYPE_CHECKING, Any, Dict
 
-from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.auth import AuthClient
+from aft_common.logger import customization_request_logger
 
 if TYPE_CHECKING:
     from aws_lambda_powertools.utilities.typing import LambdaContext
 else:
     LambdaContext = object
 
-logger = utils.get_logger()
-
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    action = event["action"]
+    event_payload = event["payload"]
+    request_id = event_payload["customization_request_id"]
+    target_account_id = event_payload["account_info"]["account"]["id"]
+
+    logger = customization_request_logger(
+        aws_account_id=target_account_id, customization_request_id=request_id
+    )
+
     auth = AuthClient()
     try:
-        logger.info("AFT Account Provisioning Framework Create Role Handler Start")
-
-        payload = event["payload"]
-        action = event["action"]
-
         if action != "create_role":
             raise Exception(
                 f"Incorrect Command Passed to Lambda Function. Input: {action}. Expected: 'create_role'"
             )
-
-        account_id = payload["account_info"]["account"]["id"]
-        provisioning = ProvisionRoles(auth=auth, account_id=account_id)
+        logger.info("Deploying / managing AFT Roles in target account")
+        provisioning = ProvisionRoles(auth=auth, account_id=target_account_id)
         provisioning.deploy_aws_aft_roles()
 
     except Exception as error:

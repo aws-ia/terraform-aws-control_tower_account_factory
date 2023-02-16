@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
-import os
+import logging
 import time
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Dict, List, Sequence
@@ -26,7 +26,7 @@ else:
     TagTypeDef = object
 
 
-logger = utils.get_logger()
+logger = logging.getLogger("aft")
 
 
 AFT_EXEC_ROLE = "AWSAFTExecution"
@@ -174,12 +174,16 @@ class ProvisionRoles:
     def role_policy_is_attached(
         role_name: str, policy_arn: str, target_account_session: Session
     ) -> bool:
+        logger.info("Determining if {policy_arn} is attached to {role_name}")
         resource: IAMServiceResource = target_account_session.resource("iam")
         role = resource.Role(role_name)
         policy_iterator = role.attached_policies.all()
         policy_arns = [policy.arn for policy in policy_iterator]
-        logger.info(policy_arns)
-        return policy_arn in policy_arns
+        attached = policy_arn in policy_arns
+        logger.info(
+            f"{policy_arn} is {'attached' if attached else 'detached'} to {role_name}"
+        )
+        return attached
 
     def _ensure_role_can_be_assumed(
         self, role_name: str, timeout_in_mins: int = 1, delay: int = 5
@@ -199,10 +203,8 @@ class ProvisionRoles:
                 account_id=self.target_account_id, role_name=role_name
             )
             return True
-        except ClientError as error:
-            if error.response["Error"]["Code"] == "AccessDenied":
-                return False
-            raise error
+        except ClientError:
+            return False
 
     def deploy_aws_aft_roles(self) -> None:
         trust_policy = self.generate_aft_trust_policy()
@@ -212,6 +214,7 @@ class ProvisionRoles:
             ProvisionRoles.EXECUTION_ROLE_NAME,
         ]
 
+        logger.info(f"Deploying roles {', '.join(aft_role_names)}")
         for role_name in aft_role_names:
             self._deploy_role_in_target_account(
                 role_name=role_name,
@@ -229,8 +232,6 @@ class ProvisionRoles:
 def persist_metadata(
     payload: Dict[str, Any], account_info: Dict[str, str], session: Session
 ) -> PutItemOutputTableTypeDef:
-
-    logger.info("Function Start - persist_metadata")
 
     account_tags = payload["account_request"]["account_tags"]
     account_customizations_name = payload["account_request"][
@@ -300,7 +301,6 @@ def tag_account(
     ct_management_session: Session,
     rollback: bool,
 ) -> None:
-    logger.info("Start Function - tag_account")
     logger.info(payload)
 
     tags = payload["account_request"]["account_tags"]

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
@@ -16,7 +17,7 @@ else:
     MessageTypeDef = object
     SendMessageResultTypeDef = object
 
-logger = utils.get_logger()
+logger = logging.getLogger("aft")
 
 
 def build_sqs_url(session: Session, queue_name: str) -> str:

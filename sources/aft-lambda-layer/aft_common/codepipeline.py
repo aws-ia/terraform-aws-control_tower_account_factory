@@ -1,13 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 import re
 from typing import Any, List
 
 import aft_common.aft_utils as utils
 from boto3.session import Session
 
-logger = utils.get_logger()
+logger = logging.getLogger("aft")
 
 AFT_CUSTOMIZATIONS_PIPELINE_NAME_PATTERN = "^\d\d\d\d\d\d\d\d\d\d\d\d-.*$"
 

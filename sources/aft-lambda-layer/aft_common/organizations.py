@@ -1,12 +1,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 import re
 from copy import deepcopy
 from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, cast
 
 from aft_common.aft_types import AftAccountInfo
-from aft_common.aft_utils import emails_are_equal, get_logger
+from aft_common.aft_utils import emails_are_equal
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -27,7 +28,7 @@ else:
     AccountTypeDef = object
     ParentTypeDef = object
 
-logger = get_logger()
+logger = logging.getLogger("aft")
 
 
 class OrganizationsAgent:
