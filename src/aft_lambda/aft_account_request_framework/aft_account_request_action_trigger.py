@@ -52,6 +52,16 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             logger.info("New account request received")
             record_handler.handle_account_request(new_account=True)
 
+        # In this situation, a new entry has been added to the account request table
+        # and a provisioned product exists, and No Control Tower parameters changed
+        elif (
+            record_handler.is_create_action
+            and provisioned_product_exists(record=record_handler.record)
+            and not record_handler.control_tower_parameters_updated
+        ):
+            logger.info("Customization request received for existing CT account")
+            record_handler.handle_customization_request()
+
         # If we're processing a request that updates an existing entry in the
         # account request table, we need to handle control tower parameter changes
         # by routing the request to service catalog

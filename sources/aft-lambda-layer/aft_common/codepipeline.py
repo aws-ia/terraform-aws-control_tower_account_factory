@@ -102,30 +102,31 @@ def list_pipelines(session: Session) -> List[Any]:
     return matched_pipelines
 
 
-def get_running_pipeline_count(session: Session, names: List[str]) -> int:
+def get_running_pipeline_count(session: Session, pipeline_names: List[str]) -> int:
     pipeline_counter = 0
     client = session.client("codepipeline")
 
-    for p in names:
-        logger.info("Getting pipeline executions for " + p)
+    for name in pipeline_names:
+        logger.info("Getting pipeline executions for " + name)
+        pipeline_execution_summaries = []
 
-        response = client.list_pipeline_executions(pipelineName=p)
-        pipeline_execution_summaries = response["pipelineExecutionSummaries"]
+        paginator = client.get_paginator("list_pipeline_executions")
+        pages = paginator.paginate(pipelineName=name)
+        for page in pages:
+            pipeline_execution_summaries.extend(page["pipelineExecutionSummaries"])
 
-        while "nextToken" in response:
-            response = client.list_pipeline_executions(
-                pipelineName=p, nextToken=response["nextToken"]
-            )
-            pipeline_execution_summaries.extend(response["pipelineExecutionSummaries"])
+        if not pipeline_execution_summaries:
+            # No executions for this pipeline in the last 12 months
+            continue
+        else:
+            latest_execution = sorted(
+                pipeline_execution_summaries, key=lambda i: i["startTime"], reverse=True  # type: ignore
+            )[0]
+            logger.info("Latest Execution: ")
+            logger.info(latest_execution)
 
-        latest_execution = sorted(
-            pipeline_execution_summaries, key=lambda i: i["startTime"], reverse=True  # type: ignore
-        )[0]
-        logger.info("Latest Execution: ")
-        logger.info(latest_execution)
-
-        if latest_execution["status"] == "InProgress":
-            pipeline_counter += 1
+            if latest_execution["status"] == "InProgress":
+                pipeline_counter += 1
 
     logger.info("The number of running pipelines is " + str(pipeline_counter))
 
