@@ -10,10 +10,13 @@ from aft_common import ddb
 from aft_common.account_request_framework import (
     build_account_customization_payload,
     build_aft_account_provisioning_framework_event,
+    control_tower_param_changed,
     insert_msg_into_acc_req_queue,
+    provisioned_product_exists,
 )
 from aft_common.auth import AuthClient
 from aft_common.organizations import OrganizationsAgent
+from aft_common.shared_account import shared_account_request
 
 logger = logging.getLogger("aft")
 
@@ -27,6 +30,7 @@ class AccountRequestRecordHandler:
         self._old_image = self.record["dynamodb"].get("OldImage")
         self._new_image = self.record["dynamodb"].get("NewImage")
         self.control_tower_parameters_updated = self._control_tower_parameters_changed()
+        self.auth = auth
 
     @property
     def is_update_action(self) -> bool:
@@ -106,3 +110,45 @@ class AccountRequestRecordHandler:
             sfn_name=account_provisioning_stepfunction,
             input=json.dumps(account_customization_payload),
         )
+
+    def process_request(self) -> None:
+
+        # Removing account from AFT
+        if self.record["eventName"] == "REMOVE":
+            logger.info("Delete account request received")
+            self.handle_remove()
+
+        # Triggering customization for shared account
+        elif not control_tower_param_changed(
+            record=self.record
+        ) and shared_account_request(event_record=self.record, auth=self.auth):
+            logger.info("Customization request received")
+            self.handle_customization_request()
+
+        # Vending new account
+        elif self.is_create_action and not provisioned_product_exists(
+            record=self.record
+        ):
+            logger.info("New account request received")
+            self.handle_account_request(new_account=True)
+
+        # Importing existing CT account into AFT and triggering customization
+        elif (
+            self.is_create_action
+            and provisioned_product_exists(record=self.record)
+            and not self.control_tower_parameters_updated
+        ):
+            logger.info("Customization request received for existing CT account")
+            self.handle_customization_request()
+
+        # Updating CT parameter for existing AFT account
+        elif self.is_update_action and self.control_tower_parameters_updated:
+            logger.info("Control Tower parameter update request received")
+            self.handle_account_request(new_account=False)
+
+        # Triggering customization for existing AFT account
+        elif self.is_update_action and not self.control_tower_parameters_updated:
+            logger.info("Customization request received")
+            self.handle_customization_request()
+        else:
+            raise Exception("Unsupported account request")

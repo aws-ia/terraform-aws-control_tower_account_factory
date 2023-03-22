@@ -16,7 +16,7 @@ locals {
   log_archive_access_logs_bucket_name              = "aws-aft-s3-access-logs"
   log_archive_bucket_object_expiration_days        = "365"
   lambda_layer_codebuild_delay                     = "420s"
-  lambda_layer_python_version                      = "3.8"
+  lambda_layer_python_version                      = "3.9"
   lambda_layer_name                                = "aft-common"
   create_role_lambda_function_name                 = "aft-account-provisioning-framework-create-aft-execution-role"
   tag_account_lambda_function_name                 = "aft-account-provisioning-framework-tag-account"

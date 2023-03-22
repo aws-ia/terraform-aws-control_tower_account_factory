@@ -30,60 +30,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     try:
         record_handler = AccountRequestRecordHandler(auth=auth, event=event)
         logger.info(record_handler.record)
-
-        # Account record was deleted from `aft-request` repo
-        if record_handler.record["eventName"] == "REMOVE":
-            record_handler.handle_remove()
-            logger.info("Delete account request received")
-
-        # We only support customization actions against shared accounts
-        elif not control_tower_param_changed(
-            record=record_handler.record
-        ) and shared_account_request(event_record=record_handler.record):
-            logger.info("Customization request received")
-            record_handler.handle_customization_request()
-
-        # In this situation, a new entry has been added to the account request table
-        # but no provisioned product exists, that means no account should exist for this
-        # and we must process this as a new account request
-        elif record_handler.is_create_action and not provisioned_product_exists(
-            record=record_handler.record
-        ):
-            logger.info("New account request received")
-            record_handler.handle_account_request(new_account=True)
-
-        # In this situation, a new entry has been added to the account request table
-        # and a provisioned product exists, and No Control Tower parameters changed
-        elif (
-            record_handler.is_create_action
-            and provisioned_product_exists(record=record_handler.record)
-            and not record_handler.control_tower_parameters_updated
-        ):
-            logger.info("Customization request received for existing CT account")
-            record_handler.handle_customization_request()
-
-        # If we're processing a request that updates an existing entry in the
-        # account request table, we need to handle control tower parameter changes
-        # by routing the request to service catalog
-        elif (
-            record_handler.is_update_action
-            and record_handler.control_tower_parameters_updated
-        ):
-            logger.info("Control Tower parameter update request received")
-            record_handler.handle_account_request(new_account=False)
-
-        # In this situation we have an entry in the account request table, but no control
-        # tower parameters are being updated, we can optimize this flow but routing the
-        # request to the customization stepfunction directly
-        elif (
-            record_handler.is_update_action
-            and not record_handler.control_tower_parameters_updated
-        ):
-            logger.info("Customization request received")
-            record_handler.handle_customization_request()
-
-        else:
-            raise Exception("Unsupported account request")
+        record_handler.process_request()
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
