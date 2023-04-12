@@ -2,9 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-from typing import Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
+from aft_common import aft_utils as utils
+from aft_common import notifications
+from aft_common.account_provisioning_framework import ProvisionRoles
+from aft_common.auth import AuthClient
 from aft_common.feature_options import (
     create_trail,
     event_selectors_exists,
@@ -14,20 +17,35 @@ from aft_common.feature_options import (
     trail_exists,
     trail_is_logging,
 )
+from aft_common.logger import customization_request_logger
 from boto3.session import Session
 
-logger = utils.get_logger()
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
 
 CLOUDTRAIL_TRAIL_NAME = "aws-aft-CustomizationsCloudTrail"
 
 
-def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    request_id = event["customization_request_id"]
+    target_account_id = event["account_info"]["account"]["id"]
+
+    logger = customization_request_logger(
+        aws_account_id=target_account_id, customization_request_id=request_id
+    )
+
+    auth = AuthClient()
+    aft_session = Session()
+
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
-        aft_session = Session()
-        ct_session = utils.get_ct_management_session(aft_session)
-        log_archive_session = utils.get_log_archive_session(aft_session)
+        ct_session = auth.get_ct_management_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
+        )
+        log_archive_session = auth.get_log_archive_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
+        )
 
         # Get SSM Parameters
         cloudtrail_enabled = utils.get_ssm_parameter_value(
@@ -43,6 +61,7 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
         log_bucket_arns = get_log_bucket_arns(log_archive_session)
 
         if cloudtrail_enabled == "true":
+            logger.info("Enabling Cloudtrail")
             if not trail_exists(ct_session):
                 create_trail(ct_session, s3_bucket_name, kms_key_arn)
             if not event_selectors_exists(ct_session):
@@ -50,11 +69,17 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
             if not trail_is_logging(ct_session):
                 start_logging(ct_session)
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=aft_session,
+            message=str(error),
+            context=context,
+            subject="AFT: Failed to enable cloudtrail",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

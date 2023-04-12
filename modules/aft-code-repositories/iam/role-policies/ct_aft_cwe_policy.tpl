@@ -7,8 +7,8 @@
                 "codepipeline:StartPipelineExecution"
             ],
             "Resource": [
-                "arn:aws:codepipeline:${region}:${account_id}:${account_request_pipeline_name}",
-                "arn:aws:codepipeline:${region}:${account_id}:${provisioning_customizations_pipeline_name}"
+                "arn:${data_aws_partition_current_partition}:codepipeline:${region}:${account_id}:${account_request_pipeline_name}",
+                "arn:${data_aws_partition_current_partition}:codepipeline:${region}:${account_id}:${provisioning_customizations_pipeline_name}"
             ]
         }
     ]

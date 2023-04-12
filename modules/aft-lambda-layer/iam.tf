@@ -14,6 +14,7 @@ resource "aws_iam_role" "codebuild_invoker_lambda_role" {
 resource "aws_iam_role_policy" "codebuild" {
   role = aws_iam_role.codebuild.name
   policy = templatefile("${path.module}/iam/role-policies/codebuild.tpl", {
+    "data_aws_partition_current_partition"      = data.aws_partition.current.partition
     "aws_region"                                = var.aws_region
     "account_id"                                = local.account_id
     "layer_name"                                = var.lambda_layer_name
@@ -26,14 +27,15 @@ resource "aws_iam_role_policy" "codebuild" {
 resource "aws_iam_role_policy" "codebuild_invoker_policy" {
   role = aws_iam_role.codebuild_invoker_lambda_role.name
   policy = templatefile("${path.module}/iam/role-policies/codebuild-invoker.tpl", {
-    "aws_region"                      = var.aws_region
-    "account_id"                      = local.account_id
-    "codebuild_project_name"          = aws_codebuild_project.codebuild.name
-    "codebuild_invoker_function_name" = local.codebuild_invoker_function_name
+    "data_aws_partition_current_partition" = data.aws_partition.current.partition
+    "aws_region"                           = var.aws_region
+    "account_id"                           = local.account_id
+    "codebuild_project_name"               = aws_codebuild_project.codebuild.name
+    "codebuild_invoker_function_name"      = local.codebuild_invoker_function_name
   })
 }
 
 resource "aws_iam_role_policy_attachment" "codebuild_invoker_VPC_access" {
   role       = aws_iam_role.codebuild_invoker_lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }

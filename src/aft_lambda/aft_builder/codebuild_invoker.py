@@ -5,7 +5,7 @@ import datetime
 import inspect
 import logging
 import time
-from typing import Any, Dict, TypedDict, Union
+from typing import Any, Dict, TypedDict
 
 from boto3.session import Session
 
@@ -19,11 +19,9 @@ class LayerBuildStatus(TypedDict):
 
 # This function is directly responsible for building `aft_common` library
 # Do not import  `aft_common` into this handler!
-def lambda_handler(
-    event: Dict[str, Any], context: Union[Dict[str, Any], None]
-) -> LayerBuildStatus:
+def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> LayerBuildStatus:
+    session = Session()
     try:
-        session = Session()
         client = session.client("codebuild")
 
         codebuild_project_name = event["codebuild_project_name"]
@@ -54,11 +52,11 @@ def lambda_handler(
         logger.info(f"Build {job_id} failed - time out")
         raise Exception(f"Build {job_id} failed - time out")
 
-    except Exception as e:
+    except Exception as error:
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

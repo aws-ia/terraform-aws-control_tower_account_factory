@@ -2,47 +2,48 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-from typing import Any, Dict, Union
+import logging
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
 import boto3
+from aft_common import aft_utils as utils
+from aft_common import ddb, notifications
+from aft_common.logger import configure_aft_logger
 
-logger = utils.get_logger()
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+    from mypy_boto3_dynamodb.type_defs import PutItemOutputTableTypeDef
+else:
+    PutItemOutputTableTypeDef = object
+    LambdaContext = object
+
+configure_aft_logger()
+logger = logging.getLogger("aft")
 
 
 def lambda_handler(
-    event: Dict[str, Any], context: Union[Dict[str, Any], None]
-) -> Dict[str, Any]:
+    event: Dict[str, Any], context: LambdaContext
+) -> PutItemOutputTableTypeDef:
+    session = boto3.session.Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
+        response = ddb.put_ddb_item(
+            session,
+            utils.get_ssm_parameter_value(session, utils.SSM_PARAM_AFT_EVENTS_TABLE),
+            event,
+        )
+        return response
 
-        try:
-            session = boto3.session.Session()
-
-            response: Dict[str, Any] = utils.put_ddb_item(
-                session,
-                utils.get_ssm_parameter_value(
-                    session, utils.SSM_PARAM_AFT_EVENTS_TABLE
-                ),
-                event,
-            )
-            return response
-
-        except Exception as e:
-            message = {
-                "FILE": __file__.split("/")[-1],
-                "METHOD": inspect.stack()[0][3],
-                "EXCEPTION": str(e),
-            }
-            logger.exception(message)
-            raise
-
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=session,
+            message=str(error),
+            context=context,
+            subject="AFT Event Logging failed",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

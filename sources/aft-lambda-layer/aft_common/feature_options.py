@@ -1,9 +1,9 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 from typing import TYPE_CHECKING
 
-import boto3
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
@@ -24,12 +24,11 @@ else:
 from typing import Optional
 
 import aft_common.aft_utils as utils
-import boto3
 
 SUPPORT_API_REGION = "us-east-1"
 CLOUDTRAIL_TRAIL_NAME = "aws-aft-CustomizationsCloudTrail"
 
-logger = utils.get_logger()
+logger = logging.getLogger("aft")
 
 
 def get_aws_regions(client: EC2Client) -> List[str]:
@@ -285,6 +284,8 @@ def get_log_bucket_arns(session: Session) -> List[str]:
     response = client.list_buckets()
     bucket_arns = []
     for b in response["Buckets"]:
-        bucket_arns.append("arn:aws:s3:::" + b["Name"] + "/*")
+        bucket_arns.append(
+            f"arn:{utils.get_aws_partition(session)}:s3:::" + b["Name"] + "/*"
+        )
     logger.info(str(bucket_arns))
     return bucket_arns

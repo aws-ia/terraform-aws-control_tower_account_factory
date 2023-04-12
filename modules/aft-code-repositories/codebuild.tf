@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+
 data "local_file" "account_request_buildspec" {
   filename = "${path.module}/buildspecs/ct-aft-account-request.yml"
 }
@@ -22,9 +23,14 @@ resource "aws_codebuild_project" "account_request" {
 
   environment {
     compute_type                = "BUILD_GENERAL1_MEDIUM"
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:4.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
   }
 
   logs_config {
@@ -49,6 +55,10 @@ resource "aws_codebuild_project" "account_request" {
     security_group_ids = var.security_group_ids
   }
 
+  lifecycle {
+    ignore_changes = [project_visibility]
+  }
+
 }
 
 resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" {
@@ -65,9 +75,15 @@ resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" 
 
   environment {
     compute_type                = "BUILD_GENERAL1_MEDIUM"
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:4.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
   }
 
   logs_config {
@@ -92,12 +108,19 @@ resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" 
     security_group_ids = var.security_group_ids
   }
 
+  lifecycle {
+    ignore_changes = [project_visibility]
+  }
+
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "account_request" {
   name              = "/aws/codebuild/ct-aft-account-request"
   retention_in_days = var.log_group_retention
 }
+
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "account_provisioning_customizations" {
   name              = "/aws/codebuild/ct-aft-account-provisioning-customizations"
   retention_in_days = var.log_group_retention

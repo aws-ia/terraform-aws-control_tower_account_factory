@@ -1,52 +1,10 @@
 {
-  "StartAt": "aft_account_provisioning_framework_validate",
+  "StartAt": "aft_account_provisioning_framework_persist_metadata",
   "States": {
-    "aft_account_provisioning_framework_validate": {
-      "Next": "aft_account_provisioning_framework_get_account_info",
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": "$.validated",
-      "ResultSelector": {"Success.$":"$.Payload"},
-      "Parameters": {
-        "FunctionName": "${validate_request_function_name}",
-        "Payload": {
-          "job_name.$": "$$.Execution.Name",
-          "payload.$": "$",
-          "action": "validate"
-        }
-      },
-      "Catch": [
-        {
-          "ErrorEquals": ["States.ALL"],
-          "Next": "aft_account_provisioning_framework_notify_error"
-        }
-      ]
-    },
-    "aft_account_provisioning_framework_get_account_info": {
-      "Next": "aft_account_provisioning_framework_persist_metadata",
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": "$.account_info",
-      "ResultSelector": {"account.$":"$.Payload"},
-      "Parameters": {
-        "FunctionName": "${get_account_info_function_name}",
-        "Payload": {
-          "job_name.$": "$$.Execution.Name",
-          "payload.$": "$",
-          "action": "get_account_info"
-        }
-      },
-      "Catch": [
-        {
-          "ErrorEquals": ["States.ALL"],
-          "Next": "aft_account_provisioning_framework_notify_error"
-        }
-      ]
-    },
     "aft_account_provisioning_framework_persist_metadata": {
       "Next": "aft_account_provisioning_framework_create_role",
       "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "arn:${current_partition}:states:::lambda:invoke",
       "ResultPath": "$.persist_metadata",
       "ResultSelector": {"StatusCode.$":"$.StatusCode"},
       "Parameters": {
@@ -67,7 +25,7 @@
     "aft_account_provisioning_framework_create_role": {
       "Next": "aft_account_provisioning_framework_tag_account",
       "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "arn:${current_partition}:states:::lambda:invoke",
       "ResultPath": "$.role",
       "ResultSelector": {"Arn.$":"$.Payload"},
       "Parameters": {
@@ -96,7 +54,7 @@
     "aft_account_provisioning_framework_tag_account": {
       "Next": "aft_account_provisioning_framework_account_metadata_ssm",
       "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "arn:${current_partition}:states:::lambda:invoke",
       "ResultPath": "$.account_tags",
       "ResultSelector": {"StatusCode.$":"$.StatusCode"},
       "Parameters": {
@@ -118,7 +76,7 @@
     "aft_account_provisioning_framework_account_metadata_ssm": {
       "Next": "aft_account_provisioning_framework_aft_features",
       "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "arn:${current_partition}:states:::lambda:invoke",
       "ResultPath": "$.account_metadata_ssm",
       "ResultSelector": {"StatusCode.$":"$.StatusCode"},
       "Parameters": {
@@ -140,7 +98,7 @@
     "aft_account_provisioning_framework_aft_features": {
       "Next": "aft_account_provisioning_customizations",
       "Type": "Task",
-      "Resource": "arn:aws:states:::states:startExecution.sync:2",
+      "Resource": "arn:${current_partition}:states:::states:startExecution.sync:2",
       "Parameters": {
         "StateMachineArn": "${aft_account_provisioning_framework_aft_features_state_machine_arn}",
         "Input.$": "$"
@@ -149,7 +107,7 @@
     "aft_account_provisioning_customizations": {
       "Next": "run_create_pipeline?",
       "Type": "Task",
-      "Resource": "arn:aws:states:::states:startExecution.sync:2",
+      "Resource": "arn:${current_partition}:states:::states:startExecution.sync:2",
       "Parameters": {
         "StateMachineArn": "${aft_account_provisioning_customizations_state_machine_arn}",
         "Input.$": "$.Input"
@@ -175,7 +133,7 @@
     "aft_account_provisioning_framework_create_pipeline": {
       "Next": "aft_account_provisioning_framework_notify_success",
       "Type": "Task",
-      "Resource": "arn:aws:states:::codebuild:startBuild.sync",
+      "Resource": "arn:${current_partition}:states:::codebuild:startBuild.sync",
       "Parameters": {
         "ProjectName": "aft-create-pipeline",
         "EnvironmentVariablesOverride": [
@@ -201,7 +159,7 @@
     },
     "aft_account_provisioning_framework_notify_success": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish",
+      "Resource": "arn:${current_partition}:states:::sns:publish",
       "Parameters": {
         "TopicArn": "${aft_notification_arn}",
         "Message.$": "$"
@@ -210,7 +168,7 @@
     },
     "aft_account_provisioning_framework_notify_error": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish",
+      "Resource": "arn:${current_partition}:states:::sns:publish",
       "Parameters": {
         "TopicArn": "${aft_failure_notification_arn}",
         "Message.$": "$.Cause"

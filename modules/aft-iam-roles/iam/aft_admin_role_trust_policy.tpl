@@ -4,7 +4,7 @@
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::${aft_account_id}:root"
+        "AWS": "arn:${data_aws_partition_current_partition}:iam::${aft_account_id}:root"
       },
       "Action": "sts:AssumeRole"
     }

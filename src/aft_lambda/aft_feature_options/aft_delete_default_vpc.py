@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-from typing import TYPE_CHECKING, Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
 import boto3
+from aft_common import aft_utils as utils
+from aft_common import notifications
+from aft_common.account_provisioning_framework import ProvisionRoles
+from aft_common.auth import AuthClient
 from aft_common.feature_options import (
     delete_acls,
     delete_internet_gateways,
@@ -21,53 +24,32 @@ from aft_common.feature_options import (
     get_vpc_security_groups,
     get_vpc_subnets,
 )
+from aft_common.logger import customization_request_logger
 
 if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
     from mypy_boto3_ec2 import EC2Client, EC2ServiceResource
 else:
     EC2Client = object
     EC2ServiceResource = object
+    LambdaContext = object
 
-logger = utils.get_logger()
 
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    request_id = event["customization_request_id"]
+    target_account_id = event["account_info"]["account"]["id"]
 
-def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
-    logger.info("Lambda_handler Event")
-    logger.info(event)
+    logger = customization_request_logger(
+        aws_account_id=target_account_id, customization_request_id=request_id
+    )
 
+    auth = AuthClient()
+    aft_session = boto3.session.Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
-        aft_session = boto3.session.Session()
-        role_arn = utils.build_role_arn(
-            aft_session,
-            utils.get_ssm_parameter_value(aft_session, utils.SSM_PARAM_AFT_ADMIN_ROLE),
+        target_account_session = auth.get_target_account_session(
+            account_id=target_account_id, role_name=ProvisionRoles.SERVICE_ROLE_NAME
         )
-        aft_admin_session = utils.get_boto_session(
-            utils.get_assume_role_credentials(
-                aft_session,
-                role_arn,
-                utils.get_ssm_parameter_value(
-                    aft_session, utils.SSM_PARAM_AFT_SESSION_NAME
-                ),
-            )
-        )
-        target_account = event["account_info"]["account"]["id"]
-        role_arn = utils.build_role_arn(
-            aft_session,
-            utils.get_ssm_parameter_value(aft_session, utils.SSM_PARAM_AFT_EXEC_ROLE),
-            target_account,
-        )
-        session = utils.get_boto_session(
-            utils.get_assume_role_credentials(
-                aft_admin_session,
-                role_arn,
-                utils.get_ssm_parameter_value(
-                    aft_session, utils.SSM_PARAM_AFT_SESSION_NAME
-                ),
-            )
-        )
-        client: EC2Client = session.client("ec2")
+        client: EC2Client = target_account_session.client("ec2")
         regions = get_aws_regions(client)
 
         if (
@@ -77,7 +59,10 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
             == "true"
         ):
             for region in regions:
-                logger.info("Creating boto3 session in " + region)
+                logger.info(
+                    "Deleting default VPC for AFT management account in region "
+                    + region
+                )
                 session = boto3.session.Session(region_name=region)
                 client = session.client("ec2")
                 vpc = get_default_vpc(client)
@@ -99,11 +84,17 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
                     delete_security_groups(client, security_groups)
                     delete_vpc(client, vpc)
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=aft_session,
+            message=str(error),
+            context=context,
+            subject="AFT: Failed to delete default VPC",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

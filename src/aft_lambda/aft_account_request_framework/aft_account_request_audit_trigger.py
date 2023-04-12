@@ -2,23 +2,28 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
+import logging
 import sys
-from typing import Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
+from aft_common import aft_utils as utils
+from aft_common import notifications
 from aft_common.account_request_framework import put_audit_record
+from aft_common.logger import configure_aft_logger
 from boto3.session import Session
 
-logger = utils.get_logger()
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
+
+configure_aft_logger()
+logger = logging.getLogger("aft")
 
 
-def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
-
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    aft_management_session = Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
-        session = Session()
-
         # validate event
         if "Records" in event:
             response = None
@@ -27,7 +32,7 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
                 if event_record["eventSource"] == "aws:dynamodb":
                     logger.info("DynamoDB Event Record Received")
                     table_name = utils.get_ssm_parameter_value(
-                        session, utils.SSM_PARAM_AFT_DDB_AUDIT_TABLE
+                        aft_management_session, utils.SSM_PARAM_AFT_DDB_AUDIT_TABLE
                     )
                     event_name = event_record["eventName"]
 
@@ -41,21 +46,29 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
                     if event_name in supported_events:
                         logger.info("Event Name: " + event_name)
                         response = put_audit_record(
-                            session, table_name, image_to_record, event_name
+                            aft_management_session,
+                            table_name,
+                            image_to_record,
+                            event_name,
                         )
                     else:
                         logger.info(f"Event Name: {event_name} is unsupported.")
                 else:
-                    logger.info("Non DynamoDB Event Received")
-                    sys.exit(1)
+                    raise Exception("Non DynamoDB Event Received")
         else:
             logger.info("Unexpected Event Received")
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=aft_management_session,
+            message=str(error),
+            context=context,
+            subject="AFT account request failed",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

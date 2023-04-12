@@ -6,7 +6,8 @@ resource "aws_kms_key" "aft_log_key" {
   description         = "KMS key for encrypt/decrypt log files"
   enable_key_rotation = "true"
   policy = templatefile("${path.module}/kms/key-policies/log-key.tpl", {
-    log_archive_account_id = var.log_archive_account_id
+    log_archive_account_id               = var.log_archive_account_id
+    data_aws_partition_current_partition = data.aws_partition.current.partition
   })
 }
 

@@ -3,36 +3,43 @@
 #
 import inspect
 import json
-from typing import Any, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
-import boto3
+from aft_common import aft_utils as utils
+from aft_common import notifications
 from aft_common.account_provisioning_framework import (
-    AFT_EXEC_ROLE,
     SSM_PARAMETER_PATH,
-    create_ssm_parameters,
+    ProvisionRoles,
     delete_ssm_parameters,
     get_ssm_parameters_names_by_path,
+    put_ssm_parameters,
 )
+from aft_common.auth import AuthClient
+from aft_common.logger import customization_request_logger
 
-logger = utils.get_logger()
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
 
 
-def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) -> None:
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+
+    event_payload = event["payload"]
+    request_id = event_payload["customization_request_id"]
+    target_account_id = event_payload["account_info"]["account"]["id"]
+    account_request = event_payload["account_request"]
+    custom_fields = json.loads(account_request.get("custom_fields", "{}"))
+
+    logger = customization_request_logger(
+        aws_account_id=target_account_id, customization_request_id=request_id
+    )
+
+    auth = AuthClient()
     try:
-        account_request = event["payload"]["account_request"]
-        custom_fields = json.loads(account_request.get("custom_fields", "{}"))
-        target_account_id = event["payload"]["account_info"]["account"]["id"]
-
-        local_session = boto3.session.Session()
-
-        aft_session = utils.get_aft_admin_role_session(local_session)
-        target_account_role_arn = utils.build_role_arn(
-            aft_session, AFT_EXEC_ROLE, target_account_id
-        )
-
         # Create the custom field parameters in the AFT home region
-        target_region = aft_session.region_name
+        session = auth.get_aft_management_session()
+        target_region = session.region_name
 
         aft_ssm_session_policy = {
             "Version": "2012-10-17",
@@ -44,18 +51,23 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
                         "ssm:DeleteParameters",
                     ],
                     "Effect": "Allow",
-                    "Resource": f"arn:aws:ssm:{target_region}:{target_account_id}:parameter{SSM_PARAMETER_PATH}*",
-                }
+                    "Resource": f"arn:{utils.get_aws_partition(session)}:ssm:{target_region}:{target_account_id}:parameter{SSM_PARAMETER_PATH}*",
+                },
+                {
+                    "Action": [
+                        "sts:AssumeRole",
+                    ],
+                    "Effect": "Allow",
+                    "Resource": f"arn:{utils.get_aws_partition(session)}:iam::{target_account_id}:role/${ProvisionRoles.EXECUTION_ROLE_NAME}",
+                },
             ],
         }
 
-        target_account_creds = utils.get_assume_role_credentials(
-            session=aft_session,
-            role_arn=target_account_role_arn,
-            session_name="aft_ssm_metadata",
+        target_account_session = auth.get_target_account_session(
+            account_id=target_account_id,
             session_policy=json.dumps(aft_ssm_session_policy),
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME,
         )
-        target_account_session = utils.get_boto_session(target_account_creds)
 
         params = get_ssm_parameters_names_by_path(
             target_account_session, SSM_PARAMETER_PATH
@@ -66,18 +78,24 @@ def lambda_handler(event: Dict[str, Any], context: Union[Dict[str, Any], None]) 
 
         # Delete SSM parameters which do not exist in new custom fields
         params_to_remove = list(existing_keys.difference(new_keys))
-        logger.info(message=f"Deleting SSM params: {params_to_remove}")
+        logger.info(f"Deleting SSM params: {params_to_remove}")
         delete_ssm_parameters(target_account_session, params_to_remove)
 
         # Update / Add SSM parameters for custom fields provided
-        logger.info(message=f"Adding/Updating SSM params: {custom_fields}")
-        create_ssm_parameters(target_account_session, custom_fields)
+        logger.info(f"Adding/Updating SSM params: {custom_fields}")
+        put_ssm_parameters(target_account_session, custom_fields)
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=auth.get_aft_management_session(),
+            message=str(error),
+            context=context,
+            subject="AFT account provisioning failed",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

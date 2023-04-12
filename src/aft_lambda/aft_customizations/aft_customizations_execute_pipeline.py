@@ -2,26 +2,27 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-from typing import Any, Dict, Union
+import logging
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
-from aft_common.customizations import execute_pipeline
+from aft_common import aft_utils as utils
+from aft_common import notifications
+from aft_common.codepipeline import execute_pipeline
+from aft_common.logger import configure_aft_logger, customization_request_logger
 from boto3.session import Session
 
-logger = utils.get_logger()
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
+
+configure_aft_logger()
+logger = logging.getLogger("aft")
 
 
-def lambda_handler(
-    event: Dict[str, Any], context: Union[Dict[str, Any], None]
-) -> Dict[str, Any]:
-
-    logger.info("Lambda_handler Event")
-    logger.info(event)
-
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
+    session = Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
-        session = Session()
         maximum_concurrent_pipelines = int(
             utils.get_ssm_parameter_value(
                 session, utils.SSM_PARAM_AFT_MAXIMUM_CONCURRENT_CUSTOMIZATIONS
@@ -32,18 +33,24 @@ def lambda_handler(
         pipelines_to_run = maximum_concurrent_pipelines - running_pipelines
         accounts = event["targets"]["pending_accounts"]
         logger.info("Accounts submitted for execution: " + str(len(accounts)))
-        for p in accounts[:pipelines_to_run]:
-            execute_pipeline(session, str(p))
-            accounts.remove(p)
+        for account_id in accounts[:pipelines_to_run]:
+            execute_pipeline(session, str(account_id))
+            accounts.remove(account_id)
         logger.info("Accounts remaining to be executed - ")
         logger.info(accounts)
         return {"number_pending_accounts": len(accounts), "pending_accounts": accounts}
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=session,
+            message=str(error),
+            context=context,
+            subject="Failed to trigger one or more AFT account customization pipelines",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

@@ -16,75 +16,102 @@
 
 import json
 import logging
-from typing import Any, Callable
+import os
+from datetime import date, datetime
+from enum import Enum
+from json import JSONEncoder
+from typing import TYPE_CHECKING, Any, MutableMapping, Tuple
 
-from .datetime_encoder import DateTimeEncoder
+from botocore.response import StreamingBody
+
+if TYPE_CHECKING:
+    LoggerAdapter = logging.LoggerAdapter[logging.Logger]
+else:
+    from logging import LoggerAdapter
 
 
-class Logger(object):
-    def __init__(self, loglevel: str = "warning") -> None:
-        """Initializes logging"""
-        self.config(loglevel=loglevel)
-        return
+_ORIGINAL_LOG_FACTORY = logging.getLogRecordFactory()
 
-    def config(self, loglevel: str = "warning") -> None:
-        loglevel = logging.getLevelName(loglevel.upper())
-        mainlogger = logging.getLogger()
-        mainlogger.setLevel(loglevel)
 
-        logfmt = '{"time_stamp": "%(asctime)s", "log_level": "%(levelname)s", "log_message": %(message)s}\n'
-        if len(mainlogger.handlers) == 0:
-            mainlogger.addHandler(logging.StreamHandler())
-        mainlogger.handlers[0].setFormatter(logging.Formatter(logfmt))
-        self.log = logging.LoggerAdapter(mainlogger, {})
+ACCOUNT_ID_FIELD_NAME = "account_id"
+CUSTOMIZATION_REQUEST_ID_FIELD_NAME = "customization_request_id"
 
-    def _format(self, message: str) -> str:
-        """formats log message in json
 
-        Args:
-        message (str): log message, can be a dict, list, string, or json blob
-        """
-        try:
-            message = json.loads(message)
-        except Exception:
-            pass
-        try:
-            return json.dumps(message, indent=4, cls=DateTimeEncoder)
-        except Exception:
-            return json.dumps(str(message))
+def _already_json_encoded(blob: str) -> bool:
+    try:
+        json.loads(blob)
+        return True
+    except (json.JSONDecodeError, TypeError):
+        # TypeErrors are generated when attempting to loads an array/dict/obj
+        return False
 
-    def debug(self, message: Any, **kwargs: Any) -> None:
-        """wrapper for logging.debug call"""
-        self.log.debug(self._format(message), **kwargs)
 
-    def info(self, message: Any, **kwargs: Any) -> None:
-        ## type: (object, object) -> object
-        """wrapper for logging.info call"""
-        self.log.info(self._format(message), **kwargs)
+class _AFTEncoder(JSONEncoder):
+    def default(self, obj: object) -> object:
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        elif isinstance(obj, StreamingBody):
+            return obj.read().decode()
+        else:
+            return JSONEncoder.default(self, obj)
 
-    def warning(self, message: Any, **kwargs: Any) -> None:
-        """wrapper for logging.warning call"""
-        self.log.warning(self._format(message), **kwargs)
 
-    def error(self, message: Any, **kwargs: Any) -> None:
-        """wrapper for logging.error call"""
-        self.log.error(self._format(message), **kwargs)
+class _AccountCustomizationAdapter(LoggerAdapter):
+    def process(
+        self, message: str, kwargs: MutableMapping[str, Any]
+    ) -> Tuple[str, MutableMapping[str, Any]]:
+        log_tracing = {
+            ACCOUNT_ID_FIELD_NAME: self.extra.get(ACCOUNT_ID_FIELD_NAME),
+            CUSTOMIZATION_REQUEST_ID_FIELD_NAME: self.extra.get(
+                CUSTOMIZATION_REQUEST_ID_FIELD_NAME
+            ),
+            "detail": message,
+        }
+        return (
+            json.dumps(log_tracing, cls=_AFTEncoder),
+            kwargs,
+        )
 
-    def critical(self, message: Any, **kwargs: Any) -> None:
-        """wrapper for logging.critical call"""
-        self.log.critical(self._format(message), **kwargs)
 
-    def exception(self, message: Any, **kwargs: Any) -> None:
-        """wrapper for logging.exception call"""
-        self.log.exception(self._format(message), **kwargs)
+def _aft_record_factory(*args: Any, **kwargs: Any) -> logging.LogRecord:
+    record = _ORIGINAL_LOG_FACTORY(*args, **kwargs)
+    if isinstance(record.msg, dict) or not _already_json_encoded(record.msg):
+        record.msg = json.dumps(record.msg, cls=_AFTEncoder)
+    return record
 
-    def log_unhandled_exception(self, message: Any) -> None:
-        """log unhandled exception"""
-        self.log.exception("Unhandled Exception: {}".format(message))
 
-    def log_general_exception(
-        self, file: Any, method: Callable[..., Any], exception: Exception
-    ) -> None:
-        """log general exception"""
-        message = {"FILE": file, "METHOD": method, "EXCEPTION": str(exception)}
-        self.log.exception(self._format(json.dumps(message)))
+def _get_log_level() -> str:
+    # Maintaining backwards compatibility, the old implementation defaults to INFO
+    log_level = os.environ.get("log_level", "info")
+    return log_level.upper()
+
+
+def configure_aft_logger() -> None:
+    fmt = '{"time_stamp": "%(asctime)s", "module": "%(module)s", "log_level": "%(levelname)s", "log_message": %(message)s}'
+    root_logger = logging.getLogger()
+    if root_logger.hasHandlers():
+        console = root_logger.handlers[0]
+    else:
+        console = logging.StreamHandler()
+        root_logger.addHandler(console)
+    console.setFormatter(logging.Formatter(fmt))
+
+    aft_logger = logging.getLogger("aft")
+    aft_logger.setLevel(_get_log_level())
+
+    logging.setLogRecordFactory(_aft_record_factory)
+
+
+def customization_request_logger(
+    aws_account_id: str,
+    customization_request_id: str,
+) -> LoggerAdapter:
+    configure_aft_logger()
+    logger = logging.getLogger("aft.customization")
+    return _AccountCustomizationAdapter(
+        logger,
+        extra={
+            ACCOUNT_ID_FIELD_NAME: aws_account_id,
+            CUSTOMIZATION_REQUEST_ID_FIELD_NAME: customization_request_id,
+        },
+    )

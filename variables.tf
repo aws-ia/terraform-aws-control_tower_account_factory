@@ -45,12 +45,8 @@ variable "aft_framework_repo_url" {
 
 variable "aft_framework_repo_git_ref" {
   description = "Git branch from which the AFT framework should be sourced from"
-  default     = "main"
+  default     = null
   type        = string
-  validation {
-    condition     = length(var.aft_framework_repo_git_ref) > 0
-    error_message = "Variable var: aft_framework_repo_git_ref cannot be empty."
-  }
 }
 
 variable "aft_management_account_id" {
@@ -87,7 +83,7 @@ variable "maximum_concurrent_customizations" {
   default     = 5
   validation {
     condition     = var.maximum_concurrent_customizations > 0
-    error_message = "Variable var: maximum_concurrent_customizations must be greater than 0."
+    error_message = "Maximum_concurrent_customizations must be greater than 0."
   }
 }
 
@@ -98,6 +94,16 @@ variable "aft_vpc_endpoints" {
   validation {
     condition     = contains([true, false], var.aft_vpc_endpoints)
     error_message = "Valid values for var: aft_vpc_endpoints are (true, false)."
+  }
+}
+
+variable "concurrent_account_factory_actions" {
+  description = "Maximum number of accounts that can be provisioned in parallel."
+  type        = number
+  default     = 5
+  validation {
+    condition     = var.concurrent_account_factory_actions > 0
+    error_message = "Maximum_concurrent_accounts_being_provisioned must be greater than 0."
   }
 }
 
@@ -285,7 +291,7 @@ variable "tf_backend_secondary_region" {
 variable "terraform_token" {
   type        = string
   description = "Terraform token for Cloud or Enterprise"
-  default     = "null"
+  default     = "null" # Non-sensitive default value #tfsec:ignore:general-secrets-no-plaintext-exposure
   sensitive   = true
   validation {
     condition     = length(var.terraform_token) > 0
@@ -364,5 +370,19 @@ variable "aft_vpc_public_subnet_02_cidr" {
   validation {
     condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.aft_vpc_public_subnet_02_cidr))
     error_message = "Variable var: aft_vpc_public_subnet_02_cidr value must be a valid network CIDR, x.x.x.x/y."
+  }
+}
+
+#########################################
+# AFT Metrics Reporting Variables
+#########################################
+
+variable "aft_metrics_reporting" {
+  description = "Flag toggling reporting of operational metrics"
+  type        = bool
+  default     = true
+  validation {
+    condition     = contains([true, false], var.aft_metrics_reporting)
+    error_message = "Valid values for var: aft_metrics_reporting are (true, false)."
   }
 }

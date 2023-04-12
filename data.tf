@@ -4,3 +4,5 @@
 data "local_file" "version" {
   filename = "${path.module}/VERSION"
 }
+
+data "aws_partition" "current" {}

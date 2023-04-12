@@ -2,23 +2,37 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict
 
-import aft_common.aft_utils as utils
+from aft_common import aft_utils as utils
+from aft_common import notifications
+from aft_common.account_provisioning_framework import ProvisionRoles
+from aft_common.auth import AuthClient
+from aft_common.logger import customization_request_logger
 from aft_common.premium_support import account_enrollment_requested, generate_case
 from boto3.session import Session
 
-logger = utils.get_logger()
+if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
+else:
+    LambdaContext = object
 
 
-def lambda_handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> None:
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    request_id = event["customization_request_id"]
+    target_account_id = event["account_info"]["account"]["id"]
 
+    logger = customization_request_logger(
+        aws_account_id=target_account_id, customization_request_id=request_id
+    )
+
+    auth = AuthClient()
+    aft_session = Session()
     try:
-        logger.info("Lambda_handler Event")
-        logger.info(event)
-        aft_session = Session()
-        ct_mgmt_session = utils.get_ct_management_session(aft_session)
-        target_account_id = event["account_info"]["account"]["id"]
+        ct_mgmt_session = auth.get_ct_management_session(
+            role_name=ProvisionRoles.SERVICE_ROLE_NAME
+        )
+
         if (
             utils.get_ssm_parameter_value(
                 aft_session, utils.SSM_PARAM_FEATURE_ENTERPRISE_SUPPORT_ENABLED
@@ -26,13 +40,22 @@ def lambda_handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> 
             == "true"
         ):
             if not account_enrollment_requested(ct_mgmt_session, target_account_id):
+                logger.info(
+                    "Generating support case for enrolling target account into AWS Enterprise Support"
+                )
                 generate_case(ct_mgmt_session, target_account_id)
 
-    except Exception as e:
+    except Exception as error:
+        notifications.send_lambda_failure_sns_message(
+            session=aft_session,
+            message=str(error),
+            context=context,
+            subject="AFT: Failed to enroll into Enterprise Support",
+        )
         message = {
             "FILE": __file__.split("/")[-1],
             "METHOD": inspect.stack()[0][3],
-            "EXCEPTION": str(e),
+            "EXCEPTION": str(error),
         }
         logger.exception(message)
         raise

@@ -14,16 +14,29 @@
       ]
     },
     "Invoke Provisioning Framework": {
+      "Type": "Map",
       "Next": "Get Pipeline Executions",
-      "Type": "Task",
-      "Resource": "${invoke_provisioning_framework_function_arn}",
-      "ResultPath": "$.invoke_framework",
-      "Catch": [
-        {
-          "ErrorEquals": ["States.ALL"],
-          "Next": "Notify Failure"
+      "MaxConcurrency": 25,
+      "InputPath": "$.targets",
+      "ItemsPath": "$.target_accounts_info",
+      "Parameters": {
+        "info.$": "$$.Map.Item.Value"
+      },
+      "Iterator": {
+        "StartAt": "Invoke Account provisioning Step Function",
+        "States": {
+          "Invoke Account provisioning Step Function": {
+            "Type": "Task",
+            "Resource": "arn:${current_partition}:states:::states:startExecution.sync:2",
+            "Parameters": {
+              "StateMachineArn": "${invoke_account_provisioning_sfn_arn}",
+              "Input.$": "$.info" 
+            },
+            "End": true
+          }
         }
-      ]
+      },
+      "ResultPath": null
     },
     "Get Pipeline Executions": {
       "Next": "Pending Pipeline Executions?",
@@ -78,7 +91,7 @@
     },
     "Notify Success": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish",
+      "Resource": "arn:${current_partition}:states:::sns:publish",
       "Parameters": {
         "TopicArn": "${aft_notification_arn}",
         "Message.$": "$"
@@ -87,7 +100,7 @@
     },
     "Notify Failure": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish",
+      "Resource": "arn:${current_partition}:states:::sns:publish",
       "Parameters": {
         "TopicArn": "${aft_failure_notification_arn}",
         "Message.$": "$.Cause"

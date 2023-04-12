@@ -1,6 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "codebuild_invoker" {
   filename         = var.builder_archive_path
   function_name    = local.codebuild_invoker_function_name
@@ -9,7 +11,7 @@ resource "aws_lambda_function" "codebuild_invoker" {
   handler          = "codebuild_invoker.lambda_handler"
   source_code_hash = var.builder_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = 900
 
   vpc_config {

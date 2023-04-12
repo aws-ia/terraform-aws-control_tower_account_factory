@@ -62,6 +62,9 @@ output "account_factory_product_name" {
 output "invoke_aft_account_provisioning_framework_lambda_function_name" {
   value = aws_lambda_function.aft_invoke_aft_account_provisioning_framework.function_name
 }
+output "aft_cleanup_resources_function_name" {
+  value = aws_lambda_function.aft_cleanup_resources.function_name
+}
 output "aft_account_provisioning_framework_sfn_name" {
   value = var.aft_account_provisioning_framework_sfn_name
 }

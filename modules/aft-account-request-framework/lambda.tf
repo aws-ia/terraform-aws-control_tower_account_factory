@@ -3,6 +3,7 @@
 #
 ######## aft_account_request_audit_trigger ########
 
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "aft_account_request_audit_trigger" {
 
   filename      = var.request_framework_archive_path
@@ -13,7 +14,7 @@ resource "aws_lambda_function" "aft_account_request_audit_trigger" {
 
   source_code_hash = var.request_framework_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
@@ -38,6 +39,7 @@ resource "aws_lambda_event_source_mapping" "aft_account_request_audit_trigger" {
   maximum_retry_attempts = 1
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_account_request_audit_trigger" {
   name              = "/aws/lambda/${aws_lambda_function.aft_account_request_audit_trigger.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
@@ -45,7 +47,7 @@ resource "aws_cloudwatch_log_group" "aft_account_request_audit_trigger" {
 
 ######## aft_account_request_action_trigger ########
 
-
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "aft_account_request_action_trigger" {
 
   filename      = var.request_framework_archive_path
@@ -56,7 +58,7 @@ resource "aws_lambda_function" "aft_account_request_action_trigger" {
 
   source_code_hash = var.request_framework_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
@@ -75,6 +77,7 @@ resource "aws_lambda_event_source_mapping" "aft_account_request_action_trigger" 
   maximum_retry_attempts = 1
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_account_request_action_trigger" {
   name              = "/aws/lambda/${aws_lambda_function.aft_account_request_action_trigger.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
@@ -82,7 +85,7 @@ resource "aws_cloudwatch_log_group" "aft_account_request_action_trigger" {
 
 ######## aft_controltower_event_logger ########
 
-
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "aft_controltower_event_logger" {
 
   filename      = var.request_framework_archive_path
@@ -93,7 +96,7 @@ resource "aws_lambda_function" "aft_controltower_event_logger" {
 
   source_code_hash = var.request_framework_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
@@ -111,6 +114,7 @@ resource "aws_lambda_permission" "aft_controltower_event_logger" {
   source_arn    = aws_cloudwatch_event_rule.aft_controltower_event_trigger.arn
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_controltower_event_logger" {
   name              = "/aws/lambda/${aws_lambda_function.aft_controltower_event_logger.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
@@ -118,7 +122,7 @@ resource "aws_cloudwatch_log_group" "aft_controltower_event_logger" {
 
 ######## aft_account_request_processor ########
 
-
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "aft_account_request_processor" {
 
   filename      = var.request_framework_archive_path
@@ -129,9 +133,15 @@ resource "aws_lambda_function" "aft_account_request_processor" {
 
   source_code_hash = var.request_framework_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
+
+  environment {
+    variables = {
+      AFT_PROVISIONING_CONCURRENCY = var.concurrent_account_factory_actions
+    }
+  }
 
   vpc_config {
     subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
@@ -148,6 +158,7 @@ resource "aws_lambda_permission" "aft_account_request_processor" {
   source_arn    = aws_cloudwatch_event_rule.aft_account_request_processor.arn
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_account_request_processor" {
   name              = "/aws/lambda/${aws_lambda_function.aft_account_request_processor.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
@@ -155,7 +166,7 @@ resource "aws_cloudwatch_log_group" "aft_account_request_processor" {
 
 ######## aft_invoke_aft_account_provisioning_framework ########
 
-
+#tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "aft_invoke_aft_account_provisioning_framework" {
 
   filename      = var.request_framework_archive_path
@@ -166,7 +177,7 @@ resource "aws_lambda_function" "aft_invoke_aft_account_provisioning_framework" {
 
   source_code_hash = var.request_framework_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
@@ -185,7 +196,38 @@ resource "aws_lambda_permission" "aft_invoke_aft_account_provisioning_framework"
   source_arn    = aws_cloudwatch_event_rule.aft_controltower_event_trigger.arn
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_invoke_aft_account_provisioning_framework" {
   name              = "/aws/lambda/${aws_lambda_function.aft_invoke_aft_account_provisioning_framework.function_name}"
+  retention_in_days = var.cloudwatch_log_group_retention
+}
+
+######## aft_cleanup_resources ########
+
+#tfsec:ignore:aws-lambda-enable-tracing
+resource "aws_lambda_function" "aft_cleanup_resources" {
+
+  filename      = var.request_framework_archive_path
+  function_name = "aft-cleanup-resources"
+  description   = "Removes AFT pipeline resources when an account record is removed from the AFT repo"
+  role          = aws_iam_role.aft_cleanup_resources.arn
+  handler       = "aft_cleanup_resources.lambda_handler"
+
+  source_code_hash = var.request_framework_archive_hash
+  memory_size      = 1024
+  runtime          = "python3.9"
+  timeout          = "300"
+  layers           = [var.aft_common_layer_arn]
+
+  vpc_config {
+    subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01.id, aws_subnet.aft_vpc_private_subnet_02.id])
+    security_group_ids = tolist([aws_security_group.aft_vpc_default_sg.id])
+  }
+
+}
+
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
+resource "aws_cloudwatch_log_group" "aft_cleanup_resources" {
+  name              = "/aws/lambda/${aws_lambda_function.aft_cleanup_resources.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
 }

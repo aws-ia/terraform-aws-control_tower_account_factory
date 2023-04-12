@@ -24,7 +24,7 @@
             "Sid": "Enable IAM User Permissions",
             "Effect": "Allow",
             "Principal": {
-                "AWS": "arn:aws:iam::${log_archive_account_id}:root"
+                "AWS": "arn:${data_aws_partition_current_partition}:iam::${log_archive_account_id}:root"
             },
             "Action": "kms:*",
             "Resource": "*"
