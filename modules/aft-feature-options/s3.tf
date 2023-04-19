@@ -69,7 +69,7 @@ resource "aws_s3_bucket_public_access_block" "aft_logging_bucket" {
   restrict_public_buckets = true
 }
 
-
+#tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "aft_access_logs" {
   provider = aws.log_archive
   bucket   = "${var.log_archive_access_logs_bucket_name}-${var.log_archive_account_id}-${data.aws_region.current.name}"
@@ -89,7 +89,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "aft_access_logs_e
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      kms_master_key_id = var.aft_kms_key_id
+      sse_algorithm     = "aws:kms"
     }
   }
 }
@@ -109,12 +110,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "aft_access_logs_lifecycle_conf
     }
   }
 
-}
-
-resource "aws_s3_bucket_acl" "aft_access_logs_acl" {
-  provider = aws.log_archive
-  bucket   = aws_s3_bucket.aft_access_logs.id
-  acl      = "log-delivery-write"
 }
 
 resource "aws_s3_bucket_public_access_block" "aft_access_logs" {

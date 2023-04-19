@@ -21,6 +21,10 @@ variable "aft_kms_key_arn" {
   type = string
 }
 
+variable "aft_kms_key_id" {
+  type = string
+}
+
 variable "aft_sns_topic_arn" {
   type = string
 }

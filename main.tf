@@ -143,6 +143,7 @@ module "aft_feature_options" {
   log_archive_bucket_object_expiration_days = local.log_archive_bucket_object_expiration_days
   aft_features_sfn_name                     = local.aft_features_sfn_name
   aft_kms_key_arn                           = module.aft_account_request_framework.aft_kms_key_arn
+  aft_kms_key_id                            = module.aft_account_request_framework.aft_kms_key_id
   aft_common_layer_arn                      = module.aft_lambda_layer.layer_version_arn
   aft_sns_topic_arn                         = module.aft_account_request_framework.sns_topic_arn
   aft_failure_sns_topic_arn                 = module.aft_account_request_framework.failure_sns_topic_arn
