@@ -270,6 +270,7 @@ resource "aws_dynamodb_table" "lock-table" {
     name = "LockID"
     type = "S"
   }
+  lifecycle { ignore_changes = [replica] }
 
   tags = {
     "Name" = "aft-backend-${data.aws_caller_identity.current.account_id}"
