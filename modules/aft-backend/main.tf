@@ -270,22 +270,21 @@ resource "aws_dynamodb_table" "lock-table" {
     name = "LockID"
     type = "S"
   }
-  lifecycle { ignore_changes = [replica] }
+
+  # If secondary_region is provided, there will be 1 iteration of the dynamic replica block
+  # If secondary region is omitted, there will be 0 iteration of the dynamic replica block
+  dynamic "replica" {
+    for_each = var.secondary_region == "" ? [] : [1]
+    content {
+      region_name = var.secondary_region
+    }
+  }
 
   tags = {
     "Name" = "aft-backend-${data.aws_caller_identity.current.account_id}"
   }
 }
 
-resource "aws_dynamodb_table_replica" "lock-table-replica" {
-  count            = var.secondary_region == "" ? 0 : 1
-  provider         = aws.secondary_region
-  global_table_arn = aws_dynamodb_table.lock-table.arn
-
-  tags = {
-    "Name" = "aft-backend-${data.aws_caller_identity.current.account_id}"
-  }
-}
 
 # KMS Resources
 
