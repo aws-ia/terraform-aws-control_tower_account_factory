@@ -75,6 +75,16 @@ resource "aws_s3_bucket" "aft_access_logs" {
   bucket   = "${var.log_archive_access_logs_bucket_name}-${var.log_archive_account_id}-${data.aws_region.current.name}"
 }
 
+resource "aws_s3_bucket_policy" "aft_access_logs" {
+  provider = aws.log_archive
+  bucket   = aws_s3_bucket.aft_access_logs.id
+  policy = templatefile("${path.module}/s3/bucket-policies/aft_access_logs.tpl", {
+    aws_s3_bucket_aft_access_logs_arn    = aws_s3_bucket.aft_access_logs.arn
+    aws_s3_bucket_aft_logging_bucket_arn = aws_s3_bucket.aft_logging_bucket.arn
+    log_archive_account_id               = var.log_archive_account_id
+  })
+}
+
 resource "aws_s3_bucket_versioning" "aft_access_logs_versioning" {
   provider = aws.log_archive
   bucket   = aws_s3_bucket.aft_access_logs.id
@@ -83,14 +93,14 @@ resource "aws_s3_bucket_versioning" "aft_access_logs_versioning" {
   }
 }
 
+#tfsec:ignore:aws-s3-encryption-customer-key
 resource "aws_s3_bucket_server_side_encryption_configuration" "aft_access_logs_encryption" {
   provider = aws.log_archive
   bucket   = aws_s3_bucket.aft_access_logs.id
 
   rule {
     apply_server_side_encryption_by_default {
-      kms_master_key_id = var.aft_kms_key_id
-      sse_algorithm     = "aws:kms"
+      sse_algorithm = "AES256"
     }
   }
 }
