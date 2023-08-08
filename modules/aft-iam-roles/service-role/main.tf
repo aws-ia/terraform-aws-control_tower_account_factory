@@ -15,7 +15,7 @@ variable "trusted_entity_type" {
 }
 
 variable "role_name" {
-  default = "AWSAFTService"
+  default = "AWSAFTServices"
 }
 
 variable "trusted_entity" {
