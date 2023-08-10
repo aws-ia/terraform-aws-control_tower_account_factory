@@ -3,29 +3,18 @@
 #
 import json
 import logging
-import sys
 import uuid
 from datetime import datetime
 from functools import cached_property, partial
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    Mapping,
-    Optional,
-    Sequence,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, cast
 
+import aft_common.constants
+import aft_common.service_catalog
+import aft_common.ssm
 from aft_common import aft_utils as utils
 from aft_common import ddb, sqs
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.aft_types import AftInvokeAccountCustomizationPayload
-from aft_common.aft_utils import get_ct_product_id
 from aft_common.auth import AuthClient
 from aft_common.exceptions import (
     NoAccountFactoryPortfolioFound,
@@ -42,7 +31,6 @@ if TYPE_CHECKING:
         ProvisionedProductDetailTypeDef,
         ProvisioningParameterTypeDef,
         ProvisionProductOutputTypeDef,
-        SearchProvisionedProductsOutputTypeDef,
         UpdateProvisioningParameterTypeDef,
     )
 else:
@@ -59,99 +47,11 @@ else:
 logger = logging.getLogger("aft")
 
 
-def ct_account_product_is_healthy(product: ProvisionedProductAttributeTypeDef) -> bool:
-    aft_sc_product_allowed_status = ["AVAILABLE", "TAINTED"]
-    # If LastSuccessfulProvisioningRecordId does not exist, the account was never successfully provisioned
-    return product["Status"] in aft_sc_product_allowed_status and bool(
-        product.get("LastSuccessfulProvisioningRecordId")
-    )
-
-
-def get_healthy_ct_product_batch(
-    ct_management_session: Session,
-) -> Iterator[Iterable[ProvisionedProductAttributeTypeDef]]:
-    sc_product_search_filter: Mapping[Literal["SearchQuery"], Sequence[str]] = {
-        "SearchQuery": [
-            "type:CONTROL_TOWER_ACCOUNT",
-        ]
-    }
-    sc_client = ct_management_session.client("servicecatalog")
-    logger.info(
-        "Searching Account Factory for account with matching email in healthy status"
-    )
-    # Get products with the required type
-    response: SearchProvisionedProductsOutputTypeDef = (
-        sc_client.search_provisioned_products(
-            Filters=sc_product_search_filter, PageSize=100
-        )
-    )
-    provisioned_products = response["ProvisionedProducts"]
-    healthy_products: Iterable[ProvisionedProductAttributeTypeDef] = filter(
-        ct_account_product_is_healthy, provisioned_products
-    )
-
-    yield healthy_products
-
-    while response.get("NextPageToken") is not None:
-        response = sc_client.search_provisioned_products(
-            Filters=sc_product_search_filter,
-            PageSize=100,
-            PageToken=response["NextPageToken"],
-        )
-        provisioned_products = response["ProvisionedProducts"]
-        healthy_products = filter(ct_account_product_is_healthy, provisioned_products)
-
-        yield healthy_products
-
-    return
-
-
-def provisioned_product_exists(record: Dict[str, Any]) -> bool:
-    # Go get all my accounts from SC (Not all PPs)
-    auth = AuthClient()
-    ct_management_session = auth.get_ct_management_session(
-        role_name=ProvisionRoles.SERVICE_ROLE_NAME
-    )
-    account_email = ddb.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
-        "control_tower_parameters"
-    ]["AccountEmail"]
-
-    for batch in get_healthy_ct_product_batch(
-        ct_management_session=ct_management_session
-    ):
-        pp_ids = [product["Id"] for product in batch]
-
-        if email_exists_in_batch(account_email, pp_ids, ct_management_session):
-            return True
-
-    # We processed all batches of accounts with healthy statuses, and did not find a match
-    # It is possible that the account exists, but does not have a healthy status
-    logger.info(
-        "Did not find account with matching email in healthy status in Account Factory"
-    )
-
-    return False
-
-
-def email_exists_in_batch(
-    target_email: str, pps: List[str], ct_management_session: Session
-) -> bool:
-    sc_client = ct_management_session.client("servicecatalog")
-    for pp in pps:
-        pp_email = sc_client.get_provisioned_product_outputs(
-            ProvisionedProductId=pp, OutputKeys=["AccountEmail"]
-        )["Outputs"][0]["OutputValue"]
-        if utils.emails_are_equal(target_email, pp_email):
-            logger.info("Account email match found; provisioned product exists.")
-            return True
-    return False
-
-
 def insert_msg_into_acc_req_queue(
     event_record: Dict[Any, Any], new_account: bool, session: Session
 ) -> None:
-    sqs_queue = utils.get_ssm_parameter_value(
-        session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
+    sqs_queue = aft_common.ssm.get_ssm_parameter_value(
+        session, aft_common.constants.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
     )
     sqs_queue = sqs.build_sqs_url(session=session, queue_name=sqs_queue)
     message = build_sqs_message(record=event_record, new_account=new_account)
@@ -219,7 +119,9 @@ def put_audit_record(
 def account_name_or_email_in_use(
     ct_management_session: Session, account_name: str, account_email: str
 ) -> bool:
-    orgs = ct_management_session.client("organizations")
+    orgs = ct_management_session.client(
+        "organizations", config=utils.get_high_retry_botoconfig()
+    )
     paginator = orgs.get_paginator("list_accounts")
     for page in paginator.paginate():
         for account in page["Accounts"]:
@@ -279,7 +181,9 @@ def create_new_account(
     client = ct_management_session.client("servicecatalog")
     event_system = client.meta.events
 
-    aft_version = utils.get_ssm_parameter_value(session, "/aft/config/aft/version")
+    aft_version = aft_common.ssm.get_ssm_parameter_value(
+        session, aft_common.constants.SSM_PARAM_ACCOUNT_AFT_VERSION
+    )
     header_with_aft_version = partial(add_header, version=aft_version)
     event_system.register_first("before-sign.*.*", header_with_aft_version)
 
@@ -295,8 +199,10 @@ def create_new_account(
         account_name=request["control_tower_parameters"]["AccountName"]
     )
     response = client.provision_product(
-        ProductId=utils.get_ct_product_id(session, ct_management_session),
-        ProvisioningArtifactId=utils.get_ct_provisioning_artifact_id(
+        ProductId=aft_common.service_catalog.get_ct_product_id(
+            session, ct_management_session
+        ),
+        ProvisioningArtifactId=aft_common.service_catalog.get_ct_provisioning_artifact_id(
             session, ct_management_session
         ),
         ProvisionedProductName=provisioned_product_name,
@@ -315,7 +221,9 @@ def update_existing_account(
     client = ct_management_session.client("servicecatalog")
     event_system = client.meta.events
 
-    aft_version = utils.get_ssm_parameter_value(session, "/aft/config/aft/version")
+    aft_version = aft_common.ssm.get_ssm_parameter_value(
+        session, aft_common.constants.SSM_PARAM_ACCOUNT_AFT_VERSION
+    )
     header_with_aft_version = partial(add_header, version=aft_version)
     event_system.register_first("before-sign.*.*", header_with_aft_version)
 
@@ -325,7 +233,7 @@ def update_existing_account(
 
     control_tower_email_parameter = request["control_tower_parameters"]["AccountEmail"]
     target_product: Optional[ProvisionedProductAttributeTypeDef] = None
-    for batch in get_healthy_ct_product_batch(
+    for batch in aft_common.service_catalog.get_healthy_ct_product_batch(
         ct_management_session=ct_management_session
     ):
         for product in batch:
@@ -351,15 +259,17 @@ def update_existing_account(
         )
 
     # check to see if the product still exists and is still active
-    if utils.ct_provisioning_artifact_is_active(
+    if aft_common.service_catalog.ct_provisioning_artifact_is_active(
         session=session,
         ct_management_session=ct_management_session,
         artifact_id=target_product["ProvisioningArtifactId"],
     ):
         target_provisioning_artifact_id = target_product["ProvisioningArtifactId"]
     else:
-        target_provisioning_artifact_id = utils.get_ct_provisioning_artifact_id(
-            session, ct_management_session
+        target_provisioning_artifact_id = (
+            aft_common.service_catalog.get_ct_provisioning_artifact_id(
+                session, ct_management_session
+            )
         )
 
     logger.info(
@@ -370,7 +280,9 @@ def update_existing_account(
     )
     update_response = client.update_provisioned_product(
         ProvisionedProductId=target_product["Id"],
-        ProductId=utils.get_ct_product_id(session, ct_management_session),
+        ProductId=aft_common.service_catalog.get_ct_product_id(
+            session, ct_management_session
+        ),
         ProvisioningArtifactId=target_provisioning_artifact_id,
         ProvisioningParameters=provisioning_parameters,
         UpdateToken=str(uuid.uuid1()),
@@ -381,8 +293,8 @@ def update_existing_account(
 def get_account_request_record(
     aft_management_session: Session, request_table_id: str
 ) -> Dict[str, Any]:
-    table_name = utils.get_ssm_parameter_value(
-        aft_management_session, utils.SSM_PARAM_AFT_DDB_REQ_TABLE
+    table_name = aft_common.ssm.get_ssm_parameter_value(
+        aft_management_session, aft_common.constants.SSM_PARAM_AFT_DDB_REQ_TABLE
     )
     logger.info(
         "Getting record for id " + request_table_id + " in DDB table " + table_name
@@ -439,7 +351,7 @@ class AccountRequest:
             session=self.ct_management_session
         )
         self.aft_management_session = auth.get_aft_management_session()
-        self.account_factory_product_id = get_ct_product_id(
+        self.account_factory_product_id = aft_common.service_catalog.get_ct_product_id(
             session=self.aft_management_session,
             ct_management_session=self.ct_management_session,
         )
@@ -457,7 +369,7 @@ class AccountRequest:
         if it exists, raises exception if not found
         """
         client: ServiceCatalogClient = self.ct_management_session.client(
-            "servicecatalog"
+            "servicecatalog", config=utils.get_high_retry_botoconfig()
         )
         paginator = client.get_paginator("list_portfolios")
         for response in paginator.paginate():
@@ -491,7 +403,9 @@ class AccountRequest:
             )
 
     def service_role_associated_with_account_factory(self) -> bool:
-        client = self.ct_management_session.client("servicecatalog")
+        client = self.ct_management_session.client(
+            "servicecatalog", config=utils.get_high_retry_botoconfig()
+        )
         paginator = client.get_paginator("list_principals_for_portfolio")
         for response in paginator.paginate(
             PortfolioId=self.account_factory_portfolio_id
@@ -504,7 +418,7 @@ class AccountRequest:
 
     def provisioning_threshold_reached(self, threshold: int) -> bool:
         client: ServiceCatalogClient = self.ct_management_session.client(
-            "servicecatalog"
+            "servicecatalog", config=utils.get_high_retry_botoconfig()
         )
         logger.info("Checking for account provisioning in progress")
 

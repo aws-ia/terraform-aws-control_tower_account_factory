@@ -7,15 +7,15 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
-from aft_common.account_provisioning_framework import (
-    SSM_PARAMETER_PATH,
-    ProvisionRoles,
+from aft_common.account_provisioning_framework import ProvisionRoles
+from aft_common.auth import AuthClient
+from aft_common.constants import SSM_PARAMETER_PATH
+from aft_common.logger import customization_request_logger
+from aft_common.ssm import (
     delete_ssm_parameters,
     get_ssm_parameters_names_by_path,
     put_ssm_parameters,
 )
-from aft_common.auth import AuthClient
-from aft_common.logger import customization_request_logger
 
 if TYPE_CHECKING:
     from aws_lambda_powertools.utilities.typing import LambdaContext

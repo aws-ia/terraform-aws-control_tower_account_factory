@@ -5,9 +5,11 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, List, Sequence
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import aft_common.aft_utils as utils
+import aft_common.constants
+import aft_common.ssm
 from aft_common import ddb
 from aft_common.auth import AuthClient
 from aft_common.organizations import OrganizationsAgent
@@ -30,8 +32,6 @@ logger = logging.getLogger("aft")
 
 
 AFT_EXEC_ROLE = "AWSAFTExecution"
-
-SSM_PARAMETER_PATH = "/aft/account-request/custom-fields/"
 
 
 class ProvisionRoles:
@@ -227,6 +227,9 @@ class ProvisionRoles:
             self._ensure_role_can_be_assumed(role_name=role_name)
             logger.info(f"Can assume {role_name} role")
 
+        # Guard for IAM eventual consistency
+        time.sleep(65)
+
 
 # From persist-metadata Lambda
 def persist_metadata(
@@ -237,8 +240,8 @@ def persist_metadata(
     account_customizations_name = payload["account_request"][
         "account_customizations_name"
     ]
-    metadata_table_name = utils.get_ssm_parameter_value(
-        session, utils.SSM_PARAM_AFT_DDB_META_TABLE
+    metadata_table_name = aft_common.ssm.get_ssm_parameter_value(
+        session, aft_common.constants.SSM_PARAM_AFT_DDB_META_TABLE
     )
 
     item = {
@@ -261,38 +264,6 @@ def persist_metadata(
 
     logger.info(response)
     return response
-
-
-def get_ssm_parameters_names_by_path(session: Session, path: str) -> List[str]:
-
-    client = session.client("ssm")
-    paginator = client.get_paginator("get_parameters_by_path")
-    pages = paginator.paginate(Path=path, Recursive=True)
-
-    parameter_names = []
-    for page in pages:
-        parameter_names.extend([param["Name"] for param in page["Parameters"]])
-
-    return parameter_names
-
-
-def delete_ssm_parameters(session: Session, parameters: Sequence[str]) -> None:
-    batches = utils.yield_batches_from_list(
-        parameters, batch_size=10
-    )  # Max batch size for API
-    for batched_names in batches:
-        client = session.client("ssm")
-        response = client.delete_parameters(Names=batched_names)
-
-
-def put_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:
-
-    client = session.client("ssm")
-
-    for key, value in parameters.items():
-        response = client.put_parameter(
-            Name=SSM_PARAMETER_PATH + key, Value=value, Type="String", Overwrite=True
-        )
 
 
 def tag_account(

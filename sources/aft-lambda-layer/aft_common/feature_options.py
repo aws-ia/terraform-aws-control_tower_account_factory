@@ -2,28 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
+import aft_common.aft_utils as utils
+from boto3.session import Session
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
+    from mypy_boto3_cloudtrail import CloudTrailClient
     from mypy_boto3_ec2 import EC2Client, EC2ServiceResource
 else:
     EC2Client = object
     EC2ServiceResource = object
-
-from typing import TYPE_CHECKING, List
-
-from boto3.session import Session
-
-if TYPE_CHECKING:
-    from mypy_boto3_cloudtrail import CloudTrailClient
-else:
     CloudTrailClient = object
-
-from typing import Optional
-
-import aft_common.aft_utils as utils
 
 SUPPORT_API_REGION = "us-east-1"
 CLOUDTRAIL_TRAIL_NAME = "aws-aft-CustomizationsCloudTrail"

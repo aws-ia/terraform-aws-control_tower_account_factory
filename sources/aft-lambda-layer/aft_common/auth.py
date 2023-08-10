@@ -5,20 +5,19 @@ import logging
 from functools import cached_property
 from typing import TYPE_CHECKING, Optional
 
-from aft_common.aft_utils import (
+from aft_common.aft_utils import get_aws_partition
+from aft_common.constants import (
     SSM_PARAM_ACCOUNT_AFT_MANAGEMENT_ACCOUNT_ID,
     SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID,
     SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID,
-    get_aws_partition,
-    get_ssm_parameter_value,
 )
+from aft_common.ssm import get_ssm_parameter_value
 from boto3 import Session
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from mypy_boto3_sts import STSClient
     from mypy_boto3_sts.type_defs import AssumeRoleRequestRequestTypeDef
-
 else:
     STSClient = object
     AssumeRoleRequestRequestTypeDef = object

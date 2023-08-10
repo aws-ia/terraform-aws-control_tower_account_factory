@@ -16,15 +16,15 @@ AFT_CUSTOMIZATIONS_PIPELINE_NAME_PATTERN = "^\d\d\d\d\d\d\d\d\d\d\d\d-.*$"
 def get_pipeline_for_account(session: Session, account_id: str) -> str:
     current_account = session.client("sts").get_caller_identity()["Account"]
     current_region = session.region_name
-    client = session.client("codepipeline")
+
     logger.info("Getting pipeline name for " + account_id)
 
-    response = client.list_pipelines()
+    client = session.client("codepipeline", config=utils.get_high_retry_botoconfig())
+    paginator = client.get_paginator("list_pipelines")
 
-    pipelines = response["pipelines"]
-    while "nextToken" in response:
-        response = client.list_pipelines(nextToken=response["nextToken"])
-        pipelines.extend(response["pipelines"])
+    pipelines = []
+    for page in paginator.paginate():
+        pipelines.extend(page["pipelines"])
 
     for p in pipelines:
         name = p["name"]
@@ -46,24 +46,20 @@ def get_pipeline_for_account(session: Session, account_id: str) -> str:
 
 
 def pipeline_is_running(session: Session, name: str) -> bool:
-    client = session.client("codepipeline")
-
     logger.info("Getting pipeline executions for " + name)
 
-    response = client.list_pipeline_executions(pipelineName=name)
-    pipeline_execution_summaries = response["pipelineExecutionSummaries"]
+    client = session.client("codepipeline", config=utils.get_high_retry_botoconfig())
+    paginator = client.get_paginator("list_pipeline_executions")
 
-    while "nextToken" in response:
-        response = client.list_pipeline_executions(
-            pipelineName=name, nextToken=response["nextToken"]
-        )
-        pipeline_execution_summaries.extend(response["pipelineExecutionSummaries"])
+    pipeline_execution_summaries = []
+    for page in paginator.paginate(pipelineName=name):
+        pipeline_execution_summaries.extend(page["pipelineExecutionSummaries"])
 
     latest_execution = sorted(
         pipeline_execution_summaries, key=lambda i: i["startTime"], reverse=True  # type: ignore
     )[0]
-    logger.info("Latest Execution: ")
-    logger.info(latest_execution)
+
+    logger.info(f"Latest Execution: {latest_execution}")
     if latest_execution["status"] == "InProgress":
         return True
     else:
@@ -82,17 +78,17 @@ def execute_pipeline(session: Session, account_id: str) -> None:
 
 
 def list_pipelines(session: Session) -> List[Any]:
-    pattern = re.compile(AFT_CUSTOMIZATIONS_PIPELINE_NAME_PATTERN)
-    matched_pipelines = []
-    client = session.client("codepipeline")
     logger.info("Listing Pipelines - ")
 
-    response = client.list_pipelines()
+    pattern = re.compile(AFT_CUSTOMIZATIONS_PIPELINE_NAME_PATTERN)
+    matched_pipelines = []
 
-    pipelines = response["pipelines"]
-    while "nextToken" in response:
-        response = client.list_pipelines(nextToken=response["nextToken"])
-        pipelines.extend(response["pipelines"])
+    client = session.client("codepipeline", config=utils.get_high_retry_botoconfig())
+    paginator = client.get_paginator("list_pipelines")
+
+    pipelines = []
+    for page in paginator.paginate():
+        pipelines.extend(page["pipelines"])
 
     for p in pipelines:
         if re.match(pattern, p["name"]):
@@ -104,15 +100,14 @@ def list_pipelines(session: Session) -> List[Any]:
 
 def get_running_pipeline_count(session: Session, pipeline_names: List[str]) -> int:
     pipeline_counter = 0
-    client = session.client("codepipeline")
+    client = session.client("codepipeline", config=utils.get_high_retry_botoconfig())
 
     for name in pipeline_names:
         logger.info("Getting pipeline executions for " + name)
-        pipeline_execution_summaries = []
 
         paginator = client.get_paginator("list_pipeline_executions")
-        pages = paginator.paginate(pipelineName=name)
-        for page in pages:
+        pipeline_execution_summaries = []
+        for page in paginator.paginate(pipelineName=name):
             pipeline_execution_summaries.extend(page["pipelineExecutionSummaries"])
 
         if not pipeline_execution_summaries:

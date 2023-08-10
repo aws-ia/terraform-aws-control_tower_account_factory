@@ -3,7 +3,12 @@
 #
 from typing import TYPE_CHECKING
 
+from aft_common.aft_utils import (
+    get_high_retry_botoconfig,
+    resubmit_request_on_boto_throttle,
+)
 from boto3.session import Session
+from botocore.config import Config
 
 if TYPE_CHECKING:
     from mypy_boto3_support import SupportClient
@@ -13,6 +18,7 @@ else:
 SUPPORT_API_REGION = "us-east-1"
 
 
+@resubmit_request_on_boto_throttle
 def account_enrollment_requested(
     ct_management_session: Session, account_id: str
 ) -> bool:
@@ -22,9 +28,11 @@ def account_enrollment_requested(
     """
     submitted_enroll_case_title = f"Add Account {account_id} to Enterprise Support"
 
-    client: SupportClient = ct_management_session.client(
-        "support", region_name=SUPPORT_API_REGION
+    # Must use us-east-1 region for Support API
+    botoconfig = Config.merge(
+        get_high_retry_botoconfig(), Config(region_name=SUPPORT_API_REGION)
     )
+    client: SupportClient = ct_management_session.client("support", config=botoconfig)
     paginator = client.get_paginator("describe_cases")
     pages = paginator.paginate(
         includeResolvedCases=True,

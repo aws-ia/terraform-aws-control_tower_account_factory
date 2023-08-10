@@ -7,7 +7,11 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, cast
 
 from aft_common.aft_types import AftAccountInfo
-from aft_common.aft_utils import emails_are_equal
+from aft_common.aft_utils import (
+    emails_are_equal,
+    get_high_retry_botoconfig,
+    resubmit_request_on_boto_throttle,
+)
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -43,7 +47,7 @@ class OrganizationsAgent:
 
     def __init__(self, ct_management_session: Session):
         self.orgs_client: OrganizationsClient = ct_management_session.client(
-            "organizations"
+            "organizations", config=get_high_retry_botoconfig()
         )
 
         # Memoization - cache org query results
@@ -245,6 +249,7 @@ class OrganizationsAgent:
                 return True
         return False
 
+    @resubmit_request_on_boto_throttle
     def tag_org_resource(
         self,
         resource: str,

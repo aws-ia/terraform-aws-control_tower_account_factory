@@ -6,13 +6,11 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import notifications
-from aft_common.account_request_framework import (
-    control_tower_param_changed,
-    provisioned_product_exists,
-)
+from aft_common.account_request_framework import control_tower_param_changed
 from aft_common.account_request_record_handler import AccountRequestRecordHandler
 from aft_common.auth import AuthClient
 from aft_common.logger import configure_aft_logger
+from aft_common.service_catalog import provisioned_product_exists
 from aft_common.shared_account import shared_account_request
 
 if TYPE_CHECKING:

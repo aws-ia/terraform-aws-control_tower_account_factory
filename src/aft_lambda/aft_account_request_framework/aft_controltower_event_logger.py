@@ -5,8 +5,9 @@ import inspect
 import logging
 from typing import TYPE_CHECKING, Any, Dict
 
+import aft_common.ssm
 import boto3
-from aft_common import aft_utils as utils
+from aft_common import constants as utils
 from aft_common import ddb, notifications
 from aft_common.logger import configure_aft_logger
 
@@ -28,7 +29,9 @@ def lambda_handler(
     try:
         response = ddb.put_ddb_item(
             session,
-            utils.get_ssm_parameter_value(session, utils.SSM_PARAM_AFT_EVENTS_TABLE),
+            aft_common.ssm.get_ssm_parameter_value(
+                session, utils.SSM_PARAM_AFT_EVENTS_TABLE
+            ),
             event,
         )
         return response

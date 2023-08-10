@@ -4,7 +4,8 @@
 import inspect
 from typing import TYPE_CHECKING, Any, Dict
 
-from aft_common import aft_utils as utils
+import aft_common.ssm
+from aft_common import constants as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.auth import AuthClient
@@ -34,7 +35,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
         )
 
         if (
-            utils.get_ssm_parameter_value(
+            aft_common.ssm.get_ssm_parameter_value(
                 aft_session, utils.SSM_PARAM_FEATURE_ENTERPRISE_SUPPORT_ENABLED
             ).lower()
             == "true"

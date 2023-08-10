@@ -18,7 +18,6 @@ import json
 import logging
 import os
 from datetime import date, datetime
-from enum import Enum
 from json import JSONEncoder
 from typing import TYPE_CHECKING, Any, MutableMapping, Tuple
 

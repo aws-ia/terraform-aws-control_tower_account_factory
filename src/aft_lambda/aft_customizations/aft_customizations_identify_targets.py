@@ -6,7 +6,6 @@ import logging
 import sys
 from typing import TYPE_CHECKING, Any, Dict
 
-from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_request_framework import (
     build_account_customization_payload,

@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-from typing import Any, Dict, List, Literal, TypedDict, Union
+from typing import Any, Dict, Literal, TypedDict
 
 
 class AftAccountInfo(TypedDict):
