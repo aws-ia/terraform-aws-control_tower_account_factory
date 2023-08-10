@@ -62,7 +62,7 @@ variable "ct_home_region" {
   description = "The region from which this module will be executed. This MUST be the same region as Control Tower is deployed."
   type        = string
   validation {
-    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
+    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
     error_message = "Variable var: region is not valid."
   }
 }
@@ -83,7 +83,7 @@ variable "maximum_concurrent_customizations" {
   default     = 5
   validation {
     condition     = var.maximum_concurrent_customizations > 0
-    error_message = "Variable var: maximum_concurrent_customizations must be greater than 0."
+    error_message = "Maximum_concurrent_customizations must be greater than 0."
   }
 }
 
@@ -94,6 +94,16 @@ variable "aft_vpc_endpoints" {
   validation {
     condition     = contains([true, false], var.aft_vpc_endpoints)
     error_message = "Valid values for var: aft_vpc_endpoints are (true, false)."
+  }
+}
+
+variable "concurrent_account_factory_actions" {
+  description = "Maximum number of accounts that can be provisioned in parallel."
+  type        = number
+  default     = 5
+  validation {
+    condition     = var.concurrent_account_factory_actions > 0
+    error_message = "Maximum_concurrent_accounts_being_provisioned must be greater than 0."
   }
 }
 
@@ -269,10 +279,11 @@ variable "terraform_distribution" {
 }
 
 variable "tf_backend_secondary_region" {
+  default     = ""
   type        = string
   description = "AFT creates a backend for state tracking for its own state as well as OSS cases. The backend's primary region is the same as the AFT region, but this defines the secondary region to replicate to."
   validation {
-    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa)-(central|(north|south)?(east|west)?)-\\d", var.tf_backend_secondary_region))
+    condition     = var.tf_backend_secondary_region == "" || can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af)-(central|(north|south)?(east|west)?)-\\d", var.tf_backend_secondary_region))
     error_message = "Variable var: tf_backend_secondary_region is not valid."
   }
 }

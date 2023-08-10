@@ -33,8 +33,3 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "aft-codepipeline-
     }
   }
 }
-
-resource "aws_s3_bucket_acl" "aft-codepipeline-customizations-bucket-acl" {
-  bucket = aws_s3_bucket.aft_codepipeline_customizations_bucket.id
-  acl    = "private"
-}

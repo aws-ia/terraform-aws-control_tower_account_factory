@@ -4,9 +4,9 @@
 import inspect
 from typing import TYPE_CHECKING, Any, Dict
 
-from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import persist_metadata
+from aft_common.logger import customization_request_logger
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -16,15 +16,22 @@ else:
     PutItemOutputTableTypeDef = object
     LambdaContext = object
 
-logger = utils.get_logger()
-
 
 def lambda_handler(
     event: Dict[str, Any], context: LambdaContext
 ) -> PutItemOutputTableTypeDef:
+
+    action = event["action"]
+    event_payload = event["payload"]
+    request_id = event_payload["customization_request_id"]
+    account_info = event_payload["account_info"]["account"]
+    target_account_id = event_payload["account_info"]["account"]["id"]
+    logger = customization_request_logger(
+        aws_account_id=target_account_id, customization_request_id=request_id
+    )
+
     aft_management_session = Session()
     try:
-        logger.info("AFT Account Provisioning Framework Handler Start")
 
         rollback = None
 
@@ -34,13 +41,10 @@ def lambda_handler(
         except KeyError:
             pass
 
-        payload = event["payload"]
-        action = event["action"]
-
         if action == "persist_metadata":
-            account_info = payload["account_info"]["account"]
+            logger.info(f"Managing AFT metadata table entry for target account")
             update_metadata = persist_metadata(
-                payload, account_info, aft_management_session
+                event_payload, account_info, aft_management_session
             )
             return update_metadata
         else:

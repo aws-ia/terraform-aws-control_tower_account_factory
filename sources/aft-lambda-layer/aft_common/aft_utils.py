@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 import os
 from typing import (
     IO,
@@ -34,8 +35,6 @@ else:
     SFNClient = object
     StartExecutionOutputTypeDef = object
     STSClient = object
-
-from .logger import Logger
 
 SSM_PARAM_AFT_DDB_META_TABLE = "/aft/resources/ddb/aft-request-metadata-table-name"
 SSM_PARAM_AFT_SESSION_NAME = "/aft/resources/iam/aft-session-name"
@@ -104,20 +103,7 @@ SSM_PARAM_ACCOUNT_TERRAFORM_VERSION = "/aft/config/terraform/version"
 SSM_PARAM_AFT_METRICS_REPORTING = "/aft/config/metrics-reporting"
 SSM_PARAM_AFT_METRICS_REPORTING_UUID = "/aft/config/metrics-reporting-uuid"
 
-
-# INIT
-def get_logger() -> Logger:
-    # initialise logger
-    if "log_level" in os.environ.keys():
-        log_level = os.environ["log_level"]
-    else:
-        # presumed local debugging
-        log_level = "info"
-    logger = Logger(loglevel=log_level)
-    return logger
-
-
-logger = get_logger()
+logger = logging.getLogger("aft")
 
 
 def emails_are_equal(first_email: str, second_email: str) -> bool:
@@ -223,7 +209,7 @@ def invoke_step_function(
     sfn_arn = build_sfn_arn(session, sfn_name)
     logger.info("Starting SFN execution of " + sfn_arn)
     response = client.start_execution(stateMachineArn=sfn_arn, input=input)
-    logger.info(response)
+    logger.debug(response)
     return response
 
 

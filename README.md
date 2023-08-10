@@ -64,13 +64,13 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.15.1, < 2.0.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.9.0, < 5.0.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.27.0, < 5.0.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.9.0, < 5.0.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.27.0, < 5.0.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | n/a |
 
 ## Modules
@@ -120,6 +120,7 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 | <a name="input_aft_vpc_public_subnet_02_cidr"></a> [aft\_vpc\_public\_subnet\_02\_cidr](#input\_aft\_vpc\_public\_subnet\_02\_cidr) | CIDR Block to allocate to the Public Subnet 02 | `string` | `"192.168.2.128/25"` | no |
 | <a name="input_audit_account_id"></a> [audit\_account\_id](#input\_audit\_account\_id) | Audit Account Id | `string` | n/a | yes |
 | <a name="input_cloudwatch_log_group_retention"></a> [cloudwatch\_log\_group\_retention](#input\_cloudwatch\_log\_group\_retention) | Amount of days to keep CloudWatch Log Groups for Lambda functions. 0 = Never Expire | `string` | `"0"` | no |
+| <a name="input_concurrent_account_factory_actions"></a> [concurrent\_account\_factory\_actions](#input\_concurrent\_account\_factory\_actions) | Maximum number of accounts that can be provisioned in parallel. | `number` | `5` | no |
 | <a name="input_ct_home_region"></a> [ct\_home\_region](#input\_ct\_home\_region) | The region from which this module will be executed. This MUST be the same region as Control Tower is deployed. | `string` | n/a | yes |
 | <a name="input_ct_management_account_id"></a> [ct\_management\_account\_id](#input\_ct\_management\_account\_id) | Control Tower Management Account Id | `string` | n/a | yes |
 | <a name="input_github_enterprise_url"></a> [github\_enterprise\_url](#input\_github\_enterprise\_url) | GitHub enterprise URL, if GitHub Enterprise is being used | `string` | `"null"` | no |
@@ -133,7 +134,7 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 | <a name="input_terraform_org_name"></a> [terraform\_org\_name](#input\_terraform\_org\_name) | Organization name for Terraform Cloud or Enterprise | `string` | `"null"` | no |
 | <a name="input_terraform_token"></a> [terraform\_token](#input\_terraform\_token) | Terraform token for Cloud or Enterprise | `string` | `"null"` | no |
 | <a name="input_terraform_version"></a> [terraform\_version](#input\_terraform\_version) | Terraform version being used for AFT | `string` | `"0.15.5"` | no |
-| <a name="input_tf_backend_secondary_region"></a> [tf\_backend\_secondary\_region](#input\_tf\_backend\_secondary\_region) | AFT creates a backend for state tracking for its own state as well as OSS cases. The backend's primary region is the same as the AFT region, but this defines the secondary region to replicate to. | `string` | n/a | yes |
+| <a name="input_tf_backend_secondary_region"></a> [tf\_backend\_secondary\_region](#input\_tf\_backend\_secondary\_region) | AFT creates a backend for state tracking for its own state as well as OSS cases. The backend's primary region is the same as the AFT region, but this defines the secondary region to replicate to. | `string` | `""` | no |
 | <a name="input_vcs_provider"></a> [vcs\_provider](#input\_vcs\_provider) | Customer VCS Provider - valid inputs are codecommit, bitbucket, github, or githubenterprise | `string` | `"codecommit"` | no |
 
 ## Outputs

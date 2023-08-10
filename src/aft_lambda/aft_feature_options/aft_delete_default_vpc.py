@@ -24,29 +24,30 @@ from aft_common.feature_options import (
     get_vpc_security_groups,
     get_vpc_subnets,
 )
+from aft_common.logger import customization_request_logger
 
 if TYPE_CHECKING:
+    from aws_lambda_powertools.utilities.typing import LambdaContext
     from mypy_boto3_ec2 import EC2Client, EC2ServiceResource
 else:
     EC2Client = object
     EC2ServiceResource = object
-
-if TYPE_CHECKING:
-    from aws_lambda_powertools.utilities.typing import LambdaContext
-else:
     LambdaContext = object
-
-logger = utils.get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+    request_id = event["customization_request_id"]
+    target_account_id = event["account_info"]["account"]["id"]
+
+    logger = customization_request_logger(
+        aws_account_id=target_account_id, customization_request_id=request_id
+    )
+
     auth = AuthClient()
     aft_session = boto3.session.Session()
     try:
-        target_account = event["account_info"]["account"]["id"]
-
         target_account_session = auth.get_target_account_session(
-            account_id=target_account, role_name=ProvisionRoles.SERVICE_ROLE_NAME
+            account_id=target_account_id, role_name=ProvisionRoles.SERVICE_ROLE_NAME
         )
         client: EC2Client = target_account_session.client("ec2")
         regions = get_aws_regions(client)
@@ -58,7 +59,10 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             == "true"
         ):
             for region in regions:
-                logger.info("Creating boto3 session in " + region)
+                logger.info(
+                    "Deleting default VPC for AFT management account in region "
+                    + region
+                )
                 session = boto3.session.Session(region_name=region)
                 client = session.client("ec2")
                 vpc = get_default_vpc(client)

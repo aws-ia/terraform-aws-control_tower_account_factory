@@ -69,10 +69,20 @@ resource "aws_s3_bucket_public_access_block" "aft_logging_bucket" {
   restrict_public_buckets = true
 }
 
-
+#tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "aft_access_logs" {
   provider = aws.log_archive
   bucket   = "${var.log_archive_access_logs_bucket_name}-${var.log_archive_account_id}-${data.aws_region.current.name}"
+}
+
+resource "aws_s3_bucket_policy" "aft_access_logs" {
+  provider = aws.log_archive
+  bucket   = aws_s3_bucket.aft_access_logs.id
+  policy = templatefile("${path.module}/s3/bucket-policies/aft_access_logs.tpl", {
+    aws_s3_bucket_aft_access_logs_arn    = aws_s3_bucket.aft_access_logs.arn
+    aws_s3_bucket_aft_logging_bucket_arn = aws_s3_bucket.aft_logging_bucket.arn
+    log_archive_account_id               = var.log_archive_account_id
+  })
 }
 
 resource "aws_s3_bucket_versioning" "aft_access_logs_versioning" {
@@ -83,6 +93,7 @@ resource "aws_s3_bucket_versioning" "aft_access_logs_versioning" {
   }
 }
 
+#tfsec:ignore:aws-s3-encryption-customer-key
 resource "aws_s3_bucket_server_side_encryption_configuration" "aft_access_logs_encryption" {
   provider = aws.log_archive
   bucket   = aws_s3_bucket.aft_access_logs.id
@@ -109,12 +120,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "aft_access_logs_lifecycle_conf
     }
   }
 
-}
-
-resource "aws_s3_bucket_acl" "aft_access_logs_acl" {
-  provider = aws.log_archive
-  bucket   = aws_s3_bucket.aft_access_logs.id
-  acl      = "log-delivery-write"
 }
 
 resource "aws_s3_bucket_public_access_block" "aft_access_logs" {

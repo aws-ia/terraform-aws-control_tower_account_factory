@@ -13,7 +13,7 @@ resource "aws_lambda_function" "aft_customizations_identify_targets" {
 
   source_code_hash = var.customizations_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
@@ -41,7 +41,7 @@ resource "aws_lambda_function" "aft_customizations_execute_pipeline" {
 
   source_code_hash = var.customizations_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
@@ -68,7 +68,7 @@ resource "aws_lambda_function" "aft_customizations_get_pipeline_executions" {
 
   source_code_hash = var.customizations_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 

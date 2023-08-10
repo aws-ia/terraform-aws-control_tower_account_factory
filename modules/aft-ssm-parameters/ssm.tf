@@ -236,6 +236,7 @@ resource "aws_ssm_parameter" "aft_config_backend_primary_region" {
 }
 
 resource "aws_ssm_parameter" "aft_config_backend_secondary_region" {
+  count = var.aft_config_backend_secondary_region == "" ? 0 : 1
   name  = "/aft/config/oss-backend/secondary-region"
   type  = "String"
   value = var.aft_config_backend_secondary_region

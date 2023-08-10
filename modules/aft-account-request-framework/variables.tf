@@ -48,3 +48,6 @@ variable "request_framework_archive_path" {
 variable "request_framework_archive_hash" {
   type = string
 }
+variable "concurrent_account_factory_actions" {
+  type = number
+}

@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 from typing import Any, Dict, List
 
 from aft_common import aft_utils as utils
@@ -16,17 +17,16 @@ from aft_common.auth import AuthClient
 from aft_common.organizations import OrganizationsAgent
 from boto3.session import Session
 
-logger = utils.get_logger()
+logger = logging.getLogger("aft")
 
 
-def shared_account_request(event_record: Dict[str, Any]) -> bool:
+def shared_account_request(event_record: Dict[str, Any], auth: AuthClient) -> bool:
     ct_params = ddb.unmarshal_ddb_item(event_record["dynamodb"]["NewImage"])[
         "control_tower_parameters"
     ]
     account_email = ct_params["AccountEmail"]
     account_name = ct_params["AccountName"]
     request_ou = ct_params["ManagedOrganizationalUnit"]
-    auth = AuthClient()
     shared_account_ids = get_shared_ids(
         aft_management_session=auth.get_aft_management_session()
     )

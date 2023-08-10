@@ -2,19 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
-import json
+import logging
 from typing import TYPE_CHECKING, Any, Dict
 
-from aft_common import aft_utils as utils
-from aft_common import codepipeline, ddb, notifications
+from aft_common import notifications
 from aft_common.account_request_framework import (
-    build_aft_account_provisioning_framework_event,
     control_tower_param_changed,
-    insert_msg_into_acc_req_queue,
     provisioned_product_exists,
 )
+from aft_common.account_request_record_handler import AccountRequestRecordHandler
 from aft_common.auth import AuthClient
-from aft_common.organizations import OrganizationsAgent
+from aft_common.logger import configure_aft_logger
 from aft_common.shared_account import shared_account_request
 
 if TYPE_CHECKING:
@@ -22,95 +20,21 @@ if TYPE_CHECKING:
 else:
     LambdaContext = object
 
-logger = utils.get_logger()
+
+configure_aft_logger()
+logger = logging.getLogger("aft")
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     auth = AuthClient()
-    aft_management_session = auth.get_aft_management_session()
     try:
-        # validate event
-        if "Records" not in event:
-            return None
-        event_record = event["Records"][0]
-        if "eventSource" not in event_record:
-            return None
-        if event_record["eventSource"] != "aws:dynamodb":
-            return None
-
-        logger.info("DynamoDB Event Record Received")
-        logger.info(event_record)
-
-        # Account record was deleted from `aft-request` repo
-        if event_record["eventName"] == "REMOVE":
-            logger.info("Delete account request received")
-            account_request = ddb.unmarshal_ddb_item(
-                event_record["dynamodb"]["OldImage"]
-            )
-            payload = {"account_request": account_request}
-
-            lambda_name = utils.get_ssm_parameter_value(
-                aft_management_session,
-                utils.SSM_PARAM_AFT_CLEANUP_RESOURCES_LAMBDA,
-            )
-            utils.invoke_lambda(
-                aft_management_session,
-                lambda_name,
-                json.dumps(payload).encode(),
-            )
-            return None
-
-        # If it is a shared account update request, invoke the Account Provisioning Framework Lambda
-        if shared_account_request(event_record=event_record):
-            logger.info("Shared Account Update Request Received")
-            payload = build_aft_account_provisioning_framework_event(event_record)
-            lambda_name = utils.get_ssm_parameter_value(
-                aft_management_session,
-                utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
-            )
-            utils.invoke_lambda(
-                aft_management_session,
-                lambda_name,
-                json.dumps(payload).encode(),
-            )
-            return None
-
-        new_account = not provisioned_product_exists(event_record)
-        control_tower_updates = control_tower_param_changed(event_record)
-
-        if new_account:
-            logger.info("New account request received")
-            insert_msg_into_acc_req_queue(
-                event_record=event_record,
-                new_account=True,
-                session=aft_management_session,
-            )
-        elif not new_account and control_tower_updates:
-            logger.info("Modify account request received")
-            logger.info("Control Tower Parameter Update Request Received")
-            insert_msg_into_acc_req_queue(
-                event_record=event_record,
-                new_account=False,
-                session=aft_management_session,
-            )
-        elif not new_account and not control_tower_updates:
-            logger.info("NON-Control Tower Parameter Update Request Received")
-            payload = build_aft_account_provisioning_framework_event(event_record)
-            lambda_name = utils.get_ssm_parameter_value(
-                aft_management_session,
-                utils.SSM_PARAM_AFT_ACCOUNT_PROVISIONING_FRAMEWORK_LAMBDA,
-            )
-            utils.invoke_lambda(
-                aft_management_session,
-                lambda_name,
-                json.dumps(payload).encode(),
-            )
-        else:
-            raise Exception("Unsupported account request")
+        record_handler = AccountRequestRecordHandler(auth=auth, event=event)
+        logger.info(record_handler.record)
+        record_handler.process_request()
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
-            session=aft_management_session,
+            session=auth.aft_management_session,
             message=str(error),
             context=context,
             subject="AFT account request failed",

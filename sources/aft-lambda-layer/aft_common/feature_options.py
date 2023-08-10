@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 from typing import TYPE_CHECKING
 
 from botocore.exceptions import ClientError
@@ -27,7 +28,7 @@ import aft_common.aft_utils as utils
 SUPPORT_API_REGION = "us-east-1"
 CLOUDTRAIL_TRAIL_NAME = "aws-aft-CustomizationsCloudTrail"
 
-logger = utils.get_logger()
+logger = logging.getLogger("aft")
 
 
 def get_aws_regions(client: EC2Client) -> List[str]:

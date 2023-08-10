@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 import os
 import re
 from typing import Any, Dict, List
@@ -13,7 +14,7 @@ from boto3.session import Session
 
 AFT_SHARED_ACCOUNT_NAMES = ["ct-management", "log-archive", "audit"]
 
-logger = utils.get_logger()
+logger = logging.getLogger("aft")
 
 
 def validate_identify_targets_request(payload: Dict[str, Any]) -> bool:

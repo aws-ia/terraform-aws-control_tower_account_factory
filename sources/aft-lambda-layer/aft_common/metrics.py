@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
+import logging
 from datetime import datetime
 from typing import Any, Dict, Optional, TypedDict
 
@@ -10,7 +11,7 @@ from aft_common import aft_utils as utils
 from aft_common.auth import AuthClient
 from boto3.session import Session
 
-logger = utils.get_logger()
+logger = logging.getLogger("aft")
 
 
 class MetricsPayloadType(TypedDict):

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 import sys
 import uuid
 from datetime import datetime
@@ -24,6 +25,7 @@ from aft_common import aft_utils as utils
 from aft_common import ddb, sqs
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.aft_types import AftInvokeAccountCustomizationPayload
+from aft_common.aft_utils import get_ct_product_id
 from aft_common.auth import AuthClient
 from aft_common.exceptions import (
     NoAccountFactoryPortfolioFound,
@@ -37,6 +39,7 @@ if TYPE_CHECKING:
     from mypy_boto3_servicecatalog import ServiceCatalogClient
     from mypy_boto3_servicecatalog.type_defs import (
         ProvisionedProductAttributeTypeDef,
+        ProvisionedProductDetailTypeDef,
         ProvisioningParameterTypeDef,
         ProvisionProductOutputTypeDef,
         SearchProvisionedProductsOutputTypeDef,
@@ -53,7 +56,7 @@ else:
     ServiceCatalogClient = object
 
 
-logger = utils.get_logger()
+logger = logging.getLogger("aft")
 
 
 def ct_account_product_is_healthy(product: ProvisionedProductAttributeTypeDef) -> bool:
@@ -394,8 +397,7 @@ def get_account_request_record(
         logger.info(item)
         return item
     else:
-        logger.info("Record not found in DDB table, exiting")
-        sys.exit(1)
+        raise Exception(f"Account {request_table_id}  not found in {table_name}")
 
 
 def build_account_customization_payload(
@@ -416,9 +418,11 @@ def build_account_customization_payload(
 
     account_customization_payload: AftInvokeAccountCustomizationPayload = {
         "account_info": {"account": account_info},
-        "control_tower_event": control_tower_event,  # Unused by AFT but kept for aft-account-provisioning-customizations backwards compatibility
+        # Unused by AFT but kept for aft-account-provisioning-customizations backwards compatibility
+        "control_tower_event": control_tower_event,
         "account_request": account_request,
         "account_provisioning": {"run_create_pipeline": "true"},
+        "customization_request_id": str(uuid.uuid4()),
     }
 
     return account_customization_payload
@@ -435,7 +439,7 @@ class AccountRequest:
             session=self.ct_management_session
         )
         self.aft_management_session = auth.get_aft_management_session()
-        self.account_factory_product_id = utils.get_ct_product_id(
+        self.account_factory_product_id = get_ct_product_id(
             session=self.aft_management_session,
             ct_management_session=self.ct_management_session,
         )
@@ -498,7 +502,7 @@ class AccountRequest:
                 return True
         return False
 
-    def provisioning_in_progress(self) -> bool:
+    def provisioning_threshold_reached(self, threshold: int) -> bool:
         client: ServiceCatalogClient = self.ct_management_session.client(
             "servicecatalog"
         )
@@ -515,12 +519,22 @@ class AccountRequest:
             )
             pps.extend(response["ProvisionedProducts"])
 
-        for p in pps:
-            if p["ProductId"] == self.account_factory_product_id:
-                logger.info("Identified CT Product - " + p["Id"])
-                if p["Status"] in ["UNDER_CHANGE", "PLAN_IN_PROGRESS"]:
-                    logger.info("Product provisioning in Progress")
-                    return True
+        return self.products_in_progress_at_threshold(
+            threshold=threshold, provisioned_products=pps
+        )
 
-        logger.info("No product provisioning in Progress")
-        return False
+    def products_in_progress_at_threshold(
+        self,
+        threshold: int,
+        provisioned_products: List[ProvisionedProductDetailTypeDef],
+    ) -> bool:
+        in_progress_count = 0
+
+        for product in provisioned_products:
+            if product["ProductId"] != self.account_factory_product_id:
+                continue
+            logger.info("Identified CT Product - " + product["Id"])
+            if product["Status"] in ["UNDER_CHANGE", "PLAN_IN_PROGRESS"]:
+                in_progress_count += 1
+
+        return in_progress_count >= threshold

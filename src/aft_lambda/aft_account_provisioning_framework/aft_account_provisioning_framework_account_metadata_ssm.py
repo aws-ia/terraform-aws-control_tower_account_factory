@@ -5,7 +5,6 @@ import inspect
 import json
 from typing import TYPE_CHECKING, Any, Dict
 
-import boto3
 from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import (
@@ -16,22 +15,28 @@ from aft_common.account_provisioning_framework import (
     put_ssm_parameters,
 )
 from aft_common.auth import AuthClient
+from aft_common.logger import customization_request_logger
 
 if TYPE_CHECKING:
     from aws_lambda_powertools.utilities.typing import LambdaContext
 else:
     LambdaContext = object
 
-logger = utils.get_logger()
-
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
+
+    event_payload = event["payload"]
+    request_id = event_payload["customization_request_id"]
+    target_account_id = event_payload["account_info"]["account"]["id"]
+    account_request = event_payload["account_request"]
+    custom_fields = json.loads(account_request.get("custom_fields", "{}"))
+
+    logger = customization_request_logger(
+        aws_account_id=target_account_id, customization_request_id=request_id
+    )
+
     auth = AuthClient()
     try:
-        account_request = event["payload"]["account_request"]
-        custom_fields = json.loads(account_request.get("custom_fields", "{}"))
-        target_account_id = event["payload"]["account_info"]["account"]["id"]
-
         # Create the custom field parameters in the AFT home region
         session = auth.get_aft_management_session()
         target_region = session.region_name
@@ -73,11 +78,11 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
         # Delete SSM parameters which do not exist in new custom fields
         params_to_remove = list(existing_keys.difference(new_keys))
-        logger.info(message=f"Deleting SSM params: {params_to_remove}")
+        logger.info(f"Deleting SSM params: {params_to_remove}")
         delete_ssm_parameters(target_account_session, params_to_remove)
 
         # Update / Add SSM parameters for custom fields provided
-        logger.info(message=f"Adding/Updating SSM params: {custom_fields}")
+        logger.info(f"Adding/Updating SSM params: {custom_fields}")
         put_ssm_parameters(target_account_session, custom_fields)
 
     except Exception as error:

@@ -11,7 +11,7 @@ resource "aws_lambda_function" "codebuild_invoker" {
   handler          = "codebuild_invoker.lambda_handler"
   source_code_hash = var.builder_archive_hash
   memory_size      = 1024
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   timeout          = 900
 
   vpc_config {

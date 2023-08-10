@@ -1,12 +1,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 import re
 from copy import deepcopy
 from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, cast
 
 from aft_common.aft_types import AftAccountInfo
-from aft_common.aft_utils import emails_are_equal, get_logger
+from aft_common.aft_utils import emails_are_equal
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -27,7 +28,7 @@ else:
     AccountTypeDef = object
     ParentTypeDef = object
 
-logger = get_logger()
+logger = logging.getLogger("aft")
 
 
 class OrganizationsAgent:
@@ -162,11 +163,11 @@ class OrganizationsAgent:
 
     def get_ou_ids_from_ou_names(self, target_ou_names: List[str]) -> List[str]:
         ous = self.get_all_org_ous()
-        ou_map = {}
+        org_ou_map = {}
 
-        # Convert list of OUs to name->id map for constant time lookups
+        # Convert list of OUs to id->name map for constant time lookups
         for ou in ous:
-            ou_map[ou["Name"]] = ou["Id"]
+            org_ou_map[ou["Id"]] = ou["Name"]
 
         # Search the map for every target exactly once
         matched_ou_ids = []
@@ -177,11 +178,15 @@ class OrganizationsAgent:
             )
             if nested_parsed is not None:  # Nested OU pattern matched!
                 target_name, target_id = nested_parsed
-                if ou_map[target_name] == target_id:
-                    matched_ou_ids.append(ou_map[target_name])
+                if target_id in org_ou_map.keys():
+                    if org_ou_map[target_id] == target_name:
+                        matched_ou_ids.append(target_id)
             else:
-                if target_name in ou_map:
-                    matched_ou_ids.append(ou_map[target_name])
+                if target_name in org_ou_map.values():
+                    target_id = [
+                        id for id, name in org_ou_map.items() if target_name == name
+                    ][0]
+                    matched_ou_ids.append(target_id)
 
         return matched_ou_ids
 

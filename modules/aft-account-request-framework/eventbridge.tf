@@ -22,7 +22,7 @@ resource "aws_cloudwatch_event_rule" "aft_control_tower_events" {
   "source": ["aws.controltower"],
   "detail-type": ["AWS Service Event via CloudTrail"],
   "detail": {
-    "eventName": ["SetupLandingZone", "UpdateLandingZone", "RegisterOrganizationalUnit", "DeregisterOrganizationalUnit", "EnableGuardrail", "DisableGuardrail", "CreateManagedAccount", "UpdateManagedAccount"]
+    "eventName": ["CreateManagedAccount", "UpdateManagedAccount"]
   }
 }
 EOF

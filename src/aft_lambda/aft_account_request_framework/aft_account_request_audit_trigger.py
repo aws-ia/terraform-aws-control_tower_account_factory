@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
+import logging
 import sys
 from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.account_request_framework import put_audit_record
+from aft_common.logger import configure_aft_logger
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -15,7 +17,8 @@ if TYPE_CHECKING:
 else:
     LambdaContext = object
 
-logger = utils.get_logger()
+configure_aft_logger()
+logger = logging.getLogger("aft")
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
@@ -51,8 +54,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                     else:
                         logger.info(f"Event Name: {event_name} is unsupported.")
                 else:
-                    logger.info("Non DynamoDB Event Received")
-                    sys.exit(1)
+                    raise Exception("Non DynamoDB Event Received")
         else:
             logger.info("Unexpected Event Received")
 

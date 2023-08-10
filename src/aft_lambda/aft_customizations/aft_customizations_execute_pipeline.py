@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import inspect
+import logging
 from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import aft_utils as utils
 from aft_common import notifications
 from aft_common.codepipeline import execute_pipeline
+from aft_common.logger import configure_aft_logger, customization_request_logger
 from boto3.session import Session
 
 if TYPE_CHECKING:
@@ -14,7 +16,8 @@ if TYPE_CHECKING:
 else:
     LambdaContext = object
 
-logger = utils.get_logger()
+configure_aft_logger()
+logger = logging.getLogger("aft")
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
