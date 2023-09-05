@@ -238,7 +238,7 @@ module "aft_ssm_parameters" {
   account_request_repo_branch                                 = var.account_request_repo_branch
   account_request_repo_name                                   = var.account_request_repo_name
   vcs_provider                                                = var.vcs_provider
-  aft_config_backend_primary_region                           = var.ct_home_region
+  aft_config_backend_primary_region                           = var.aft_management_region
   aft_config_backend_secondary_region                         = var.tf_backend_secondary_region
   aft_framework_repo_url                                      = var.aft_framework_repo_url
   aft_framework_repo_git_ref                                  = local.aft_framework_repo_git_ref
