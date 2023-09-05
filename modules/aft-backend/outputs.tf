@@ -15,3 +15,9 @@ output "kms_key_id" {
   description = "The globally unique identifier for the primary key."
   value       = aws_kms_key.encrypt-primary-region.key_id
 }
+
+
+output "kms_secondary_key_id" {
+  description = "The globally unique identifier for the primary key."
+  value       = aws_kms_key.encrypt-secondary-region.key_id
+}
