@@ -92,3 +92,7 @@ variable "account_provisioning_customizations_repo_branch" {
 variable "global_codebuild_timeout" {
   type = number
 }
+
+variable "ct_codestar_region" {
+  type = string
+}

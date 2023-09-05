@@ -64,11 +64,12 @@ module "aft_backend" {
   source           = "./modules/aft-backend"
   primary_region   = var.ct_home_region
   secondary_region = var.tf_backend_secondary_region
+  create_dynamodb_replica = var.tf_backend_create_dynamodb_replica
 }
 
 module "aft_code_repositories" {
   providers = {
-    aws = aws.aft_management
+    aws = aws.aft_code_repositories
   }
   source                                          = "./modules/aft-code-repositories"
   vpc_id                                          = module.aft_account_request_framework.aft_vpc_id
@@ -94,6 +95,7 @@ module "aft_code_repositories" {
   global_customizations_repo_branch               = var.global_customizations_repo_branch
   log_group_retention                             = var.cloudwatch_log_group_retention
   global_codebuild_timeout                        = var.global_codebuild_timeout
+  ct_codestar_region                              = var.ct_codestar_region
 }
 
 module "aft_customizations" {

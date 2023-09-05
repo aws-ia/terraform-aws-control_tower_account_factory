@@ -49,6 +49,14 @@ variable "aft_framework_repo_git_ref" {
   type        = string
 }
 
+variable "ct_coderepo_region" {
+  type        = string
+  validation {
+    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
+    error_message = "Variable var: region is not valid."
+  }
+}
+
 variable "aft_management_account_id" {
   description = "AFT Management Account ID"
   type        = string
@@ -285,6 +293,16 @@ variable "tf_backend_secondary_region" {
   validation {
     condition     = var.tf_backend_secondary_region == "" || can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.tf_backend_secondary_region))
     error_message = "Variable var: tf_backend_secondary_region is not valid."
+  }
+}
+
+variable "tf_backend_create_dynamodb_replica" {
+  default     = true
+  type        = bool
+
+  validation {
+    condition     = contains([true, false], var.aft_metrics_reporting)
+    error_message = "Valid values for var: aft_metrics_reporting are (true, false)."
   }
 }
 

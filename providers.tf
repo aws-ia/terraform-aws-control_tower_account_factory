@@ -25,6 +25,21 @@ provider "aws" {
     }
   }
 }
+
+provider "aws" {
+  alias  = "aft_code_repositories"
+  region = var.ct_coderepo_region
+  assume_role {
+    role_arn     = "arn:${data.aws_partition.current.partition}:iam::${var.aft_management_account_id}:role/AWSControlTowerExecution"
+    session_name = local.aft_session_name
+  }
+  default_tags {
+    tags = {
+      managed_by = "AFT"
+    }
+  }
+}
+
 provider "aws" {
   alias  = "tf_backend_secondary_region"
   region = var.tf_backend_secondary_region
