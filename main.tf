@@ -95,7 +95,6 @@ module "aft_code_repositories" {
   global_customizations_repo_branch               = var.global_customizations_repo_branch
   log_group_retention                             = var.cloudwatch_log_group_retention
   global_codebuild_timeout                        = var.global_codebuild_timeout
-  ct_codestar_region                              = var.ct_codestar_region
 }
 
 module "aft_customizations" {
