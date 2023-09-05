@@ -180,7 +180,7 @@ module "aft_lambda_layer" {
   lambda_layer_python_version                       = local.lambda_layer_python_version
   aft_tf_aws_customizations_module_git_ref_ssm_path = local.ssm_paths.aft_tf_aws_customizations_module_git_ref_ssm_path
   aft_tf_aws_customizations_module_url_ssm_path     = local.ssm_paths.aft_tf_aws_customizations_module_url_ssm_path
-  aws_region                                        = var.ct_home_region
+  aws_region                                        = var.aft_management_region
   aft_kms_key_arn                                   = module.aft_account_request_framework.aft_kms_key_arn
   aft_vpc_id                                        = module.aft_account_request_framework.aft_vpc_id
   aft_vpc_private_subnets                           = module.aft_account_request_framework.aft_vpc_private_subnets

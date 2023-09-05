@@ -49,10 +49,10 @@ variable "aft_framework_repo_git_ref" {
   type        = string
 }
 
-variable "ct_management_region" {
+variable "aft_management_region" {
   type        = string
   validation {
-    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.ct_management_region))
+    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.aft_management_region))
     error_message = "Variable var: region is not valid."
   }
 }
