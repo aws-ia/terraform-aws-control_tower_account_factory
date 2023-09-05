@@ -52,7 +52,7 @@ variable "aft_framework_repo_git_ref" {
 variable "ct_coderepo_region" {
   type        = string
   validation {
-    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
+    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.ct_coderepo_region))
     error_message = "Variable var: region is not valid."
   }
 }
