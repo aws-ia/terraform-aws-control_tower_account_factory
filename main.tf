@@ -69,13 +69,13 @@ module "aft_backend" {
 
 module "aft_code_repositories" {
   providers = {
-    aws = aws.aft_code_repositories
+    aws = aws.aft_management
   }
   source                                          = "./modules/aft-code-repositories"
   vpc_id                                          = module.aft_account_request_framework.aft_vpc_id
   aft_config_backend_bucket_id                    = module.aft_backend.bucket_id
   aft_config_backend_table_id                     = module.aft_backend.table_id
-  aft_config_backend_kms_key_id                   = module.aft_backend.kms_secondary_key_id
+  aft_config_backend_kms_key_id                   = module.aft_backend.kms_key_id
   account_request_table_name                      = module.aft_account_request_framework.request_table_name
   codepipeline_s3_bucket_arn                      = module.aft_customizations.aft_codepipeline_customizations_bucket_arn
   codepipeline_s3_bucket_name                     = module.aft_customizations.aft_codepipeline_customizations_bucket_name
