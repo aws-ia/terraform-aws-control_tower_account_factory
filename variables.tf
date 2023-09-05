@@ -301,7 +301,7 @@ variable "tf_backend_create_dynamodb_replica" {
   type        = bool
 
   validation {
-    condition     = contains([true, false], var.aft_metrics_reporting)
+    condition     = contains([true, false], var.tf_backend_create_dynamodb_replica)
     error_message = "Valid values for var: aft_metrics_reporting are (true, false)."
   }
 }
