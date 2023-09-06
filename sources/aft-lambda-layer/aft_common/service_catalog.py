@@ -37,7 +37,7 @@ logger = logging.getLogger("aft")
 
 
 def get_ct_product_id(session: Session, ct_management_session: Session) -> str:
-    client: ServiceCatalogClient = ct_management_session.client("servicecatalog",region="il-central-1")
+    client: ServiceCatalogClient = ct_management_session.client("servicecatalog")
     sc_product_name = get_ssm_parameter_value(session, SSM_PARAM_SC_PRODUCT_NAME)
     logger.info("Getting product ID for " + sc_product_name)
 
@@ -51,7 +51,7 @@ def ct_provisioning_artifact_is_active(
     session: Session, ct_management_session: Session, artifact_id: str
 ) -> bool:
     client: ServiceCatalogClient = ct_management_session.client(
-        "servicecatalog",region="il-central-1", config=utils.get_high_retry_botoconfig()
+        "servicecatalog", config=utils.get_high_retry_botoconfig()
     )
     sc_product_name = get_ssm_parameter_value(session, SSM_PARAM_SC_PRODUCT_NAME)
     logger.info("Checking provisioning artifact ID " + artifact_id)
@@ -75,7 +75,7 @@ def ct_provisioning_artifact_is_active(
 def get_ct_provisioning_artifact_id(
     session: Session, ct_management_session: Session
 ) -> str:
-    client: ServiceCatalogClient = ct_management_session.client("servicecatalog",region="il-central-1")
+    client: ServiceCatalogClient = ct_management_session.client("servicecatalog")
     sc_product_name = get_ssm_parameter_value(session, SSM_PARAM_SC_PRODUCT_NAME)
     logger.info("Getting provisioning artifact ID for " + sc_product_name)
 
@@ -99,7 +99,7 @@ def get_healthy_ct_product_batch(
         ]
     }
     sc_client = ct_management_session.client(
-        "servicecatalog",region="il-central-1", config=utils.get_high_retry_botoconfig()
+        "servicecatalog", config=utils.get_high_retry_botoconfig()
     )
     logger.info(
         "Searching Account Factory for account with matching email in healthy status"
@@ -135,7 +135,7 @@ def email_exists_in_batch(
     target_email: str, pps: List[str], ct_management_session: Session
 ) -> bool:
     sc_client = ct_management_session.client(
-        "servicecatalog",region="il-central-1", config=utils.get_high_retry_botoconfig()
+        "servicecatalog", config=utils.get_high_retry_botoconfig()
     )
     for pp in pps:
         pp_email = sc_client.get_provisioned_product_outputs(
