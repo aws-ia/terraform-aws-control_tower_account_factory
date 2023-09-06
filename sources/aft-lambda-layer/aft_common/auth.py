@@ -177,7 +177,7 @@ class AuthClient:
     def get_ct_management_session(
         self,
         role_name: Optional[str] = None,
-        region: Optional[str] = None,
+        region: Optional[str] = "il-central-1",
         session_policy: Optional[str] = None,
         session_duration: int = 900,
     ) -> Session:
