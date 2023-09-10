@@ -185,7 +185,6 @@ class AuthClient:
             session=self.aft_management_session,
             param=SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID,
         )
-        region: "il-central-1"
         return self.get_target_account_session(
             account_id=account_id,
             role_name=role_name,
