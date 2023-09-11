@@ -147,7 +147,7 @@ class AuthClient:
             hub_session = self._get_hub_session(session_duration=session_duration)
 
         hub_caller_identity = hub_session.client("sts").get_caller_identity()
-
+        print(f"hub_caller_identity={hub_caller_identity}")
         # Preserve behavior
         if role_name is None:
             logger.info("No role provided, using default AWSAFTExecution role")
@@ -161,7 +161,7 @@ class AuthClient:
             account_id=account_id,
             role_name=role_name,
         )
-
+        print(f"spoke_role_arn={spoke_role_arn}")
         logger.info(
             f"Generating session using {hub_caller_identity['Arn']} for {spoke_role_arn}"
         )
@@ -185,6 +185,7 @@ class AuthClient:
             session=self.aft_management_session,
             param=SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID,
         )
+        print(f"account_id = {account_id}")
         return self.get_target_account_session(
             account_id=account_id,
             role_name=role_name,
