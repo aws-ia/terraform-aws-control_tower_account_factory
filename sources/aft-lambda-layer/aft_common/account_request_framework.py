@@ -344,10 +344,11 @@ class AccountRequest:
     ACCOUNT_FACTORY_PORTFOLIO_NAME = "AWS Control Tower Account Factory Portfolio"
 
     def __init__(self, auth: AuthClient) -> None:
-        self.ct_management_session = auth.get_ct_management_session(
-            role_name=ProvisionRoles.SERVICE_ROLE_NAME,
-            region="il-central-1"
-        )
+        self.ct_management_account_id = Session(region_name="il-central-1")
+        # self.ct_management_session = auth.get_ct_management_session(
+        #     role_name=ProvisionRoles.SERVICE_ROLE_NAME,
+        #     region="il-central-1"
+        # )
         self.ct_management_account_id = auth.get_account_id_from_session(
             session=self.ct_management_session
         )

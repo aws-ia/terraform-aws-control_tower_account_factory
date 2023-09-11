@@ -183,7 +183,6 @@ class AuthClient:
     ) -> Session:
         account_id = get_ssm_parameter_value(
             session=self.aft_management_session,
-            region="eu-west-1",
             param=SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID,
         )
         return self.get_target_account_session(
