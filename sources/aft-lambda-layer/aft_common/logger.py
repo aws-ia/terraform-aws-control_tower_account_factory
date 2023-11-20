@@ -59,6 +59,9 @@ class _AccountCustomizationAdapter(LoggerAdapter):
     def process(
         self, message: str, kwargs: MutableMapping[str, Any]
     ) -> Tuple[str, MutableMapping[str, Any]]:
+        # Handle optionality
+        if self.extra is None:
+            self.extra = {}
         log_tracing = {
             ACCOUNT_ID_FIELD_NAME: self.extra.get(ACCOUNT_ID_FIELD_NAME),
             CUSTOMIZATION_REQUEST_ID_FIELD_NAME: self.extra.get(

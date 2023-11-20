@@ -15,8 +15,14 @@ locals {
   }
 }
 
+data "template_file" "invoke_customizations_sfn_template" {
+  // Use valid JSON but transform it during load to support numeric replacement
+  template = replace(file("${local.state_machine_source}"), "\"$${maximum_concurrent_customizations}\"", "$${maximum_concurrent_customizations}")
+  vars     = local.replacements_map
+}
+
 resource "aws_sfn_state_machine" "aft_invoke_customizations_sfn" {
   name       = "aft-invoke-customizations"
   role_arn   = aws_iam_role.aft_invoke_customizations_sfn.arn
-  definition = templatefile(local.state_machine_source, local.replacements_map)
+  definition = data.template_file.invoke_customizations_sfn_template.rendered
 }

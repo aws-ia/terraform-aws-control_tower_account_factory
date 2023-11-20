@@ -226,6 +226,9 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Always ignore layer build directories
+sources/aft-lambda-layer/build
+
 ### Windows ###
 # Windows thumbnail cache files
 Thumbs.db

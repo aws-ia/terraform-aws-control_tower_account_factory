@@ -51,3 +51,7 @@ variable "request_framework_archive_hash" {
 variable "concurrent_account_factory_actions" {
   type = number
 }
+
+variable "lambda_runtime_python_version" {
+  type = string
+}
