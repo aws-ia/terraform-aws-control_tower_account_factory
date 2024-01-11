@@ -274,7 +274,7 @@ resource "aws_dynamodb_table" "lock-table" {
   # If secondary_region is provided, there will be 1 iteration of the dynamic replica block
   # If secondary region is omitted, there will be 0 iteration of the dynamic replica block
   dynamic "replica" {
-    for_each = var.create_dynamodb_replica  ? [] : [1]
+    for_each = var.secondary_region == "" ? [] : [1]
     content {
       region_name = var.secondary_region
     }

@@ -16,7 +16,7 @@
     "Invoke Provisioning Framework": {
       "Type": "Map",
       "Next": "Get Pipeline Executions",
-      "MaxConcurrency": 25,
+      "MaxConcurrency": "${maximum_concurrent_customizations}",
       "InputPath": "$.targets",
       "ItemsPath": "$.target_accounts_info",
       "Parameters": {

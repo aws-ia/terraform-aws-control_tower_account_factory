@@ -14,7 +14,7 @@ provider "aws" {
 
 provider "aws" {
   alias  = "aft_management"
-  region = var.aft_management_region
+  region = var.ct_home_region
   assume_role {
     role_arn     = "arn:${data.aws_partition.current.partition}:iam::${var.aft_management_account_id}:role/AWSControlTowerExecution"
     session_name = local.aft_session_name
@@ -25,9 +25,6 @@ provider "aws" {
     }
   }
 }
-
-
-
 provider "aws" {
   alias  = "tf_backend_secondary_region"
   region = var.tf_backend_secondary_region

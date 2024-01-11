@@ -244,6 +244,7 @@ def __handle_errors(response):
         return
 
     errors = response.json()["errors"]
+    print("Handling errors: {}".format(errors))
     if len(errors) == 0:
         print("Empty set of errors returned by client; raising internal failure")
         raise ClientError(status="500", message="Internal failure")

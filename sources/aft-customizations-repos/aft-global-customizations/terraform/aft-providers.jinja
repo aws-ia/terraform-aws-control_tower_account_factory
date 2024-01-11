@@ -3,7 +3,6 @@
 
 provider "aws" {
   region = "{{ provider_region }}"
-  skip_region_validation = true
   assume_role {
     role_arn    = "{{ target_admin_role_arn }}"
   }

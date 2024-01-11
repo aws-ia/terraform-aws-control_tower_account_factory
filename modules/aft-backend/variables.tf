@@ -8,8 +8,3 @@ variable "primary_region" {
 variable "secondary_region" {
   type = string
 }
-
-variable "create_dynamodb_replica" {
-  type = bool
-  default = true
-}

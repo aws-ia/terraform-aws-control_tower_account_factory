@@ -49,14 +49,6 @@ variable "aft_framework_repo_git_ref" {
   type        = string
 }
 
-variable "aft_management_region" {
-  type        = string
-  validation {
-    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.aft_management_region))
-    error_message = "Variable var: region is not valid."
-  }
-}
-
 variable "aft_management_account_id" {
   description = "AFT Management Account ID"
   type        = string
@@ -70,7 +62,7 @@ variable "ct_home_region" {
   description = "The region from which this module will be executed. This MUST be the same region as Control Tower is deployed."
   type        = string
   validation {
-    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
+    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
     error_message = "Variable var: region is not valid."
   }
 }
@@ -269,7 +261,7 @@ variable "account_provisioning_customizations_repo_branch" {
 variable "terraform_version" {
   description = "Terraform version being used for AFT"
   type        = string
-  default     = "0.15.5"
+  default     = "1.5.7"
   validation {
     condition     = can(regex("\\bv?\\d+(\\.\\d+)+[\\-\\w]*\\b", var.terraform_version))
     error_message = "Invalid value for var: terraform_version."
@@ -291,18 +283,8 @@ variable "tf_backend_secondary_region" {
   type        = string
   description = "AFT creates a backend for state tracking for its own state as well as OSS cases. The backend's primary region is the same as the AFT region, but this defines the secondary region to replicate to."
   validation {
-    condition     = var.tf_backend_secondary_region == "" || can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.tf_backend_secondary_region))
+    condition     = var.tf_backend_secondary_region == "" || can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af)-(central|(north|south)?(east|west)?)-\\d", var.tf_backend_secondary_region))
     error_message = "Variable var: tf_backend_secondary_region is not valid."
-  }
-}
-
-variable "tf_backend_create_dynamodb_replica" {
-  default     = true
-  type        = bool
-
-  validation {
-    condition     = contains([true, false], var.tf_backend_create_dynamodb_replica)
-    error_message = "Valid values for var: aft_metrics_reporting are (true, false)."
   }
 }
 
