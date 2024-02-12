@@ -113,7 +113,6 @@ class AccountRequestRecordHandler:
         )
 
     def process_request(self) -> None:
-
         # Removing account from AFT
         if self.record["eventName"] == "REMOVE":
             logger.info("Delete account request received")

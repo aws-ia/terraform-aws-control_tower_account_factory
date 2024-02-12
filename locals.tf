@@ -14,7 +14,6 @@ locals {
   account_factory_product_name                     = "AWS Control Tower Account Factory"
   log_archive_bucket_name                          = "aws-aft-logs"
   log_archive_access_logs_bucket_name              = "aws-aft-s3-access-logs"
-  log_archive_bucket_object_expiration_days        = "365"
   lambda_layer_codebuild_delay                     = "420s"
   lambda_layer_python_version                      = chomp(trimspace(data.local_file.python_version.content))
   lambda_runtime_python_version                    = format("%s%s", "python", chomp(trimspace(data.local_file.python_version.content)))

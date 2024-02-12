@@ -46,10 +46,14 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
     buildspec = data.local_file.aft_global_customizations_terraform.content
   }
 
-  vpc_config {
-    vpc_id             = var.aft_vpc_id
-    subnets            = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+    content {
+      vpc_id             = var.aft_vpc_id
+      subnets            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
+
   }
 
   lifecycle {
@@ -115,10 +119,14 @@ resource "aws_codebuild_project" "aft_account_customizations_terraform" {
     buildspec = data.local_file.aft_account_customizations_terraform.content
   }
 
-  vpc_config {
-    vpc_id             = var.aft_vpc_id
-    subnets            = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+
+    content {
+      vpc_id             = var.aft_vpc_id
+      subnets            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 
   lifecycle {
@@ -233,10 +241,14 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
     buildspec = data.local_file.aft_create_pipeline.content
   }
 
-  vpc_config {
-    vpc_id             = var.aft_vpc_id
-    subnets            = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+
+    content {
+      vpc_id             = var.aft_vpc_id
+      subnets            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 
   lifecycle {

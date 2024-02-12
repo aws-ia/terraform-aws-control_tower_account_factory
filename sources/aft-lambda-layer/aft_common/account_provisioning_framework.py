@@ -35,7 +35,6 @@ AFT_EXEC_ROLE = "AWSAFTExecution"
 
 
 class ProvisionRoles:
-
     SERVICE_ROLE_NAME = "AWSAFTService"
     EXECUTION_ROLE_NAME = "AWSAFTExecution"
 
@@ -235,7 +234,6 @@ class ProvisionRoles:
 def persist_metadata(
     payload: Dict[str, Any], account_info: Dict[str, str], session: Session
 ) -> PutItemOutputTableTypeDef:
-
     account_tags = payload["account_request"]["account_tags"]
     account_customizations_name = payload["account_request"][
         "account_customizations_name"

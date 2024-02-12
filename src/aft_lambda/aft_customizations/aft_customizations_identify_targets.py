@@ -63,7 +63,6 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
 
             target_account_info = []
             for account_id in target_accounts:
-
                 logger.info(f"Building customization payload for {account_id}")
 
                 try:

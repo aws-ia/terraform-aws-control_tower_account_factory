@@ -63,7 +63,6 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                 ),
             )
             if sqs_message is not None:
-
                 aft_metrics = AFTMetrics()
 
                 sqs_body = json.loads(sqs_message["Body"])

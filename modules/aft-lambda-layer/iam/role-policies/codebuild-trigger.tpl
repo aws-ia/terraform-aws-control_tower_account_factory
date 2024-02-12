@@ -22,7 +22,7 @@
           "logs:PutLogEvents"
       ],
       "Effect": "Allow",
-      "Resource": "arn:${data_aws_partition_current_partition}:logs:${aws_region}:${account_id}:log-group:/aws/lambda/${codebuild_invoker_function_name}:*"
+      "Resource": "arn:${data_aws_partition_current_partition}:logs:${aws_region}:${account_id}:log-group:/aws/lambda/${codebuild_trigger_function_name}:*"
     }
   ]
 }

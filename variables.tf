@@ -77,6 +77,25 @@ variable "cloudwatch_log_group_retention" {
   }
 }
 
+variable "backup_recovery_point_retention" {
+  description = "Number of days to keep backup recovery points in AFT DynamoDB tables. Default = Never Expire"
+  type        = number
+  default     = null
+  validation {
+    condition     = var.backup_recovery_point_retention == null ? true : (var.backup_recovery_point_retention >= 1 && var.backup_recovery_point_retention <= 36500)
+    error_message = "Value must be between 1 and 36500."
+  }
+}
+variable "log_archive_bucket_object_expiration_days" {
+  description = "Amount of days to keep the objects stored in the AFT logging bucket"
+  type        = number
+  default     = 365
+  validation {
+    condition     = var.log_archive_bucket_object_expiration_days > 0
+    error_message = "Log_archive_bucket_object_expiration_days must be an integer greater than 0."
+  }
+}
+
 variable "maximum_concurrent_customizations" {
   description = "Maximum number of customizations/pipelines to run at once"
   type        = number
@@ -323,6 +342,15 @@ variable "terraform_api_endpoint" {
 #########################################
 # AFT VPC Variables
 #########################################
+variable "aft_enable_vpc" {
+  description = "Flag turning use of VPC on/off for AFT"
+  type        = bool
+  default     = true
+  validation {
+    condition     = contains([true, false], var.aft_enable_vpc)
+    error_message = "Valid values for var: aft_enable_vpc are (true, false)."
+  }
+}
 
 variable "aft_vpc_cidr" {
   type        = string
