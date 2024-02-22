@@ -92,3 +92,11 @@ variable "account_provisioning_customizations_repo_branch" {
 variable "global_codebuild_timeout" {
   type = number
 }
+
+variable "account_request_buildspec" {
+  type = string
+}
+
+variable "account_provisioning_customizations_buildspec" {
+  type = string
+}

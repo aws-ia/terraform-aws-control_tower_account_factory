@@ -18,14 +18,14 @@ data "aws_iam_policy" "AWSLambdaVPCAccessExecutionRole" {
   name = "AWSLambdaVPCAccessExecutionRole"
 }
 
-data "local_file" "aft_global_customizations_terraform" {
-  filename = "${path.module}/buildspecs/aft-global-customizations-terraform.yml"
-}
-
-data "local_file" "aft_account_customizations_terraform" {
-  filename = "${path.module}/buildspecs/aft-account-customizations-terraform.yml"
-}
-
-data "local_file" "aft_create_pipeline" {
-  filename = "${path.module}/buildspecs/aft-create-pipeline.yml"
-}
+# data "local_file" "aft_global_customizations_terraform" {
+#   filename = "${path.module}/buildspecs/aft-global-customizations-terraform.yml"
+# }
+# 
+# data "local_file" "aft_account_customizations_terraform" {
+#   filename = "${path.module}/buildspecs/aft-account-customizations-terraform.yml"
+# }
+# 
+# data "local_file" "aft_create_pipeline" {
+#   filename = "${path.module}/buildspecs/aft-create-pipeline.yml"
+# }

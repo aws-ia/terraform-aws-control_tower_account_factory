@@ -112,3 +112,15 @@ variable "global_codebuild_timeout" {
 variable "lambda_runtime_python_version" {
   type = string
 }
+
+variable "aft_global_customizations_terraform" {
+  type = string
+}
+
+variable "aft_create_pipeline" {
+  type = string
+}
+
+variable "aft_account_customizations_terraform" {
+  type = string
+}

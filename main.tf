@@ -95,6 +95,8 @@ module "aft_code_repositories" {
   global_customizations_repo_branch               = var.global_customizations_repo_branch
   log_group_retention                             = var.cloudwatch_log_group_retention
   global_codebuild_timeout                        = var.global_codebuild_timeout
+  account_request_buildspec                       = var.ct_aft_account_request
+  account_provisioning_customizations_buildspec   = var.ct_aft_account_provisioning_customizations
 }
 
 module "aft_customizations" {
@@ -130,6 +132,9 @@ module "aft_customizations" {
   customizations_archive_hash                       = module.packaging.customizations_archive_hash
   global_codebuild_timeout                          = var.global_codebuild_timeout
   lambda_runtime_python_version                     = local.lambda_runtime_python_version
+  aft_global_customizations_terraform               = var.aft_global_customizations_terraform
+  aft_create_pipeline                               = var.aft_create_pipeline
+  aft_account_customizations_terraform              = var.aft_account_customizations_terraform
 }
 
 module "aft_feature_options" {
@@ -191,6 +196,7 @@ module "aft_lambda_layer" {
   s3_bucket_name                                    = module.aft_customizations.aft_codepipeline_customizations_bucket_name
   builder_archive_path                              = module.packaging.builder_archive_path
   builder_archive_hash                              = module.packaging.builder_archive_hash
+  aft_lambda_layer                                  = var.aft_lambda_layer
 }
 
 module "aft_ssm_parameters" {

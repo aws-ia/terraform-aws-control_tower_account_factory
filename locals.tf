@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 locals {
-  aft_version                                      = chomp(trimspace(data.local_file.version.content))
+  aft_version                                      = chomp(trimspace(var.aft_version))
   aft_framework_repo_git_ref                       = var.aft_framework_repo_git_ref == null || var.aft_framework_repo_git_ref == "" ? local.aft_version : var.aft_framework_repo_git_ref
   aft_account_provisioning_customizations_sfn_name = "aft-account-provisioning-customizations"
   aft_account_provisioning_framework_sfn_name      = "aft-account-provisioning-framework"
@@ -16,8 +16,8 @@ locals {
   log_archive_access_logs_bucket_name              = "aws-aft-s3-access-logs"
   log_archive_bucket_object_expiration_days        = "365"
   lambda_layer_codebuild_delay                     = "420s"
-  lambda_layer_python_version                      = chomp(trimspace(data.local_file.python_version.content))
-  lambda_runtime_python_version                    = format("%s%s", "python", chomp(trimspace(data.local_file.python_version.content)))
+  lambda_layer_python_version                      = chomp(trimspace(var.python_version))
+  lambda_runtime_python_version                    = format("%s%s", "python", chomp(trimspace(var.python_version)))
   lambda_layer_name                                = "aft-common"
   create_role_lambda_function_name                 = "aft-account-provisioning-framework-create-aft-execution-role"
   tag_account_lambda_function_name                 = "aft-account-provisioning-framework-tag-account"

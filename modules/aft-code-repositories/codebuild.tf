@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-data "local_file" "account_request_buildspec" {
-  filename = "${path.module}/buildspecs/ct-aft-account-request.yml"
-}
-data "local_file" "account_provisioning_customizations_buildspec" {
-  filename = "${path.module}/buildspecs/ct-aft-account-provisioning-customizations.yml"
-}
+# data "local_file" "account_request_buildspec" {
+#  filename = "${path.module}/buildspecs/ct-aft-account-request.yml"
+# }
+# data "local_file" "account_provisioning_customizations_buildspec" {
+#   filename = "${path.module}/buildspecs/ct-aft-account-provisioning-customizations.yml"
+# }
 
 resource "aws_codebuild_project" "account_request" {
   depends_on     = [aws_cloudwatch_log_group.account_request]
@@ -46,7 +46,7 @@ resource "aws_codebuild_project" "account_request" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = data.local_file.account_request_buildspec.content
+    buildspec = var.account_request_buildspec
   }
 
   vpc_config {
@@ -99,7 +99,7 @@ resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" 
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = data.local_file.account_provisioning_customizations_buildspec.content
+    buildspec = var.account_provisioning_customizations_buildspec
   }
 
   vpc_config {

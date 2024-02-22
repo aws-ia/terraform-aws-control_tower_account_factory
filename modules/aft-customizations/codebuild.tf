@@ -43,7 +43,7 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = data.local_file.aft_global_customizations_terraform.content
+    buildspec = var.aft_global_customizations_terraform
   }
 
   vpc_config {
@@ -112,7 +112,7 @@ resource "aws_codebuild_project" "aft_account_customizations_terraform" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = data.local_file.aft_account_customizations_terraform.content
+    buildspec = var.aft_account_customizations_terraform
   }
 
   vpc_config {
@@ -230,7 +230,7 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
 
   source {
     type      = "NO_SOURCE"
-    buildspec = data.local_file.aft_create_pipeline.content
+    buildspec = var.aft_create_pipeline
   }
 
   vpc_config {

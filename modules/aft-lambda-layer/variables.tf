@@ -63,3 +63,6 @@ variable "builder_archive_path" {
 variable "builder_archive_hash" {
   type = string
 }
+variable "aft_lambda_layer" {
+  type = string
+}

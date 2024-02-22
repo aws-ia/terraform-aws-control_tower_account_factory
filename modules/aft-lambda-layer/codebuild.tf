@@ -72,7 +72,7 @@ resource "aws_codebuild_project" "codebuild" {
 
   source {
     type      = "NO_SOURCE"
-    buildspec = data.local_file.aft_lambda_layer.content
+    buildspec = var.aft_lambda_layer
   }
 
   vpc_config {
