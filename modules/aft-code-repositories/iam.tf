@@ -15,6 +15,7 @@ resource "aws_iam_role_policy" "account_request_codepipeline_policy" {
   policy = templatefile("${path.module}/iam/role-policies/ct_aft_account_request_codepipeline_policy.tpl", {
     aws_s3_bucket_aft_codepipeline_customizations_bucket_arn = var.codepipeline_s3_bucket_arn
     data_aws_partition_current_partition                     = data.aws_partition.current.partition
+    data_account_request_repo_name                           = var.account_request_repo_name
     data_aws_region_current_name                             = data.aws_region.current.name
     data_aws_caller_identity_current_account_id              = data.aws_caller_identity.current.account_id
     data_aws_kms_alias_aft_key_target_key_arn                = var.aft_key_arn
@@ -53,6 +54,7 @@ resource "aws_iam_role_policy" "account_provisioning_customizations_codebuild_po
   policy = templatefile("${path.module}/iam/role-policies/ct_aft_codebuild_policy.tpl", {
     aws_s3_bucket_aft_codepipeline_customizations_bucket_arn = var.codepipeline_s3_bucket_arn
     data_aws_partition_current_partition                     = data.aws_partition.current.partition
+    data_account_request_repo_name                           = var.account_request_repo_name
     data_aws_region_current_name                             = data.aws_region.current.name
     data_aws_caller_identity_current_account_id              = data.aws_caller_identity.current.account_id
     data_aws_kms_alias_aft_key_target_key_arn                = var.aft_key_arn
@@ -67,6 +69,7 @@ resource "aws_iam_role_policy" "terraform_oss_backend_account_provisioning_custo
 
   policy = templatefile("${path.module}/iam/role-policies/ct_aft_codebuild_oss_backend_policy.tpl", {
     data_aws_partition_current_partition              = data.aws_partition.current.partition
+    data_account_request_repo_name                    = var.account_request_repo_name
     data_aws_region_current_name                      = data.aws_region.current.name
     data_aws_caller_identity_current_account_id       = data.aws_caller_identity.current.account_id
     data_aws_dynamo_terraform_oss_backend_table       = var.aft_config_backend_table_id
@@ -87,6 +90,7 @@ resource "aws_iam_role_policy" "account_request_codebuild_policy" {
   policy = templatefile("${path.module}/iam/role-policies/ct_aft_codebuild_policy.tpl", {
     aws_s3_bucket_aft_codepipeline_customizations_bucket_arn = var.codepipeline_s3_bucket_arn
     data_aws_partition_current_partition                     = data.aws_partition.current.partition
+    data_account_request_repo_name                           = var.account_request_repo_name
     data_aws_region_current_name                             = data.aws_region.current.name
     data_aws_caller_identity_current_account_id              = data.aws_caller_identity.current.account_id
     data_aws_kms_alias_aft_key_target_key_arn                = var.aft_key_arn

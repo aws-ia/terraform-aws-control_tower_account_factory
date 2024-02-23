@@ -54,6 +54,7 @@ variable "request_framework_archive_path" {
 variable "request_framework_archive_hash" {
   type = string
 }
+
 variable "concurrent_account_factory_actions" {
   type = number
 }
@@ -68,4 +69,8 @@ variable "backup_recovery_point_retention" {
 
 variable "aft_enable_vpc" {
   type = bool
+}
+
+variable "account_request_repo_name" {
+  type = string
 }
