@@ -156,6 +156,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework" {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft-management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
+    data_account_request_repo_name                     = var.account_request_repo_name
     aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
     aws_sns_topic_aft_failure_notifications_arn        = aws_sns_topic.aft_failure_notifications.arn
     aws_dynamodb_table_aft-request_name                = aws_dynamodb_table.aft_request.name
@@ -184,6 +185,7 @@ resource "aws_iam_role_policy" "aft_cleanup_resources" {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.aft-management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
+    data_account_request_repo_name                     = var.account_request_repo_name
     aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
     aws_sns_topic_aft_failure_notifications_arn        = aws_sns_topic.aft_failure_notifications.arn
     aws_dynamodb_table_aft-request-metadata_name       = aws_dynamodb_table.aft_request_metadata.name

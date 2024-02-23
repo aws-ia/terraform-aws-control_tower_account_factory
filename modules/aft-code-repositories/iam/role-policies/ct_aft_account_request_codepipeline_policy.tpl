@@ -22,7 +22,7 @@
         "codebuild:BatchGetBuilds",
         "codebuild:StartBuild"
       ],
-        "Resource": "arn:${data_aws_partition_current_partition}:codebuild:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*account-request*"
+        "Resource": "arn:${data_aws_partition_current_partition}:codebuild:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:${data_account_request_repo_name}"
     },
     {
       "Effect": "Allow",
@@ -35,7 +35,7 @@
         "codecommit:GetUploadArchiveStatus",
         "codecommit:CancelUploadArchive"
       ],
-      "Resource": "arn:${data_aws_partition_current_partition}:codecommit:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*account-request*"
+      "Resource": "arn:${data_aws_partition_current_partition}:codecommit:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:${data_account_request_repo_name}"
     },
     {
       "Effect": "Allow",
