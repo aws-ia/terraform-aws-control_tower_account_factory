@@ -16,7 +16,12 @@ locals {
 }
 
 resource "aws_sfn_state_machine" "aft_invoke_customizations_sfn" {
-  name       = "aft-invoke-customizations"
-  role_arn   = aws_iam_role.aft_invoke_customizations_sfn.arn
-  definition = templatefile(local.state_machine_source, local.replacements_map)
+  name     = "aft-invoke-customizations"
+  role_arn = aws_iam_role.aft_invoke_customizations_sfn.arn
+  // Use valid JSON but transform (de-quote) during load to support numeric parameterization
+  definition = replace(
+    templatefile("${local.state_machine_source}", local.replacements_map),
+    "/\"MaxConcurrency\": \"(\\d+)\"/",
+    "\"MaxConcurrency\": $1"
+  )
 }

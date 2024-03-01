@@ -30,7 +30,7 @@ module "aft_account_provisioning_framework" {
   delete_default_vpc_lambda_function_name          = local.delete_default_vpc_lambda_function_name
   enroll_support_lambda_function_name              = local.enroll_support_lambda_function_name
   enable_cloudtrail_lambda_function_name           = local.enable_cloudtrail_lambda_function_name
-
+  lambda_runtime_python_version                    = local.lambda_runtime_python_version
 }
 
 module "aft_account_request_framework" {
@@ -52,6 +52,7 @@ module "aft_account_request_framework" {
   concurrent_account_factory_actions          = var.concurrent_account_factory_actions
   request_framework_archive_path              = module.packaging.request_framework_archive_path
   request_framework_archive_hash              = module.packaging.request_framework_archive_hash
+  lambda_runtime_python_version               = local.lambda_runtime_python_version
 }
 
 
@@ -131,6 +132,7 @@ module "aft_customizations" {
   customizations_archive_path                       = module.packaging.customizations_archive_path
   customizations_archive_hash                       = module.packaging.customizations_archive_hash
   global_codebuild_timeout                          = var.global_codebuild_timeout
+  lambda_runtime_python_version                     = local.lambda_runtime_python_version
   spacelift_api_credentials_ssm_path                = local.ssm_paths_custom.spacelift_api_credentials
 }
 
@@ -160,6 +162,7 @@ module "aft_feature_options" {
   delete_default_vpc_lambda_function_name   = local.delete_default_vpc_lambda_function_name
   enroll_support_lambda_function_name       = local.enroll_support_lambda_function_name
   enable_cloudtrail_lambda_function_name    = local.enable_cloudtrail_lambda_function_name
+  lambda_runtime_python_version             = local.lambda_runtime_python_version
 }
 
 module "aft_iam_roles" {
@@ -181,6 +184,7 @@ module "aft_lambda_layer" {
   lambda_layer_name                                 = local.lambda_layer_name
   lambda_layer_codebuild_delay                      = local.lambda_layer_codebuild_delay
   lambda_layer_python_version                       = local.lambda_layer_python_version
+  lambda_runtime_python_version                     = local.lambda_runtime_python_version
   aft_tf_aws_customizations_module_git_ref_ssm_path = local.ssm_paths.aft_tf_aws_customizations_module_git_ref_ssm_path
   aft_tf_aws_customizations_module_url_ssm_path     = local.ssm_paths.aft_tf_aws_customizations_module_url_ssm_path
   aws_region                                        = var.ct_home_region
