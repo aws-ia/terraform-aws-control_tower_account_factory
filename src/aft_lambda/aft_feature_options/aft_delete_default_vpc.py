@@ -63,8 +63,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                     "Deleting default VPC for AFT management account in region "
                     + region
                 )
-                session = boto3.session.Session(region_name=region)
-                client = session.client("ec2")
+                client = target_account_session.client("ec2", region_name=region)
                 vpc = get_default_vpc(client)
                 if vpc is not None:
                     resource: EC2ServiceResource = boto3.resource(
