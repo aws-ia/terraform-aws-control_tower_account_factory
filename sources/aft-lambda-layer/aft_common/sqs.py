@@ -6,6 +6,8 @@ import logging
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+import aft_common.constants
+import aft_common.ssm
 from aft_common import aft_utils as utils
 from boto3.session import Session
 
@@ -48,8 +50,8 @@ def receive_sqs_message(session: Session, sqs_queue: str) -> Optional[MessageTyp
 
 def delete_sqs_message(session: Session, message: MessageTypeDef) -> None:
     client: SQSClient = session.client("sqs")
-    sqs_queue = utils.get_ssm_parameter_value(
-        session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
+    sqs_queue = aft_common.ssm.get_ssm_parameter_value(
+        session, aft_common.constants.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
     )
     receipt_handle = message["ReceiptHandle"]
     logger.info("Deleting SQS message with handle " + receipt_handle)

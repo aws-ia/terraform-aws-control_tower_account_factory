@@ -6,9 +6,11 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional, TypedDict
 
+import aft_common.constants
 import requests
 from aft_common import aft_utils as utils
 from aft_common.auth import AuthClient
+from aft_common.ssm import get_ssm_parameter_value
 from boto3.session import Session
 
 logger = logging.getLogger("aft")
@@ -31,15 +33,16 @@ class AFTMetrics:
 
     def _get_uuid(self, aft_management_session: Session) -> str:
 
-        uuid = utils.get_ssm_parameter_value(
-            aft_management_session, utils.SSM_PARAM_AFT_METRICS_REPORTING_UUID
+        uuid = get_ssm_parameter_value(
+            aft_management_session,
+            aft_common.constants.SSM_PARAM_AFT_METRICS_REPORTING_UUID,
         )
         return uuid
 
     def _metrics_reporting_enabled(self, aft_management_session: Session) -> bool:
 
-        flag = utils.get_ssm_parameter_value(
-            aft_management_session, utils.SSM_PARAM_AFT_METRICS_REPORTING
+        flag = get_ssm_parameter_value(
+            aft_management_session, aft_common.constants.SSM_PARAM_AFT_METRICS_REPORTING
         )
 
         if flag.lower() == "true":
@@ -52,23 +55,26 @@ class AFTMetrics:
 
         config = {}
 
-        config["cloud_trail_enabled"] = utils.get_ssm_parameter_value(
+        config["cloud_trail_enabled"] = get_ssm_parameter_value(
             aft_management_session,
-            utils.SSM_PARAM_FEATURE_CLOUDTRAIL_DATA_EVENTS_ENABLED,
+            aft_common.constants.SSM_PARAM_FEATURE_CLOUDTRAIL_DATA_EVENTS_ENABLED,
         )
-        config["enterprise_support_enabled"] = utils.get_ssm_parameter_value(
-            aft_management_session, utils.SSM_PARAM_FEATURE_ENTERPRISE_SUPPORT_ENABLED
+        config["enterprise_support_enabled"] = get_ssm_parameter_value(
+            aft_management_session,
+            aft_common.constants.SSM_PARAM_FEATURE_ENTERPRISE_SUPPORT_ENABLED,
         )
-        config["delete_default_vpc_enabled"] = utils.get_ssm_parameter_value(
-            aft_management_session, utils.SSM_PARAM_FEATURE_DEFAULT_VPCS_ENABLED
-        )
-
-        config["aft_version"] = utils.get_ssm_parameter_value(
-            aft_management_session, utils.SSM_PARAM_ACCOUNT_AFT_VERSION
+        config["delete_default_vpc_enabled"] = get_ssm_parameter_value(
+            aft_management_session,
+            aft_common.constants.SSM_PARAM_FEATURE_DEFAULT_VPCS_ENABLED,
         )
 
-        config["terraform_version"] = utils.get_ssm_parameter_value(
-            aft_management_session, utils.SSM_PARAM_ACCOUNT_TERRAFORM_VERSION
+        config["aft_version"] = get_ssm_parameter_value(
+            aft_management_session, aft_common.constants.SSM_PARAM_ACCOUNT_AFT_VERSION
+        )
+
+        config["terraform_version"] = get_ssm_parameter_value(
+            aft_management_session,
+            aft_common.constants.SSM_PARAM_ACCOUNT_TERRAFORM_VERSION,
         )
 
         config["region"] = utils.get_session_info(aft_management_session)["region"]
@@ -94,8 +100,9 @@ class AFTMetrics:
         errors = []
 
         try:
-            payload["Version"] = utils.get_ssm_parameter_value(
-                aft_management_session, utils.SSM_PARAM_ACCOUNT_AFT_VERSION
+            payload["Version"] = get_ssm_parameter_value(
+                aft_management_session,
+                aft_common.constants.SSM_PARAM_ACCOUNT_AFT_VERSION,
             )
         except Exception as e:
             payload["Version"] = None

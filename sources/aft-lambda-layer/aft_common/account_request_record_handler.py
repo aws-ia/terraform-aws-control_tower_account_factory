@@ -5,17 +5,18 @@ import json
 import logging
 from typing import Any, Dict
 
+import aft_common.constants
 from aft_common import aft_utils as utils
-from aft_common import ddb
+from aft_common import ddb, ssm
 from aft_common.account_request_framework import (
     build_account_customization_payload,
     build_aft_account_provisioning_framework_event,
     control_tower_param_changed,
     insert_msg_into_acc_req_queue,
-    provisioned_product_exists,
 )
 from aft_common.auth import AuthClient
 from aft_common.organizations import OrganizationsAgent
+from aft_common.service_catalog import provisioned_product_exists
 from aft_common.shared_account import shared_account_request
 
 logger = logging.getLogger("aft")
@@ -57,9 +58,9 @@ class AccountRequestRecordHandler:
         account_request = ddb.unmarshal_ddb_item(self._old_image)
         payload = {"account_request": account_request}
 
-        lambda_name = utils.get_ssm_parameter_value(
+        lambda_name = ssm.get_ssm_parameter_value(
             self._aft_management_session,
-            utils.SSM_PARAM_AFT_CLEANUP_RESOURCES_LAMBDA,
+            aft_common.constants.SSM_PARAM_AFT_CLEANUP_RESOURCES_LAMBDA,
         )
         utils.invoke_lambda(
             self._aft_management_session,
@@ -101,8 +102,8 @@ class AccountRequestRecordHandler:
             account_request=account_request,
             control_tower_event=account_provisioning_payload,
         )
-        account_provisioning_stepfunction = utils.get_ssm_parameter_value(
-            self._aft_management_session, utils.SSM_PARAM_AFT_SFN_NAME
+        account_provisioning_stepfunction = ssm.get_ssm_parameter_value(
+            self._aft_management_session, aft_common.constants.SSM_PARAM_AFT_SFN_NAME
         )
 
         utils.invoke_step_function(

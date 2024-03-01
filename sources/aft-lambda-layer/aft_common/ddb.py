@@ -4,7 +4,6 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from aft_common import aft_utils as utils
 from boto3.dynamodb.types import TypeDeserializer
 from boto3.session import Session
 

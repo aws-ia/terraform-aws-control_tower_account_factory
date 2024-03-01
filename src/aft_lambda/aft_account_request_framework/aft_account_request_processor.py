@@ -8,7 +8,8 @@ import os
 import time
 from typing import TYPE_CHECKING, Any, Dict
 
-from aft_common import aft_utils as utils
+import aft_common.ssm
+from aft_common import constants as utils
 from aft_common import notifications, sqs
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.account_request_framework import (
@@ -57,7 +58,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
         else:
             sqs_message = sqs.receive_sqs_message(
                 aft_management_session,
-                utils.get_ssm_parameter_value(
+                aft_common.ssm.get_ssm_parameter_value(
                     aft_management_session, utils.SSM_PARAM_ACCOUNT_REQUEST_QUEUE
                 ),
             )

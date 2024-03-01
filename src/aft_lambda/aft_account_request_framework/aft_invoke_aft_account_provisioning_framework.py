@@ -12,15 +12,15 @@ from aft_common.account_request_framework import (
     get_account_request_record,
 )
 from aft_common.aft_utils import (
-    SSM_PARAM_AFT_SFN_NAME,
-    get_ssm_parameter_value,
     invoke_step_function,
     is_aft_supported_controltower_event,
 )
 from aft_common.auth import AuthClient
+from aft_common.constants import SSM_PARAM_AFT_SFN_NAME
 from aft_common.logger import configure_aft_logger
 from aft_common.notifications import send_lambda_failure_sns_message
 from aft_common.organizations import OrganizationsAgent
+from aft_common.ssm import get_ssm_parameter_value
 from boto3.session import Session
 
 if TYPE_CHECKING:
