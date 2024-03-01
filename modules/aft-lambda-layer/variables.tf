@@ -29,6 +29,10 @@ variable "lambda_layer_python_version" {
   type = string
 }
 
+variable "lambda_runtime_python_version" {
+  type = string
+}
+
 variable "s3_bucket_name" {
   type = string
 }

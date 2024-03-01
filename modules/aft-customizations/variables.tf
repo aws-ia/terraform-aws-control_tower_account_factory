@@ -108,3 +108,7 @@ variable "customizations_archive_hash" {
 variable "global_codebuild_timeout" {
   type = number
 }
+
+variable "lambda_runtime_python_version" {
+  type = string
+}

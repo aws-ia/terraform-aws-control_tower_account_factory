@@ -1,0 +1,13 @@
+# Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+[run]
+branch = True
+omit = tests/*
+
+[report]
+show_missing = True
+precision = 1
+exclude_lines =
+    # Required due to conditional mypy imports
+    if TYPE_CHECKING: 

@@ -5,4 +5,8 @@ data "local_file" "version" {
   filename = "${path.module}/VERSION"
 }
 
+data "local_file" "python_version" {
+  filename = "${path.module}/PYTHON_VERSION"
+}
+
 data "aws_partition" "current" {}

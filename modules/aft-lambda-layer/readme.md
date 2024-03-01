@@ -23,7 +23,7 @@ aws_region - the region to deploy the layer in
 source_url - the url of the github repository which contains the ./layer/ folder, custom packages, and requirements.txt
 source_branch - the branch to clone from the source repository.
 source_type - Currently, only GITHUB has been tested.
-lambda_layer_python_version - Major python version. Defaults to 3.9
+lambda_layer_python_version - Major python version. Defaults to 3.11
 github_token - Set $TF_VAR_github_token to securely configure this variable with a personal access token to github.
 
 # Outputs
