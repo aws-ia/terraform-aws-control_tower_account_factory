@@ -455,8 +455,8 @@ phases:
           TF_S3_KEY=account-provisioning-customizations/terraform.tfstate
           cd /tmp
           echo "Installing Terraform"
-          curl -o terraform_$\{TF_VERSION\}_linux_amd64.zip https://releases.hashicorp.com/terraform/$\{TF_VERSION\}/terraform_$\{TF_VERSION\}_linux_amd64.zip
-          unzip -o terraform_$\{TF_VERSION\}_linux_amd64.zip && mv terraform /usr/bin
+          curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+          unzip -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
           terraform -no-color --version
           cd $DEFAULT_PATH/terraform
           for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D region=$TF_BACKEND_REGION -D provider_region=$CT_MGMT_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D tf_version=$TF_VERSION >> ./$(basename $f .jinja).tf; done
@@ -549,8 +549,8 @@ phases:
           TF_S3_KEY=account-request/terraform.tfstate
           cd /tmp
           echo "Installing Terraform"
-          curl -o terraform_$\{TF_VERSION\}_linux_amd64.zip https://releases.hashicorp.com/terraform/$\{TF_VERSION\}/terraform_$\{TF_VERSION\}_linux_amd64.zip
-          unzip -o terraform_$\{TF_VERSION\}_linux_amd64.zip && mv terraform /usr/bin
+          curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+          unzip -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
           terraform --version
           cd $DEFAULT_PATH/terraform
           for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D tf_version=$TF_VERSION >> ./$(basename $f .jinja).tf; done
@@ -678,9 +678,9 @@ phases:
 
           cd /tmp
           echo "Installing Terraform"
-          curl -q -o terraform_$\{TF_VERSION\}_linux_amd64.zip https://releases.hashicorp.com/terraform/$\{TF_VERSION\}/terraform_$\{TF_VERSION\}_linux_amd64.zip
+          curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
           mkdir -p /opt/aft/bin
-          unzip -q -o terraform_$\{TF_VERSION\}_linux_amd64.zip
+          unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip
           mv terraform /opt/aft/bin
           /opt/aft/bin/terraform -no-color --version
 
@@ -779,8 +779,8 @@ phases:
       # Install Terraform
       - cd /tmp
       - echo "Installing Terraform"
-      - curl -q -o terraform_$\{TF_VERSION\}_linux_amd64.zip https://releases.hashicorp.com/terraform/$\{TF_VERSION\}/terraform_$\{TF_VERSION\}_linux_amd64.zip
-      - unzip -q -o terraform_$\{TF_VERSION\}_linux_amd64.zip && mv terraform /usr/bin
+      - curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+      - unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
       - terraform --version
 
       # Install Python Dependencies
@@ -913,9 +913,9 @@ phases:
 
             cd /tmp
             echo "Installing Terraform"
-            curl -q -o terraform_$\{TF_VERSION\}_linux_amd64.zip https://releases.hashicorp.com/terraform/$\{TF_VERSION\}/terraform_$\{TF_VERSION\}_linux_amd64.zip
+            curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
             mkdir -p /opt/aft/bin
-            unzip -q -o terraform_$\{TF_VERSION\}_linux_amd64.zip 
+            unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip 
             mv terraform /opt/aft/bin
             /opt/aft/bin/terraform -no-color --version
 
