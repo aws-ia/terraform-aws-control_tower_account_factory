@@ -459,7 +459,7 @@ phases:
           unzip -o terraform_$\{TF_VERSION\}_linux_amd64.zip && mv terraform /usr/bin
           terraform -no-color --version
           cd $DEFAULT_PATH/terraform
-          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D region=$TF_BACKEND_REGION -D provider_region=$CT_MGMT_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D tf_version=$\{TF_VERSION\} >> ./$(basename $f .jinja).tf; done
+          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D region=$TF_BACKEND_REGION -D provider_region=$CT_MGMT_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D tf_version=$TF_VERSION >> ./$(basename $f .jinja).tf; done
           for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
           JSON=$(aws sts assume-role --role-arn $AFT_ADMIN_ROLE_ARN --role-session-name $ROLE_SESSION_NAME)
           #Make newly assumed role default session
@@ -479,7 +479,7 @@ phases:
           for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
           cd $DEFAULT_PATH
           tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
-          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $\{TF_VERSION\} --config_file $TF_CONFIG_PATH
+          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH
         fi
 
   build:
@@ -553,7 +553,7 @@ phases:
           unzip -o terraform_$\{TF_VERSION\}_linux_amd64.zip && mv terraform /usr/bin
           terraform --version
           cd $DEFAULT_PATH/terraform
-          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D tf_version=$\{TF_VERSION\} >> ./$(basename $f .jinja).tf; done
+          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D tf_version=$TF_VERSION >> ./$(basename $f .jinja).tf; done
           for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
           JSON=$(aws sts assume-role --role-arn $AFT_ADMIN_ROLE_ARN --role-session-name $ROLE_SESSION_NAME)
           #Make newly assumed role default session
@@ -572,7 +572,7 @@ phases:
           for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
           cd $DEFAULT_PATH
           tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
-          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $\{TF_VERSION\} --config_file $TF_CONFIG_PATH
+          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH
         fi
 
   build:
@@ -686,7 +686,7 @@ phases:
 
           # Move back to customization module
           cd $DEFAULT_PATH/terraform
-          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$\{TF_VERSION\} >> ./$(basename $f .jinja).tf; done
+          for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$TF_VERSION >> ./$(basename $f .jinja).tf; done
           for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
 
           cd $DEFAULT_PATH/terraform
@@ -704,7 +704,7 @@ phases:
           for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
           cd $DEFAULT_PATH
           tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
-          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $\{TF_VERSION\} --config_file $TF_CONFIG_PATH
+          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH
         fi
 
   post_build:
@@ -793,7 +793,7 @@ phases:
     on-failure: ABORT
     commands:
       - cd $DEFAULT_PATH/aws-aft-core-framework/sources/aft-customizations-common/templates/customizations_pipeline
-      - for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$\{TF_VERSION\} >> $(basename $f .jinja).tf; done
+      - for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$TF_VERSION >> $(basename $f .jinja).tf; done
       - for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
   build:
     on-failure: ABORT
@@ -920,7 +920,7 @@ phases:
             /opt/aft/bin/terraform -no-color --version
 
             cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
-            for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$\{TF_VERSION\} >> ./$(basename $f .jinja).tf; done
+            for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$TF_VERSION >> ./$(basename $f .jinja).tf; done
             for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
             
             cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
@@ -941,7 +941,7 @@ phases:
             
             cd $DEFAULT_PATH/$CUSTOMIZATION
             tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
-            python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $\{TF_VERSION\} --config_file $TF_CONFIG_PATH
+            python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH
           fi
         fi
   post_build:
