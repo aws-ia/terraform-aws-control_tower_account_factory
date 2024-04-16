@@ -63,7 +63,7 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0, < 2.0.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.2.0, < 2.0.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.11.0, < 6.0.0 |
 
 ## Providers
@@ -93,6 +93,8 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 | Name | Type |
 |------|------|
 | [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
+| [aws_service.home_region_validation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/service) | data source |
+| [aws_ssm_parameters_by_path.servicecatalog_regional_data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameters_by_path) | data source |
 | [local_file.python_version](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.version](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 
