@@ -10,7 +10,7 @@ data "local_file" "account_provisioning_customizations_buildspec" {
 }
 
 resource "aws_codebuild_project" "account_request" {
-  depends_on     = [aws_cloudwatch_log_group.account_request]
+  depends_on     = [aws_cloudwatch_log_group.account_request, time_sleep.iam_eventual_consistency]
   name           = "ct-aft-account-request"
   description    = "Job to apply Terraform for Account Requests"
   build_timeout  = tostring(var.global_codebuild_timeout)
@@ -65,7 +65,7 @@ resource "aws_codebuild_project" "account_request" {
 }
 
 resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" {
-  depends_on     = [aws_cloudwatch_log_group.account_request]
+  depends_on     = [aws_cloudwatch_log_group.account_request, time_sleep.iam_eventual_consistency]
   name           = "ct-aft-account-provisioning-customizations"
   description    = "Deploys the Account Provisioning Customizations terraform project"
   build_timeout  = tostring(var.global_codebuild_timeout)

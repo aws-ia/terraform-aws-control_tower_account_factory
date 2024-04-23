@@ -109,6 +109,11 @@ resource "aws_iam_role_policy" "terraform_oss_backend_account_request_codebuild_
   })
 }
 
+resource "time_sleep" "iam_eventual_consistency" {
+  depends_on      = [aws_iam_role.account_request_codebuild_role]
+  create_duration = "60s"
+}
+
 # CloudWatch Events Role
 
 resource "aws_iam_role" "cloudwatch_events_codepipeline_role" {
