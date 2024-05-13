@@ -26,7 +26,6 @@ logger = logging.getLogger("aft")
 
 
 class AuthClient:
-
     SSM_PARAM_AFT_SESSION_NAME = "/aft/resources/iam/aft-session-name"
     SSM_PARAM_AFT_ADMIN_ROLE_NAME = "/aft/resources/iam/aft-administrator-role-name"
     SSM_PARAM_AFT_EXEC_ROLE_NAME = "/aft/resources/iam/aft-execution-role-name"

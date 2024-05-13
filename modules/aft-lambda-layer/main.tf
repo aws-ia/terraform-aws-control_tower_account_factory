@@ -14,7 +14,7 @@ resource "aws_lambda_layer_version" "layer_version" {
     create_before_destroy = true
   }
 
-  depends_on = [data.aws_lambda_invocation.invoke_codebuild_job]
+  depends_on = [data.aws_lambda_invocation.trigger_codebuild_job]
 
   layer_name          = "${var.lambda_layer_name}-${replace(var.aft_version, ".", "-")}"
   compatible_runtimes = ["python${var.lambda_layer_python_version}"]

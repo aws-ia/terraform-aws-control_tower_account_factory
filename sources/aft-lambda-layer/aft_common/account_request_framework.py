@@ -149,7 +149,6 @@ def new_ct_request_is_valid(session: Session, request: Dict[str, Any]) -> bool:
 
 
 def modify_ct_request_is_valid(request: Dict[str, Any]) -> bool:
-
     old_ct_parameters = request.get("old_control_tower_parameters", {})
     new_ct_parameters = request["control_tower_parameters"]
 
@@ -318,7 +317,6 @@ def build_account_customization_payload(
     account_request: Dict[str, Any],
     control_tower_event: Optional[Dict[str, Any]],
 ) -> AftInvokeAccountCustomizationPayload:
-
     orgs_agent = OrganizationsAgent(ct_management_session)
 
     # convert ddb strings into proper data type

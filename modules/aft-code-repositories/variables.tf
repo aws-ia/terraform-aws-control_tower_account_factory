@@ -6,7 +6,8 @@ variable "vpc_id" {
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  type    = list(string)
+  default = null
 }
 
 variable "security_group_ids" {
@@ -91,4 +92,8 @@ variable "account_provisioning_customizations_repo_branch" {
 
 variable "global_codebuild_timeout" {
   type = number
+}
+
+variable "aft_enable_vpc" {
+  type = bool
 }

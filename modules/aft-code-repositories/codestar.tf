@@ -25,9 +25,12 @@ resource "aws_codestarconnections_host" "githubenterprise" {
   provider_endpoint = var.github_enterprise_url
   provider_type     = "GitHubEnterpriseServer"
 
-  vpc_configuration {
-    security_group_ids = var.security_group_ids
-    subnet_ids         = var.subnet_ids
-    vpc_id             = var.vpc_id
+  dynamic "vpc_configuration" {
+    for_each = var.aft_enable_vpc ? [1] : []
+    content {
+      security_group_ids = var.security_group_ids
+      subnet_ids         = var.subnet_ids
+      vpc_id             = var.vpc_id
+    }
   }
 }

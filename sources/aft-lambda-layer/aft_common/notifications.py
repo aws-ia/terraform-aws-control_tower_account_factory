@@ -34,7 +34,6 @@ def send_sns_message(
 def send_lambda_failure_sns_message(
     session: Session, message: str, subject: str, context: LambdaContext
 ) -> None:
-
     msg = f"""An error occurred in the '{context.function_name}' Lambda function.
 For more information, search AWS Request ID '{context.aws_request_id}' in CloudWatch log group '{context.log_group_name}'
 Error Message: {message}"""

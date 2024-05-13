@@ -277,7 +277,13 @@ resource "aws_dynamodb_table" "lock-table" {
     for_each = var.secondary_region == "" ? [] : [1]
     content {
       region_name = var.secondary_region
+      kms_key_arn = aws_kms_key.encrypt-secondary-region[0].arn
     }
+  }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = aws_kms_key.encrypt-primary-region.arn
   }
 
   tags = {

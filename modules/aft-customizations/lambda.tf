@@ -17,9 +17,13 @@ resource "aws_lambda_function" "aft_customizations_identify_targets" {
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
-  vpc_config {
-    subnet_ids         = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+
+    content {
+      subnet_ids         = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 }
 
@@ -45,9 +49,13 @@ resource "aws_lambda_function" "aft_customizations_execute_pipeline" {
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
-  vpc_config {
-    subnet_ids         = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+
+    content {
+      subnet_ids         = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 }
 
@@ -72,9 +80,13 @@ resource "aws_lambda_function" "aft_customizations_get_pipeline_executions" {
   timeout          = "300"
   layers           = [var.aft_common_layer_arn]
 
-  vpc_config {
-    subnet_ids         = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+
+    content {
+      subnet_ids         = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 
 }

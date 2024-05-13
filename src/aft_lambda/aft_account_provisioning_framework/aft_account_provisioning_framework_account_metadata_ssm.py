@@ -24,7 +24,6 @@ else:
 
 
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
-
     event_payload = event["payload"]
     request_id = event_payload["customization_request_id"]
     target_account_id = event_payload["account_info"]["account"]["id"]

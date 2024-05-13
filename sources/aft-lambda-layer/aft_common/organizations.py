@@ -155,7 +155,6 @@ class OrganizationsAgent:
     def get_children_ous_from_parent_id(
         self, parent_id: str
     ) -> List[OrganizationalUnitTypeDef]:
-
         paginator = self.orgs_client.get_paginator(
             "list_organizational_units_for_parent"
         )
