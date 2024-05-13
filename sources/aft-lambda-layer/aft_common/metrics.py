@@ -26,13 +26,11 @@ class MetricsPayloadType(TypedDict):
 
 class AFTMetrics:
     def __init__(self) -> None:
-
         self.solution_id = "SO0089-aft"
         self.api_endpoint = "https://metrics.awssolutionsbuilder.com/generic"
         self.auth = AuthClient()
 
     def _get_uuid(self, aft_management_session: Session) -> str:
-
         uuid = get_ssm_parameter_value(
             aft_management_session,
             aft_common.constants.SSM_PARAM_AFT_METRICS_REPORTING_UUID,
@@ -40,7 +38,6 @@ class AFTMetrics:
         return uuid
 
     def _metrics_reporting_enabled(self, aft_management_session: Session) -> bool:
-
         flag = get_ssm_parameter_value(
             aft_management_session, aft_common.constants.SSM_PARAM_AFT_METRICS_REPORTING
         )
@@ -52,7 +49,6 @@ class AFTMetrics:
     def _get_aft_deployment_config(
         self, aft_management_session: Session
     ) -> Dict[str, str]:
-
         config = {}
 
         config["cloud_trail_enabled"] = get_ssm_parameter_value(
@@ -84,7 +80,6 @@ class AFTMetrics:
     def wrap_event_for_api(
         self, aft_management_session: Session, event: Dict[str, Any]
     ) -> MetricsPayloadType:
-
         payload: MetricsPayloadType = {
             "Solution": self.solution_id,
             "TimeStamp": datetime.utcnow().isoformat(timespec="seconds"),
@@ -132,11 +127,9 @@ class AFTMetrics:
         return payload
 
     def post_event(self, action: str, status: Optional[str] = None) -> None:
-
         aft_management_session = self.auth.get_aft_management_session()
 
         if self._metrics_reporting_enabled(aft_management_session):
-
             event = {"action": action, "status": status}
 
             payload = self.wrap_event_for_api(aft_management_session, event)
@@ -148,7 +141,6 @@ class AFTMetrics:
 
 # Executes when run as a script from the CodeBuild containers
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
         description="Script called from within CodeBuild containers to report back AFT usage metrics"
     )

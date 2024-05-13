@@ -6,7 +6,7 @@
 #####################################################
 
 resource "aws_codebuild_project" "aft_global_customizations_terraform" {
-  depends_on     = [aws_cloudwatch_log_group.aft_global_customizations_terraform]
+  depends_on     = [aws_cloudwatch_log_group.aft_global_customizations_terraform, time_sleep.wait_for_iam_eventual_consistency]
   name           = "aft-global-customizations-terraform"
   description    = "Job to apply Terraform provided by the customer global customizations repo"
   build_timeout  = tostring(var.global_codebuild_timeout)
@@ -52,10 +52,14 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
     buildspec = data.local_file.aft_global_customizations_terraform.content
   }
 
-  vpc_config {
-    vpc_id             = var.aft_vpc_id
-    subnets            = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+    content {
+      vpc_id             = var.aft_vpc_id
+      subnets            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
+
   }
 
   lifecycle {
@@ -82,7 +86,7 @@ resource "aws_cloudwatch_log_group" "aft_global_customizations_terraform" {
 #####################################################
 
 resource "aws_codebuild_project" "aft_account_customizations_terraform" {
-  depends_on     = [aws_cloudwatch_log_group.aft_account_customizations_terraform]
+  depends_on     = [aws_cloudwatch_log_group.aft_account_customizations_terraform, time_sleep.wait_for_iam_eventual_consistency]
   name           = "aft-account-customizations-terraform"
   description    = "Job to apply Terraform provided by the customer account customizations repo"
   build_timeout  = tostring(var.global_codebuild_timeout)
@@ -121,10 +125,14 @@ resource "aws_codebuild_project" "aft_account_customizations_terraform" {
     buildspec = data.local_file.aft_account_customizations_terraform.content
   }
 
-  vpc_config {
-    vpc_id             = var.aft_vpc_id
-    subnets            = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+
+    content {
+      vpc_id             = var.aft_vpc_id
+      subnets            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 
   lifecycle {
@@ -151,7 +159,7 @@ resource "aws_cloudwatch_log_group" "aft_account_customizations_terraform" {
 #####################################################
 
 resource "aws_codebuild_project" "aft_create_pipeline" {
-  depends_on     = [aws_cloudwatch_log_group.aft_create_pipeline]
+  depends_on     = [aws_cloudwatch_log_group.aft_create_pipeline, time_sleep.wait_for_iam_eventual_consistency]
   name           = "aft-create-pipeline"
   description    = "Job to run Terraform required to create account specific customizations pipeline"
   build_timeout  = tostring(var.global_codebuild_timeout)
@@ -239,10 +247,14 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
     buildspec = data.local_file.aft_create_pipeline.content
   }
 
-  vpc_config {
-    vpc_id             = var.aft_vpc_id
-    subnets            = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+
+    content {
+      vpc_id             = var.aft_vpc_id
+      subnets            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 
   lifecycle {

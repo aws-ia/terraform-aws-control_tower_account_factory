@@ -33,6 +33,10 @@ output "cloudwatch_log_group_retention" {
   value = var.cloudwatch_log_group_retention
 }
 
+output "backup_recovery_point_retention" {
+  value = var.backup_recovery_point_retention
+}
+
 output "maximum_concurrent_customizations" {
   value = var.maximum_concurrent_customizations
 }

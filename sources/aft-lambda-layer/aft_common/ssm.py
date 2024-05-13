@@ -17,7 +17,6 @@ logger = logging.getLogger("aft")
 
 @resubmit_request_on_boto_throttle
 def put_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:
-
     client = session.client("ssm", config=get_high_retry_botoconfig())
 
     for key, value in parameters.items():
@@ -28,7 +27,6 @@ def put_ssm_parameters(session: Session, parameters: Dict[str, str]) -> None:
 
 @resubmit_request_on_boto_throttle
 def get_ssm_parameters_names_by_path(session: Session, path: str) -> List[str]:
-
     client = session.client("ssm", config=get_high_retry_botoconfig())
     paginator = client.get_paginator("get_parameters_by_path")
     pages = paginator.paginate(Path=path, Recursive=True)

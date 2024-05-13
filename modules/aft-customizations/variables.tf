@@ -78,15 +78,18 @@ variable "aft_config_backend_bucket_id" {
 }
 
 variable "aft_vpc_id" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "aft_vpc_private_subnets" {
-  type = list(string)
+  type    = list(string)
+  default = null
 }
 
 variable "aft_vpc_default_sg" {
-  type = list(string)
+  type    = list(string)
+  default = null
 }
 
 variable "maximum_concurrent_customizations" {
@@ -111,4 +114,8 @@ variable "global_codebuild_timeout" {
 
 variable "lambda_runtime_python_version" {
   type = string
+}
+
+variable "aft_enable_vpc" {
+  type = bool
 }

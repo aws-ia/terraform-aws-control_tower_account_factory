@@ -2,6 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
+resource "aws_cloudwatch_log_group" "codebuild_loggroup" {
+  name              = "/aws/codebuild/${local.common_name}"
+  retention_in_days = var.cloudwatch_log_group_retention
+}
+
 resource "aws_codebuild_project" "codebuild" {
   name           = local.common_name
   description    = "Codebuild project to create lambda layer ${var.lambda_layer_name}"
@@ -24,20 +30,8 @@ resource "aws_codebuild_project" "codebuild" {
       value = var.lambda_layer_python_version
     }
     environment_variable {
-      name  = "LAYER_NAME"
-      value = var.lambda_layer_name
-    }
-    environment_variable {
       name  = "BUCKET_NAME"
       value = var.s3_bucket_name
-    }
-    environment_variable {
-      name  = "EVENT_RULE_NAME"
-      value = "${local.common_name}-${replace(var.aft_version, ".", "-")}"
-    }
-    environment_variable {
-      name  = "EVENT_TARGET_ID"
-      value = local.target_id
     }
     environment_variable {
       name  = "SSM_AWS_MODULE_SOURCE"
@@ -50,17 +44,11 @@ resource "aws_codebuild_project" "codebuild" {
       type  = "PLAINTEXT"
     }
 
-    environment_variable {
-      name  = "AWS_PARTITION"
-      value = data.aws_partition.current.partition
-      type  = "PLAINTEXT"
-    }
-
   }
 
   logs_config {
     cloudwatch_logs {
-      group_name  = local.common_name
+      group_name  = aws_cloudwatch_log_group.codebuild_loggroup.name
       stream_name = "build-logs"
     }
 
@@ -75,10 +63,13 @@ resource "aws_codebuild_project" "codebuild" {
     buildspec = data.local_file.aft_lambda_layer.content
   }
 
-  vpc_config {
-    vpc_id             = var.aft_vpc_id
-    subnets            = var.aft_vpc_private_subnets
-    security_group_ids = var.aft_vpc_default_sg
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+    content {
+      vpc_id             = var.aft_vpc_id
+      subnets            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
   }
 
   lifecycle {

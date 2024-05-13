@@ -44,6 +44,11 @@ resource "aws_iam_role_policy" "aft_codebuild_customizations_policy" {
   })
 }
 
+resource "time_sleep" "wait_for_iam_eventual_consistency" {
+  depends_on      = [aws_iam_role.aft_codebuild_customizations_role]
+  create_duration = "60s"
+}
+
 ###################################################################
 # Step Functions - Invoke Customizations
 ###################################################################

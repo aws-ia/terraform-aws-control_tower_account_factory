@@ -11,6 +11,14 @@ resource "aws_backup_plan" "aft_controltower_backup_plan" {
     rule_name         = "aft_controltower_backup_rule"
     target_vault_name = aws_backup_vault.aft_controltower_backup_vault.name
     schedule          = "cron(0 * * * ? *)"
+
+    dynamic "lifecycle" {
+      for_each = var.backup_recovery_point_retention != null ? [1] : []
+      content {
+        delete_after = var.backup_recovery_point_retention
+      }
+    }
+
   }
 }
 

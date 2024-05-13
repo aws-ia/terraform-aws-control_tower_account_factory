@@ -18,6 +18,7 @@ module "aft_account_provisioning_framework" {
   aft_failure_sns_topic_arn                        = module.aft_account_request_framework.aft_failure_sns_topic_arn
   aft_common_layer_arn                             = module.aft_lambda_layer.layer_version_arn
   aft_kms_key_arn                                  = module.aft_account_request_framework.aft_kms_key_arn
+  aft_enable_vpc                                   = var.aft_enable_vpc
   aft_vpc_private_subnets                          = module.aft_account_request_framework.aft_vpc_private_subnets
   aft_vpc_default_sg                               = module.aft_account_request_framework.aft_vpc_default_sg
   cloudwatch_log_group_retention                   = var.cloudwatch_log_group_retention
@@ -43,6 +44,7 @@ module "aft_account_request_framework" {
   aft_account_provisioning_framework_sfn_name = local.aft_account_provisioning_framework_sfn_name
   aft_common_layer_arn                        = module.aft_lambda_layer.layer_version_arn
   cloudwatch_log_group_retention              = var.cloudwatch_log_group_retention
+  aft_enable_vpc                              = var.aft_enable_vpc
   aft_vpc_cidr                                = var.aft_vpc_cidr
   aft_vpc_private_subnet_01_cidr              = var.aft_vpc_private_subnet_01_cidr
   aft_vpc_private_subnet_02_cidr              = var.aft_vpc_private_subnet_02_cidr
@@ -53,6 +55,7 @@ module "aft_account_request_framework" {
   request_framework_archive_path              = module.packaging.request_framework_archive_path
   request_framework_archive_hash              = module.packaging.request_framework_archive_hash
   lambda_runtime_python_version               = local.lambda_runtime_python_version
+  backup_recovery_point_retention             = var.backup_recovery_point_retention
 }
 
 
@@ -98,6 +101,7 @@ module "aft_code_repositories" {
   global_customizations_repo_branch               = var.global_customizations_repo_branch
   log_group_retention                             = var.cloudwatch_log_group_retention
   global_codebuild_timeout                        = var.global_codebuild_timeout
+  aft_enable_vpc                                  = var.aft_enable_vpc
 }
 
 module "aft_customizations" {
@@ -133,6 +137,7 @@ module "aft_customizations" {
   customizations_archive_hash                       = module.packaging.customizations_archive_hash
   global_codebuild_timeout                          = var.global_codebuild_timeout
   lambda_runtime_python_version                     = local.lambda_runtime_python_version
+  aft_enable_vpc                                    = var.aft_enable_vpc
   spacelift_api_credentials_ssm_path                = local.ssm_paths_custom.spacelift_api_credentials
 }
 
@@ -146,7 +151,7 @@ module "aft_feature_options" {
   source                                    = "./modules/aft-feature-options"
   log_archive_access_logs_bucket_name       = local.log_archive_access_logs_bucket_name
   log_archive_bucket_name                   = local.log_archive_bucket_name
-  log_archive_bucket_object_expiration_days = local.log_archive_bucket_object_expiration_days
+  log_archive_bucket_object_expiration_days = var.log_archive_bucket_object_expiration_days
   aft_features_sfn_name                     = local.aft_features_sfn_name
   aft_kms_key_arn                           = module.aft_account_request_framework.aft_kms_key_arn
   aft_kms_key_id                            = module.aft_account_request_framework.aft_kms_key_id
@@ -163,6 +168,7 @@ module "aft_feature_options" {
   enroll_support_lambda_function_name       = local.enroll_support_lambda_function_name
   enable_cloudtrail_lambda_function_name    = local.enable_cloudtrail_lambda_function_name
   lambda_runtime_python_version             = local.lambda_runtime_python_version
+  aft_enable_vpc                            = var.aft_enable_vpc
 }
 
 module "aft_iam_roles" {
@@ -195,6 +201,8 @@ module "aft_lambda_layer" {
   s3_bucket_name                                    = module.aft_customizations.aft_codepipeline_customizations_bucket_name
   builder_archive_path                              = module.packaging.builder_archive_path
   builder_archive_hash                              = module.packaging.builder_archive_hash
+  cloudwatch_log_group_retention                    = var.cloudwatch_log_group_retention
+  aft_enable_vpc                                    = var.aft_enable_vpc
 }
 
 module "aft_ssm_parameters" {

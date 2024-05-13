@@ -20,7 +20,6 @@ else:
 def lambda_handler(
     event: Dict[str, Any], context: LambdaContext
 ) -> PutItemOutputTableTypeDef:
-
     action = event["action"]
     event_payload = event["payload"]
     request_id = event_payload["customization_request_id"]
@@ -32,7 +31,6 @@ def lambda_handler(
 
     aft_management_session = Session()
     try:
-
         rollback = None
 
         try:
