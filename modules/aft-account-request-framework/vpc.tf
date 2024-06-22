@@ -202,13 +202,13 @@ resource "aws_internet_gateway" "aft-vpc-igw" {
 }
 
 resource "aws_eip" "aft-vpc-natgw-01" {
-  count = var.aft_enable_vpc ? 1 : 0
-  vpc   = true
+  count  = var.aft_enable_vpc ? 1 : 0
+  domain = "vpc"
 }
 
 resource "aws_eip" "aft-vpc-natgw-02" {
-  count = var.aft_enable_vpc ? 1 : 0
-  vpc   = true
+  count  = var.aft_enable_vpc ? 1 : 0
+  domain = "vpc"
 }
 
 resource "aws_nat_gateway" "aft-vpc-natgw-01" {
