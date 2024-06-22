@@ -158,8 +158,8 @@ class ProvisionRoles:
             resource: IAMServiceResource = target_account_session.resource("iam")
             role = resource.Role(role_name)
             role.attach_policy(PolicyArn=policy_arn)
-            timeout = datetime.utcnow() + timedelta(minutes=timeout_in_mins)
-            while datetime.utcnow() < timeout:
+            timeout = datetime.now(datetime.UTC) + timedelta(minutes=timeout_in_mins)
+            while datetime.now(datetime.UTC) < timeout:
                 time.sleep(delay)
                 if self.role_policy_is_attached(
                     role_name=role_name,
@@ -187,8 +187,8 @@ class ProvisionRoles:
     def _ensure_role_can_be_assumed(
         self, role_name: str, timeout_in_mins: int = 1, delay: int = 5
     ) -> None:
-        timeout = datetime.utcnow() + timedelta(minutes=timeout_in_mins)
-        while datetime.utcnow() < timeout:
+        timeout = datetime.now(datetime.UTC) + timedelta(minutes=timeout_in_mins)
+        while datetime.now(datetime.UTC) < timeout:
             if self._can_assume_role(role_name=role_name):
                 return None
             time.sleep(delay)

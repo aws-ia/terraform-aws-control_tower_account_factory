@@ -82,7 +82,7 @@ class AFTMetrics:
     ) -> MetricsPayloadType:
         payload: MetricsPayloadType = {
             "Solution": self.solution_id,
-            "TimeStamp": datetime.utcnow().isoformat(timespec="seconds"),
+            "TimeStamp": datetime.now(datetime.UTC).isoformat(timespec="seconds"),
             "Version": None,
             "UUID": None,
             "Data": {},
