@@ -16,6 +16,12 @@ resource "aws_s3_bucket" "primary-backend-bucket" {
     "Name" = "aft-backend-${data.aws_caller_identity.current.account_id}-primary-region"
   }
 }
+resource "aws_s3_bucket_logging" "primary-backend-bucket-logging" {
+  provider      = aws.primary_region
+  bucket        = aws_s3_bucket.primary-backend-bucket.id
+  target_bucket = aws_s3_bucket.aft_access_logs_primary_backend_bucket.id
+  target_prefix = "log/"
+}
 
 #tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "secondary-backend-bucket" {
@@ -253,6 +259,72 @@ resource "aws_iam_role_policy_attachment" "replication" {
   policy_arn = aws_iam_policy.replication[0].arn
 }
 
+#tfsec:ignore:aws-s3-enable-bucket-logging
+resource "aws_s3_bucket" "aft_access_logs_primary_backend_bucket" {
+  provider = aws.primary_region
+  bucket   = "aft-backend-${data.aws_caller_identity.current.account_id}-primary-region-access-logs"
+}
+
+resource "aws_s3_bucket_policy" "aft_access_logs_primary_backend_bucket" {
+  provider = aws.primary_region
+  bucket   = aws_s3_bucket.aft_access_logs_primary_backend_bucket.id
+  policy = templatefile("${path.module}/s3/bucket-policies/aft_access_logs_primary_backend_bucket.tpl", {
+    aws_s3_bucket_aft_access_logs_arn = aws_s3_bucket.aft_access_logs_primary_backend_bucket.arn
+    aws_s3_bucket_primary_backend_arn = aws_s3_bucket.primary-backend-bucket.arn
+    aft_management_account_id         = var.aft_management_account_id
+  })
+}
+
+resource "aws_s3_bucket_versioning" "aft_access_logs_primary_backend_bucket" {
+  provider = aws.primary_region
+  bucket   = aws_s3_bucket.aft_access_logs_primary_backend_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_kms_key" "aft_access_logs_primary_backend_bucket" {
+  provider            = aws.primary_region
+  enable_key_rotation = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "aft_access_logs_primary_backend_bucket" {
+  provider = aws.primary_region
+  bucket   = aws_s3_bucket.aft_access_logs_primary_backend_bucket.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.aft_access_logs_primary_backend_bucket.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "aft_access_logs_primary_backend_bucket" {
+  provider = aws.primary_region
+  bucket   = aws_s3_bucket.aft_access_logs_primary_backend_bucket.id
+  rule {
+    status = "Enabled"
+    filter {
+      prefix = "log/"
+    }
+    id = "aft_primary_backend_bucket_access_logs_lifecycle_configuration_rule"
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.aft_backend_bucket_access_logs_object_expiration_days
+    }
+  }
+
+}
+
+resource "aws_s3_bucket_public_access_block" "aft_access_logs_primary_backend_bucket" {
+  provider                = aws.primary_region
+  bucket                  = aws_s3_bucket.aft_access_logs_primary_backend_bucket.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
 
 # DynamoDB Resources
 # TFSec incorrectly reports no DAX SSE encryption for a DDB table (SSE encryption is default-on)

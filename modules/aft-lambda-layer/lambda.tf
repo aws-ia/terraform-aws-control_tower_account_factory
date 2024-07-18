@@ -13,7 +13,6 @@ resource "aws_lambda_function" "codebuild_trigger" {
   memory_size      = 1024
   runtime          = var.lambda_runtime_python_version
   timeout          = 900
-
   dynamic "vpc_config" {
     for_each = var.aft_enable_vpc ? [1] : []
     content {

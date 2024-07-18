@@ -62,7 +62,7 @@ variable "ct_home_region" {
   description = "The region from which this module will be executed. This MUST be the same region as Control Tower is deployed."
   type        = string
   validation {
-    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
+    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
     error_message = "Variable var: region is not valid."
   }
 }
@@ -93,6 +93,16 @@ variable "log_archive_bucket_object_expiration_days" {
   validation {
     condition     = var.log_archive_bucket_object_expiration_days > 0
     error_message = "Log_archive_bucket_object_expiration_days must be an integer greater than 0."
+  }
+}
+
+variable "aft_backend_bucket_access_logs_object_expiration_days" {
+  description = "Amount of days to keep the objects stored in the access logs bucket for AFT backend buckets"
+  type        = number
+  default     = 365
+  validation {
+    condition     = var.aft_backend_bucket_access_logs_object_expiration_days > 0
+    error_message = "aft_backend_bucket_access_logs_object_expiration_days must be an integer greater than 0."
   }
 }
 
@@ -280,7 +290,7 @@ variable "account_provisioning_customizations_repo_branch" {
 variable "terraform_version" {
   description = "Terraform version being used for AFT"
   type        = string
-  default     = "1.5.7"
+  default     = "1.6.0"
   validation {
     condition     = can(regex("\\bv?\\d+(\\.\\d+)+[\\-\\w]*\\b", var.terraform_version))
     error_message = "Invalid value for var: terraform_version."

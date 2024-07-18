@@ -65,9 +65,11 @@ module "aft_backend" {
     aws.primary_region   = aws.aft_management
     aws.secondary_region = aws.tf_backend_secondary_region
   }
-  source           = "./modules/aft-backend"
-  primary_region   = var.ct_home_region
-  secondary_region = var.tf_backend_secondary_region
+  source                                                = "./modules/aft-backend"
+  primary_region                                        = var.ct_home_region
+  secondary_region                                      = var.tf_backend_secondary_region
+  aft_management_account_id                             = var.aft_management_account_id
+  aft_backend_bucket_access_logs_object_expiration_days = var.aft_backend_bucket_access_logs_object_expiration_days
 }
 
 module "aft_code_repositories" {
