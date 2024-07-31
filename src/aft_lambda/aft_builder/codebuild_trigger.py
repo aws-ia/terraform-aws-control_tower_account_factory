@@ -27,8 +27,7 @@ def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> LayerBuild
         codebuild_project_name = event["codebuild_project_name"]
         job_id = client.start_build(projectName=codebuild_project_name)["build"]["id"]
 
-        if codebuild_project_name.isalnum():
-            logger.info(f"Started build project {codebuild_project_name} job {job_id}")
+        logger.info(f"Started build project {codebuild_project_name} job {job_id}")
 
         # Wait at least 30 seconds for the build to initialize
         time.sleep(30)
@@ -44,16 +43,14 @@ def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> LayerBuild
                 time.sleep(10)
                 continue
             elif job_status == "SUCCEEDED":
-                if job_id.isalnum():
-                    logger.info(f"Build job {job_id} completed successfully")
-                    return {"Status": 200}
+                logger.info(f"Build job {job_id} completed successfully")
+                return {"Status": 200}
             else:
-                if job_id.isalnum():
-                    logger.info(f"Build {job_id} failed - non-success terminal status")
-                    raise Exception(f"Build {job_id} failed - non-success terminal status")
-        if job_id.isalnum():
-            logger.info(f"Build {job_id} failed - time out")
-            raise Exception(f"Build {job_id} failed - time out")
+                logger.info(f"Build {job_id} failed - non-success terminal status")
+                raise Exception(f"Build {job_id} failed - non-success terminal status")
+
+        logger.info(f"Build {job_id} failed - time out")
+        raise Exception(f"Build {job_id} failed - time out")
 
     except Exception as error:
         message = {

@@ -79,15 +79,14 @@ def resubmit_request_on_boto_throttle(
             except ClientError as e:
                 if e.response["Error"]["Code"] in BOTO3_CLIENT_ERROR_THROTTLING_CODES:
                     if requests >= max_requests:
-                        if requests.isalnum():
-                            logger.info(
-                                f"Exceeded max fresh-request retry attempts ({max_requests})"
-                            )
-                        raise e
-                    if retry_sleep_sec.isalnum():
                         logger.info(
-                            f"Exceeded max boto3 retries on previous request. Retrying with fresh request in {retry_sleep_sec} seconds."
+                            f"Exceeded max fresh-request retry attempts ({max_requests})"
                         )
+                        raise e
+
+                    logger.info(
+                        f"Exceeded max boto3 retries on previous request. Retrying with fresh request in {retry_sleep_sec} seconds."
+                    )
                     requests += 1
                     time.sleep(retry_sleep_sec)
 
@@ -125,16 +124,14 @@ def invoke_lambda(
     payload: Union[bytes, IO[bytes], StreamingBody],
 ) -> InvocationResponseTypeDef:
     client: LambdaClient = session.client("lambda")
-    if function_name.isalnum():
-        logger.info(f"Invoking Lambda: {function_name}")
+    logger.info(f"Invoking Lambda: {function_name}")
     response = client.invoke(
         FunctionName=function_name,
         InvocationType="Event",
         LogType="Tail",
         Payload=payload,
     )
-    if response.isalnum():
-        logger.info(response)
+    logger.info(response)
     return response
 
 
@@ -156,8 +153,7 @@ def invoke_step_function(
 ) -> StartExecutionOutputTypeDef:
     client: SFNClient = session.client("stepfunctions")
     sfn_arn = build_sfn_arn(session, sfn_name)
-    if sfn_arn.isalnum():
-        logger.info("Starting SFN execution of " + sfn_arn)
+    logger.info("Starting SFN execution of " + sfn_arn)
     response = client.start_execution(stateMachineArn=sfn_arn, input=input)
     logger.debug(response)
     return response

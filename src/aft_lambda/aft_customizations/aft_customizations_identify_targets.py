@@ -63,17 +63,15 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
 
             target_account_info = []
             for account_id in target_accounts:
-                if account_id.isalnum():
-                    logger.info(f"Building customization payload for {account_id}")
+                logger.info(f"Building customization payload for {account_id}")
 
                 try:
                     account_email = orgs_agent.get_account_email_from_id(account_id)
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "AccountNotFoundException":
-                        if account_id.isalnum():
-                            logger.info(
-                                f"Account with ID {account_id} does not exist or is suspended - ignoring"
-                            )
+                        logger.info(
+                            f"Account with ID {account_id} does not exist or is suspended - ignoring"
+                        )
                         target_accounts.remove(account_id)
                         continue
                     else:
@@ -89,9 +87,8 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
                     account_request=account_request,
                     control_tower_event={},
                 )
-                if account_payload.isalnum():
-                    logger.info(f"Successfully generated payload: {account_payload}")
-                    target_account_info.append(account_payload)
+                logger.info(f"Successfully generated payload: {account_payload}")
+                target_account_info.append(account_payload)
 
             return {
                 "number_pending_accounts": len(target_accounts),
