@@ -63,7 +63,8 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
 
             target_account_info = []
             for account_id in target_accounts:
-                logger.info(f"Building customization payload for {account_id}")
+                if account_id.isalnum():
+                    logger.info(f"Building customization payload for {account_id}")
 
                 try:
                     account_email = orgs_agent.get_account_email_from_id(account_id)
@@ -87,8 +88,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
                     account_request=account_request,
                     control_tower_event={},
                 )
-                logger.info(f"Successfully generated payload: {account_payload}")
-                target_account_info.append(account_payload)
+                if account_payload.isalnum():
+                    logger.info(f"Successfully generated payload: {account_payload}")
+                    target_account_info.append(account_payload)
 
             return {
                 "number_pending_accounts": len(target_accounts),
