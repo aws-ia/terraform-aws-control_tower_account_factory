@@ -70,9 +70,10 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
                     account_email = orgs_agent.get_account_email_from_id(account_id)
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "AccountNotFoundException":
-                        logger.info(
-                            f"Account with ID {account_id} does not exist or is suspended - ignoring"
-                        )
+                        if account_id.isalnum():
+                            logger.info(
+                                f"Account with ID {account_id} does not exist or is suspended - ignoring"
+                            )
                         target_accounts.remove(account_id)
                         continue
                     else:
