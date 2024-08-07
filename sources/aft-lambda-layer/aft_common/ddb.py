@@ -4,6 +4,7 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from aft_common.aft_utils import sanitize_input_for_logging
 from boto3.dynamodb.types import TypeDeserializer
 from boto3.session import Session
 
@@ -42,7 +43,8 @@ def put_ddb_item(
 
     logger.info(f"Inserting item into {table_name} table: {str(item)}")
     response = table.put_item(Item=item)
-    logger.info(response)
+    sanitized_response = sanitize_input_for_logging(response)
+    logger.info(sanitized_response)
     return response
 
 
@@ -54,7 +56,8 @@ def delete_ddb_item(
 
     logger.info(f"Deleting item with key: {primary_key} from: {table_name} table")
     response = table.delete_item(Key=primary_key)
-    logger.info(response)
+    sanitized_response = sanitize_input_for_logging(response)
+    logger.info(sanitized_response)
     return response
 
 

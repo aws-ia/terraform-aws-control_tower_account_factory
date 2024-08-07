@@ -75,7 +75,7 @@ def send_sqs_message(
         MessageDeduplicationId=unique_id,
         MessageGroupId=unique_id,
     )
-
-    logger.info(response)
+    sanitized_response = utils.sanitize_input_for_logging(response)
+    logger.info(sanitized_response)
 
     return response

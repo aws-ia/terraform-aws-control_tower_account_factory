@@ -11,6 +11,7 @@ from aft_common.account_request_framework import (
     build_account_customization_payload,
     get_account_request_record,
 )
+from aft_common.aft_utils import sanitize_input_for_logging
 from aft_common.auth import AuthClient
 from aft_common.customizations import (
     get_excluded_accounts,
@@ -63,14 +64,16 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
 
             target_account_info = []
             for account_id in target_accounts:
-                logger.info(f"Building customization payload for {account_id}")
-
+                sanitized_account_id = sanitize_input_for_logging(account_id)
+                logger.info(
+                    f"Building customization payload for {sanitized_account_id}"
+                )
                 try:
                     account_email = orgs_agent.get_account_email_from_id(account_id)
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "AccountNotFoundException":
                         logger.info(
-                            f"Account with ID {account_id} does not exist or is suspended - ignoring"
+                            f"Account with ID {sanitized_account_id} does not exist or is suspended - ignoring"
                         )
                         target_accounts.remove(account_id)
                         continue
@@ -87,7 +90,8 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
                     account_request=account_request,
                     control_tower_event={},
                 )
-                logger.info(f"Successfully generated payload: {account_payload}")
+                sanitized_payload = sanitize_input_for_logging(account_payload)
+                logger.info(f"Successfully generated payload: {sanitized_payload}")
                 target_account_info.append(account_payload)
 
             return {
