@@ -20,7 +20,10 @@ from aft_common.account_request_framework import (
     update_existing_account,
 )
 from aft_common.auth import AuthClient
-from aft_common.exceptions import NoAccountFactoryPortfolioFound
+from aft_common.exceptions import (
+    NoAccountFactoryPortfolioFound,
+    ServiceRoleNotAssociated,
+)
 from aft_common.logger import configure_aft_logger
 from aft_common.metrics import AFTMetrics
 from boto3.session import Session
@@ -42,11 +45,20 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     try:
         account_request = AccountRequest(auth=auth)
         try:
-            account_request.associate_aft_service_role_with_account_factory()
-        except NoAccountFactoryPortfolioFound:
+            account_request.validate_service_role_associated_with_account_factory()
+        except ServiceRoleNotAssociated:
             logger.warning(
-                f"Failed to automatically associate {ProvisionRoles.SERVICE_ROLE_NAME} to portfolio {AccountRequest.ACCOUNT_FACTORY_PORTFOLIO_NAME}. Manual intervention may be required"
+                f"{ProvisionRoles.SERVICE_ROLE_NAME} not yet associated with portfolio {AccountRequest.ACCOUNT_FACTORY_PORTFOLIO_NAME}."
             )
+            try:
+                account_request.associate_aft_service_role_with_account_factory()
+                logger.info(
+                    f"{ProvisionRoles.SERVICE_ROLE_NAME} successfully associated with portfolio {AccountRequest.ACCOUNT_FACTORY_PORTFOLIO_NAME}."
+                )
+            except NoAccountFactoryPortfolioFound:
+                logger.warning(
+                    f"Failed to automatically associate {ProvisionRoles.SERVICE_ROLE_NAME} with portfolio {AccountRequest.ACCOUNT_FACTORY_PORTFOLIO_NAME}. Manual intervention may be required"
+                )
 
         ct_management_session = auth.get_ct_management_session(
             role_name=ProvisionRoles.SERVICE_ROLE_NAME
