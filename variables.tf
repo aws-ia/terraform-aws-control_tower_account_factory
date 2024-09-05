@@ -149,6 +149,14 @@ variable "global_codebuild_timeout" {
   }
 }
 
+variable "default_tags" {
+  type        = map(string)
+  description = "Tags to apply to all supported resources"
+  default = {
+    managed_by = "AFT"
+  }
+}
+
 #########################################
 # AFT Feature Flags
 #########################################
