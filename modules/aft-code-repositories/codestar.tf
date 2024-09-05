@@ -42,8 +42,8 @@ resource "aws_codestarconnections_connection" "gitlab" {
 }
 
 resource "aws_codestarconnections_connection" "gitlabselfmanaged" {
-  count         = local.vcs.is_gitlab_selfmanaged ? 1 : 0
-  name          = "ct-aft-gitlab-selfmanaged-connection"
+  count    = local.vcs.is_gitlab_selfmanaged ? 1 : 0
+  name     = "ct-aft-gitlab-selfmanaged-connection"
   host_arn = aws_codestarconnections_host.gitlabselfmanaged[0].arn
 }
 

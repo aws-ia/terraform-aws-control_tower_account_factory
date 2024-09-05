@@ -209,7 +209,6 @@ variable "gitlab_selfmanaged_url" {
   default     = "null"
 }
 
-
 variable "account_request_repo_name" {
   description = "Repository name for the account request files. For non-CodeCommit repos, name should be in the format of Org/Repo"
   type        = string
