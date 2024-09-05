@@ -30,6 +30,10 @@ variable "github_enterprise_url" {
   type = string
 }
 
+variable "gitlab_selfmanaged_url" {
+  type = string
+}
+
 variable "account_request_table_name" {
   type = string
 }

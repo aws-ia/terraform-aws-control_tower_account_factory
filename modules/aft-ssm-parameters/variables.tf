@@ -230,6 +230,10 @@ variable "github_enterprise_url" {
   type = string
 }
 
+variable "gitlab_selfmanaged_url" {
+  type = string
+}
+
 variable "aft_logging_bucket_arn" {
   type = string
 }

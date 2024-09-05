@@ -346,6 +346,13 @@ resource "aws_ssm_parameter" "github_enterprise_url" {
   value = var.github_enterprise_url
 }
 
+resource "aws_ssm_parameter" "gitlab_selfmanaged_url" {
+  name  = "/aft/config/vcs/gitlab-selfmanaged-url"
+  type  = "String"
+  value = var.gitlab_selfmanaged_url
+}
+
+
 resource "aws_ssm_parameter" "aft_logging_bucket_arn" {
   name  = "/aft/account/log-archive/log_bucket_arn"
   type  = "String"

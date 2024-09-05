@@ -92,6 +92,7 @@ module "aft_code_repositories" {
   account_customizations_repo_name                = var.account_customizations_repo_name
   global_customizations_repo_name                 = var.global_customizations_repo_name
   github_enterprise_url                           = var.github_enterprise_url
+  gitlab_selfmanaged_url                          = var.gitlab_selfmanaged_url
   vcs_provider                                    = var.vcs_provider
   terraform_distribution                          = var.terraform_distribution
   account_provisioning_customizations_repo_name   = var.account_provisioning_customizations_repo_name
@@ -269,5 +270,6 @@ module "aft_ssm_parameters" {
   account_provisioning_customizations_repo_branch             = var.account_provisioning_customizations_repo_branch
   maximum_concurrent_customizations                           = var.maximum_concurrent_customizations
   github_enterprise_url                                       = var.github_enterprise_url
+  gitlab_selfmanaged_url                          = var.gitlab_selfmanaged_url
   aft_metrics_reporting                                       = var.aft_metrics_reporting
 }

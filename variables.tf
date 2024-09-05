@@ -192,8 +192,8 @@ variable "vcs_provider" {
   type        = string
   default     = "codecommit"
   validation {
-    condition     = contains(["codecommit", "bitbucket", "github", "githubenterprise"], var.vcs_provider)
-    error_message = "Valid values for var: vcs_provider are (codecommit, bitbucket, github, githubenterprise)."
+    condition     = contains(["codecommit", "bitbucket", "github", "githubenterprise", "gitlab", "gitlabselfmanaged"], var.vcs_provider)
+    error_message = "Valid values for var: vcs_provider are (codecommit, bitbucket, github, githubenterprise, gitlab, gitlabselfmanaged)."
   }
 }
 
@@ -202,6 +202,13 @@ variable "github_enterprise_url" {
   type        = string
   default     = "null"
 }
+
+variable "gitlab_selfmanaged_url" {
+  description = "GitLab SelfManaged URL, if GitLab SelfManaged is being used"
+  type        = string
+  default     = "null"
+}
+
 
 variable "account_request_repo_name" {
   description = "Repository name for the account request files. For non-CodeCommit repos, name should be in the format of Org/Repo"
