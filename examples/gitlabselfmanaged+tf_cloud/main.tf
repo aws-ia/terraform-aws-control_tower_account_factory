@@ -11,9 +11,14 @@ module "aft" {
   ct_home_region              = "us-east-1"
   tf_backend_secondary_region = "us-west-2"
   # VCS Vars
-  vcs_provider                                  = "gitlab"
+  vcs_provider                                  = "gitlabselfmanaged"
+  gitlab_selfmanaged_url                        = "https://gitlab.example.com"
   account_request_repo_name                     = "ExampleProject/example-repo-1"
   global_customizations_repo_name               = "ExampleProject/example-repo-2"
   account_customizations_repo_name              = "ExampleProject/example-repo-3"
   account_provisioning_customizations_repo_name = "ExampleProject/example-repo-4"
+  # TF Vars
+  terraform_distribution = "tfc"
+  terraform_token        = "EXAMPLE-uoc1c1qsw7poexampleewjeno1pte3rw"
+  terraform_org_name     = "ExampleOrg"
 }

@@ -140,7 +140,7 @@ resource "aws_codepipeline" "codestar_account_request" {
       output_artifacts = ["account-request"]
 
       configuration = {
-        ConnectionArn        = lookup({ github = local.connection_arn.github, bitbucket = local.connection_arn.bitbucket, githubenterprise = local.connection_arn.githubenterprise, gitlab = local.connection_arn.gitlab }, var.vcs_provider)
+        ConnectionArn        = lookup({ github = local.connection_arn.github, bitbucket = local.connection_arn.bitbucket, githubenterprise = local.connection_arn.githubenterprise, gitlab = local.connection_arn.gitlab, gitlabselfmanaged = local.connection_arn.gitlabselfmanaged }, var.vcs_provider)
         FullRepositoryId     = var.account_request_repo_name
         BranchName           = var.account_request_repo_branch
         DetectChanges        = true
@@ -271,7 +271,7 @@ resource "aws_codepipeline" "codestar_account_provisioning_customizations" {
       output_artifacts = ["account-provisioning-customizations"]
 
       configuration = {
-        ConnectionArn        = lookup({ github = local.connection_arn.github, bitbucket = local.connection_arn.bitbucket, githubenterprise = local.connection_arn.githubenterprise }, var.vcs_provider)
+        ConnectionArn        = lookup({ github = local.connection_arn.github, bitbucket = local.connection_arn.bitbucket, githubenterprise = local.connection_arn.githubenterprise, gitlab = local.connection_arn.gitlab, gitlabselfmanaged = local.connection_arn.gitlabselfmanaged }, var.vcs_provider)
         FullRepositoryId     = var.account_provisioning_customizations_repo_name
         BranchName           = var.account_provisioning_customizations_repo_branch
         DetectChanges        = true
