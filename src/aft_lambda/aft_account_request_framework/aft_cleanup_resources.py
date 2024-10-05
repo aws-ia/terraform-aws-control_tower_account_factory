@@ -102,8 +102,10 @@ def s3_delete_objects(session: Session, aft_management_account_id: str, account_
     s3 = session.client("s3")
 
     dirs_to_remove = [
+        (f"aft-backend-{aft_management_account_id}-primary-region", f"{account_id}-aft-account-customizations"),
         (f"aft-backend-{aft_management_account_id}-primary-region", f"{account_id}-aft-global-customizations"),
         (f"aft-backend-{aft_management_account_id}-primary-region", f"{account_id}-customizations-pipeline"),
+        (f"aft-backend-{aft_management_account_id}-secondary-region", f"{account_id}-aft-account-customizations"),
         (f"aft-backend-{aft_management_account_id}-secondary-region", f"{account_id}-aft-global-customizations"),
         (f"aft-backend-{aft_management_account_id}-secondary-region", f"{account_id}-customizations-pipeline"),
         (f"aft-customizations-pipeline-{aft_management_account_id}", f"{account_id}-customi"),
@@ -112,7 +114,8 @@ def s3_delete_objects(session: Session, aft_management_account_id: str, account_
     for bucket, dir in dirs_to_remove:
         logger.info(f"Deleting {bucket} {dir} (recursively)")
         list_objs_response = s3.list_objects_v2(Bucket=bucket, Prefix=dir)
-        delete_objs_request_keys = [{"Key": content["Key"]} for content in list_objs_response["Contents"]]
-        delete_objs_response = s3.delete_objects(Bucket=bucket, Delete={"Objects": delete_objs_request_keys})
-        sanitized_response = sanitize_input_for_logging(delete_objs_response)
-        logger.info(sanitized_response)
+        delete_objs_request_keys = [{"Key": obj["Key"]} for obj in list_objs_response["Contents"]]
+        if len(delete_objs_request_keys) > 0:
+            delete_objs_response = s3.delete_objects(Bucket=bucket, Delete={"Objects": delete_objs_request_keys})
+            sanitized_response = sanitize_input_for_logging(delete_objs_response)
+            logger.info(sanitized_response)
