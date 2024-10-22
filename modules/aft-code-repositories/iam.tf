@@ -131,7 +131,6 @@ resource "aws_iam_role_policy" "cloudwatch_events_codepipeline_role" {
     data_aws_partition_current_partition      = data.aws_partition.current.partition
     region                                    = data.aws_region.current.name
     account_id                                = data.aws_caller_identity.current.account_id
-    account_request_pipeline_name             = aws_codepipeline.codecommit_account_request[0].name
     provisioning_customizations_pipeline_name = aws_codepipeline.codecommit_account_provisioning_customizations[0].name
   })
 }
