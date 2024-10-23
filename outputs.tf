@@ -69,6 +69,10 @@ output "github_enterprise_url" {
   value = var.github_enterprise_url
 }
 
+output "gitlab_selfmanaged_url" {
+  value = var.gitlab_selfmanaged_url
+}
+
 output "account_request_repo_name" {
   value = var.account_request_repo_name
 }
