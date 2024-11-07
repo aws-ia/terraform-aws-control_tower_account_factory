@@ -101,7 +101,16 @@ phases:
           cd $DEFAULT_PATH/terraform
           export AWS_PROFILE=aft-management-admin
           /opt/aft/bin/terraform init -no-color
-          /opt/aft/bin/terraform apply -no-color --auto-approve
+          
+          delete_account=$(/opt/aft/bin/terraform output -json | jq -r '.json_item.value.custom_fields.DeleteAccount // "false"')
+          
+          if [ "$delete_account" = "true" ]; then
+            echo "DeleteAccount is set to true. Running terraform destroy..."
+            /opt/aft/bin/terraform destroy -no-color --auto-approve
+          else
+            echo "DeleteAccount is not set to true. Running terraform apply..."
+            /opt/aft/bin/terraform apply -no-color --auto-approve
+          fi
         else
           TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
           TF_TOKEN=$(aws ssm get-parameter --name "/aft/config/terraform/token" --with-decryption --query "Parameter.Value" --output text)
