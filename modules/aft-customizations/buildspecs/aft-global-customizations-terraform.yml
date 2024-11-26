@@ -102,9 +102,9 @@ phases:
           export AWS_PROFILE=aft-management-admin
           /opt/aft/bin/terraform init -no-color
           
-          delete_account=$(/opt/aft/bin/terraform output -json | jq -r '.json_item.value.custom_fields.DeleteAccount // "false"')
+          DELETE_ACCOUNT=$(aws ssm get-parameter --name "/aft/account-request/custom-fields/delete_account" --query "Parameter.Value" --output text)
           
-          if [ "$delete_account" = "true" ]; then
+          if [ "$DELETE_ACCOUNT" = "true" ]; then
             echo "DeleteAccount is set to true. Running terraform destroy..."
             /opt/aft/bin/terraform destroy -no-color --auto-approve
           else
