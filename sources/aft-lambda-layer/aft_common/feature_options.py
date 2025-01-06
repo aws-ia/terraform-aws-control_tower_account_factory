@@ -161,7 +161,7 @@ def get_vpc_security_groups(resource: EC2ServiceResource, vpc: str) -> List[str]
     sgs = []
     for s in vpc_resource.security_groups.all():
         sgs.append(s.id)
-    logger.info("SGs: " + str(sgs))
+    logger.info("SGs: " + utils.sanitize_input_for_logging(sgs))
     return sgs
 
 

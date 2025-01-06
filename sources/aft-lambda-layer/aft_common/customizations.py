@@ -7,7 +7,7 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import jsonschema
-from aft_common.aft_utils import get_high_retry_botoconfig
+from aft_common.aft_utils import get_high_retry_botoconfig, sanitize_input_for_logging
 from aft_common.constants import SSM_PARAM_AFT_DDB_META_TABLE
 from aft_common.organizations import OrganizationsAgent
 from aft_common.ssm import get_ssm_parameter_value
@@ -30,7 +30,9 @@ def validate_identify_targets_request(payload: Dict[str, Any]) -> bool:
     )
     with open(schema_path) as schema_file:
         schema_object = json.load(schema_file)
-    logger.info("Schema Loaded:" + json.dumps(schema_object))
+    logger.info(
+        "Schema Loaded:" + sanitize_input_for_logging(json.dumps(schema_object))
+    )
     validated = jsonschema.validate(payload, schema_object)
     if validated is None:
         logger.info("Request Validated")
@@ -53,7 +55,7 @@ def get_all_aft_account_ids(aft_management_session: Session) -> List[str]:
     while "LastEvaluatedKey" in response:
         logger.debug(
             "Paginated response found, continuing at {}".format(
-                response["LastEvaluatedKey"]
+                sanitize_input_for_logging(response["LastEvaluatedKey"])
             )
         )
         response = table.scan(ExclusiveStartKey=response["LastEvaluatedKey"])
