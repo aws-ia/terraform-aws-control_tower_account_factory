@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 import aft_common.ssm
 from aft_common import constants as utils
-from aft_common import notifications
+from aft_common import feature_options, notifications
 from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.auth import AuthClient
 from aft_common.logger import customization_request_logger
@@ -22,6 +22,10 @@ else:
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     request_id = event["customization_request_id"]
     target_account_id = event["account_info"]["account"]["id"]
+
+    request_id, target_account_id = (
+        feature_options.get_target_account_and_customization_id_from_event(event=event)
+    )
 
     logger = customization_request_logger(
         aws_account_id=target_account_id, customization_request_id=request_id

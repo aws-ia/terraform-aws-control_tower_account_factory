@@ -4,6 +4,7 @@
 #
 import os
 import time
+from typing import Any
 
 import requests
 
@@ -169,17 +170,18 @@ def create_destroy_run(workspace_id, api_token):
 
 def delete_workspace(workspace_id, api_token):
     endpoint = "{}/workspaces/{}".format(TERRAFORM_API_ENDPOINT, workspace_id)
+    sanitized_workspace_id = __sanitize_input_for_logging(workspace_id)
     headers = __build_standard_headers(api_token)
     response = __delete(endpoint, headers)
     if response is not None:
         errors = response["errors"]
         if len(errors) == 0:
-            print("Successfully deleted workspace {}".format(workspace_id))
+            print("Successfully deleted workspace {}".format(sanitized_workspace_id))
         else:
-            print("Error occured deleting workspace {}".format(workspace_id))
+            print("Error occured deleting workspace {}".format(sanitized_workspace_id))
             print(str(errors))
     else:
-        print("Successfully deleted workspace {}".format(workspace_id))
+        print("Successfully deleted workspace {}".format(sanitized_workspace_id))
 
 
 def wait_to_stabilize(entity_type, entity_id, target_states, api_token):
@@ -187,7 +189,11 @@ def wait_to_stabilize(entity_type, entity_id, target_states, api_token):
         status = get_action_status(entity_type, entity_id, api_token)
         if status in target_states:
             break
-        print("{} not yet ready. In status {}".format(entity_type, status))
+        print(
+            "{} not yet ready. In status {}".format(
+                entity_type, __sanitize_input_for_logging(status)
+            )
+        )
         time.sleep(10)
     return status
 
@@ -256,6 +262,14 @@ def __handle_errors(response):
             "More than one error returned by client; raising internal failure and placing all errors in the message"
         )
         raise ClientError(status="500", message=str(errors))
+
+
+def __sanitize_input_for_logging(input: Any) -> str:
+    """
+    Sanitize the input string by replacing newline characters, tabs with their literal string representations.
+    """
+    input_str = str(input)
+    return input_str.encode("unicode_escape").decode()
 
 
 class ClientError(Exception):

@@ -130,6 +130,7 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 | <a name="input_ct_home_region"></a> [ct\_home\_region](#input\_ct\_home\_region) | The region from which this module will be executed. This MUST be the same region as Control Tower is deployed. | `string` | n/a | yes |
 | <a name="input_ct_management_account_id"></a> [ct\_management\_account\_id](#input\_ct\_management\_account\_id) | Control Tower Management Account Id | `string` | n/a | yes |
 | <a name="input_github_enterprise_url"></a> [github\_enterprise\_url](#input\_github\_enterprise\_url) | GitHub enterprise URL, if GitHub Enterprise is being used | `string` | `"null"` | no |
+| <a name="input_gitlab_selfmanaged_url"></a> [gitlab\_selfmanaged\_url](#input\_gitlab\_selfmanaged\_url) | GitLab SelfManaged URL, if GitLab SelfManaged is being used | `string` | `"null"` | no |
 | <a name="input_global_codebuild_timeout"></a> [global\_codebuild\_timeout](#input\_global\_codebuild\_timeout) | Codebuild build timeout | `number` | `60` | no |
 | <a name="input_global_customizations_repo_branch"></a> [global\_customizations\_repo\_branch](#input\_global\_customizations\_repo\_branch) | Branch to source global customizations repo from | `string` | `"main"` | no |
 | <a name="input_global_customizations_repo_name"></a> [global\_customizations\_repo\_name](#input\_global\_customizations\_repo\_name) | Repository name for the global customization files. For non-CodeCommit repos, name should be in the format of Org/Repo | `string` | `"aft-global-customizations"` | no |
@@ -142,7 +143,7 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 | <a name="input_terraform_token"></a> [terraform\_token](#input\_terraform\_token) | Terraform token for Cloud or Enterprise | `string` | `"null"` | no |
 | <a name="input_terraform_version"></a> [terraform\_version](#input\_terraform\_version) | Terraform version being used for AFT | `string` | `"1.6.0"` | no |
 | <a name="input_tf_backend_secondary_region"></a> [tf\_backend\_secondary\_region](#input\_tf\_backend\_secondary\_region) | AFT creates a backend for state tracking for its own state as well as OSS cases. The backend's primary region is the same as the AFT region, but this defines the secondary region to replicate to. | `string` | `""` | no |
-| <a name="input_vcs_provider"></a> [vcs\_provider](#input\_vcs\_provider) | Customer VCS Provider - valid inputs are codecommit, bitbucket, github, or githubenterprise | `string` | `"codecommit"` | no |
+| <a name="input_vcs_provider"></a> [vcs\_provider](#input\_vcs\_provider) | Customer VCS Provider - valid inputs are codecommit, bitbucket, github, githubenterprise, gitlab, or gitLab self-managed | `string` | `"codecommit"` | no |
 
 ## Outputs
 
@@ -169,6 +170,7 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 | <a name="output_ct_home_region"></a> [ct\_home\_region](#output\_ct\_home\_region) | n/a |
 | <a name="output_ct_management_account_id"></a> [ct\_management\_account\_id](#output\_ct\_management\_account\_id) | n/a |
 | <a name="output_github_enterprise_url"></a> [github\_enterprise\_url](#output\_github\_enterprise\_url) | n/a |
+| <a name="output_gitlab_selfmanaged_url"></a> [gitlab\_selfmanaged\_url](#output\_gitlab\_selfmanaged\_url) | n/a |
 | <a name="output_global_customizations_repo_branch"></a> [global\_customizations\_repo\_branch](#output\_global\_customizations\_repo\_branch) | n/a |
 | <a name="output_global_customizations_repo_name"></a> [global\_customizations\_repo\_name](#output\_global\_customizations\_repo\_name) | n/a |
 | <a name="output_log_archive_account_id"></a> [log\_archive\_account\_id](#output\_log\_archive\_account\_id) | n/a |

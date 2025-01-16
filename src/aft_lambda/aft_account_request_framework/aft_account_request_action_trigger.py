@@ -6,12 +6,10 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import notifications
-from aft_common.account_request_framework import control_tower_param_changed
 from aft_common.account_request_record_handler import AccountRequestRecordHandler
+from aft_common.aft_utils import sanitize_input_for_logging
 from aft_common.auth import AuthClient
 from aft_common.logger import configure_aft_logger
-from aft_common.service_catalog import provisioned_product_exists
-from aft_common.shared_account import shared_account_request
 
 if TYPE_CHECKING:
     from aws_lambda_powertools.utilities.typing import LambdaContext
@@ -27,7 +25,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
     auth = AuthClient()
     try:
         record_handler = AccountRequestRecordHandler(auth=auth, event=event)
-        logger.info(record_handler.record)
+        logger.info(sanitize_input_for_logging(record_handler.record))
         record_handler.process_request()
 
     except Exception as error:

@@ -3,7 +3,7 @@
 
 [build-system]
 requires = [
-    "setuptools",
+    "setuptools >= 70.0.0",
     "wheel",
 ]
 
@@ -28,6 +28,7 @@ dependencies = [
     "botocore == 1.31.17",
     "requests == 2.32.2",
     "jsonschema == 4.3.2",
+    "urllib3 >= 1.26.19"
 ]
 
 
@@ -36,11 +37,11 @@ dev = [
     "pytest == 7.1.2",
     "pytest-cov == 4.1.0",
     "pytest-subtests == 0.8.0",
-    "black == 22.6.0",
+    "black == 24.3.0",
     "isort == 5.10.1",
     "pre-commit == 2.19.0",
     "mypy == 0.961",
-    "boto3-stubs[support, stepfunctions, ec2, organizations, servicecatalog, sqs, lambda, sns, sts, cloudtrail, ssm, iam, dynamodb] == 1.27.1",
+    "boto3-stubs[support, stepfunctions, ec2, organizations, servicecatalog, sqs, lambda, sns, sts, cloudtrail, ssm, iam, dynamodb, inspector2] == 1.27.1",
     "aws_lambda_powertools == 1.25.9",
     "types-requests == 2.27.5",
 ]

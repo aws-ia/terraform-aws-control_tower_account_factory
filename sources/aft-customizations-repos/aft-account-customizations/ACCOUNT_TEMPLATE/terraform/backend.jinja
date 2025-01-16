@@ -11,7 +11,9 @@ terraform {
     dynamodb_table = "{{ dynamodb_table }}"
     encrypt        = "true"
     kms_key_id     = "{{ kms_key_id }}"
-    role_arn       = "{{ aft_admin_role_arn }}"
+    assume_role {
+      role_arn     = "{{ aft_admin_role_arn }}"
+    }
   }
 }
 {% else -%}

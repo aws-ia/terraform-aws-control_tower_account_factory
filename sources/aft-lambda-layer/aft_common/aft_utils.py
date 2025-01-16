@@ -162,7 +162,7 @@ def invoke_step_function(
     sanitized_sfn_arn = sanitize_input_for_logging(sfn_arn)
     logger.info("Starting SFN execution of " + sanitized_sfn_arn)
     response = client.start_execution(stateMachineArn=sfn_arn, input=input)
-    logger.debug(response)
+    logger.debug(sanitize_input_for_logging(response))
     return response
 
 

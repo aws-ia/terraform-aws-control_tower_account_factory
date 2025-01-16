@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import aft_common.aft_utils as utils
 from boto3.session import Session
@@ -36,7 +36,8 @@ def get_aws_regions(client: EC2Client) -> List[str]:
 def get_default_vpc(client: EC2Client) -> Optional[str]:
     logger.info("Getting default VPC")
     try:
-        response = client.describe_vpcs(
+        describe_vpcs = client.get_paginator("describe_vpcs")
+        for page in describe_vpcs.paginate(
             Filters=[
                 {
                     "Name": "isDefault",
@@ -45,11 +46,11 @@ def get_default_vpc(client: EC2Client) -> Optional[str]:
                     ],
                 },
             ]
-        )
-        for v in response["Vpcs"]:
-            vpc_id: str = v["VpcId"]
-            logger.info(vpc_id)
-            return vpc_id
+        ):
+            for v in page["Vpcs"]:
+                vpc_id: str = v["VpcId"]
+                logger.info(vpc_id)
+                return vpc_id
         return None
     except ClientError as e:
         region = client.meta.region_name
@@ -160,7 +161,7 @@ def get_vpc_security_groups(resource: EC2ServiceResource, vpc: str) -> List[str]
     sgs = []
     for s in vpc_resource.security_groups.all():
         sgs.append(s.id)
-    logger.info("SGs: " + str(sgs))
+    logger.info("SGs: " + utils.sanitize_input_for_logging(sgs))
     return sgs
 
 
@@ -280,3 +281,19 @@ def get_log_bucket_arns(session: Session) -> List[str]:
         )
     logger.info(str(bucket_arns))
     return bucket_arns
+
+
+def get_target_account_and_customization_id_from_event(
+    event: Dict[str, Any]
+) -> Tuple[str, str]:
+    request_id = event["customization_request_id"]
+    target_account_id = event.get("account_info", {}).get("account", {}).get("id", "")
+    if not target_account_id or not is_valid_account_id(target_account_id):
+        raise ValueError(
+            f"Event does not contain a valid target account ID: {target_account_id}"
+        )
+    return request_id, target_account_id
+
+
+def is_valid_account_id(account_id: str) -> bool:
+    return account_id.isdigit() and len(account_id) == 12

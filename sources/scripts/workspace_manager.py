@@ -46,7 +46,8 @@ def setup_workspace(
 def stage_run(workspace_id, assume_role_arn, role_session_name, api_token):
     cv_id, upload_url = terraform.create_configuration_version(workspace_id, api_token)
     print("Successfully created a new configuration version: {}".format(cv_id))
-    data = open(LOCAL_CONFIGURATION_PATH, "rb")
+    with open(LOCAL_CONFIGURATION_PATH, "rb") as file:
+        data = file.read()
     terraform.upload_configuration_content(data, upload_url)
     print(
         "Successfully uploaded configuration content to upload URL: {}".format(

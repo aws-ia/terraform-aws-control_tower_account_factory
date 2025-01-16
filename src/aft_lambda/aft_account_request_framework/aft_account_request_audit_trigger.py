@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from aft_common import constants as utils
 from aft_common import notifications, ssm
 from aft_common.account_request_framework import put_audit_record
+from aft_common.aft_utils import sanitize_input_for_logging
 from aft_common.logger import configure_aft_logger
 from boto3.session import Session
 
@@ -52,7 +53,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                             event_name,
                         )
                     else:
-                        logger.info(f"Event Name: {event_name} is unsupported.")
+                        logger.info(
+                            f"Event Name: {sanitize_input_for_logging(event_name)} is unsupported."
+                        )
                 else:
                     raise Exception("Non DynamoDB Event Received")
         else:
