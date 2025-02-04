@@ -47,10 +47,11 @@ phases:
 
       # Install Terraform
       - cd /tmp
-      - echo "Installing Terraform"
-      - curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
-      - unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
-      - terraform --version
+      - echo "Installing OpenTofu"
+      - curl -fsSLO https://github.com/opentofu/opentofu/releases/download/v${TF_VERSION}/tofu_${TF_VERSION}_linux_amd64.zip
+      - unzip -q -o -p tofu_${TF_VERSION}_linux_amd64.zip tofu > /usr/bin/tofu
+      - chmod +x /usr/bin/tofu
+      - tofu -no-color --version
 
       # Install Python Dependencies
       - python3 -m venv ./venv
@@ -68,5 +69,5 @@ phases:
     on-failure: ABORT
     commands:
       - export AWS_PROFILE=aft-management-admin
-      - terraform init -no-color
-      - terraform apply -var="account_id=$VENDED_ACCOUNT_ID" -no-color --auto-approve
+      - tofu init -no-color
+      - tofu apply -var="account_id=$VENDED_ACCOUNT_ID" -no-color --auto-approve

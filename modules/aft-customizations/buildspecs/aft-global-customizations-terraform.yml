@@ -86,12 +86,12 @@ phases:
           TF_S3_KEY=$VENDED_ACCOUNT_ID-aft-global-customizations/terraform.tfstate
 
           cd /tmp
-          echo "Installing Terraform"
-          curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+          echo "Installing OpenTofu"
+          curl -fsSLO https://github.com/opentofu/opentofu/releases/download/v${TF_VERSION}/tofu_${TF_VERSION}_linux_amd64.zip
           mkdir -p /opt/aft/bin
-          unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip
-          mv terraform /opt/aft/bin
-          /opt/aft/bin/terraform -no-color --version
+          unzip -q -o -p tofu_${TF_VERSION}_linux_amd64.zip tofu > /opt/aft/bin/tofu
+          chmod +x /opt/aft/bin/tofu
+          /opt/aft/bin/tofu -no-color --version
 
           # Move back to customization module
           cd $DEFAULT_PATH/terraform
@@ -100,8 +100,8 @@ phases:
 
           cd $DEFAULT_PATH/terraform
           export AWS_PROFILE=aft-management-admin
-          /opt/aft/bin/terraform init -no-color
-          /opt/aft/bin/terraform apply -no-color --auto-approve
+          /opt/aft/bin/tofu init -no-color
+          /opt/aft/bin/tofu apply -no-color --auto-approve
         else
           TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
           TF_TOKEN=$(aws ssm get-parameter --name "/aft/config/terraform/token" --with-decryption --query "Parameter.Value" --output text)
