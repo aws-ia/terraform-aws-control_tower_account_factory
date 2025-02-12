@@ -108,10 +108,15 @@ resource "aws_cloudwatch_event_target" "account_request" {
 }
 
 ##############################################################
-# CodeStar - account-request
+# CodeConnections - account-request
 ##############################################################
 
-resource "aws_codepipeline" "codestar_account_request" {
+moved {
+  from = aws_codepipeline.codestar_account_request
+  to   = aws_codepipeline.codeconnections_account_request
+}
+
+resource "aws_codepipeline" "codeconnections_account_request" {
   count         = local.vcs.is_codecommit ? 0 : 1
   name          = "ct-aft-account-request"
   role_arn      = aws_iam_role.account_request_codepipeline_role.arn
@@ -238,13 +243,15 @@ resource "aws_codepipeline" "codecommit_account_provisioning_customizations" {
   }
 }
 
-
-
 ##############################################################
-# CodeStar - account-provisioning-customizations
+# CodeConnections - account-provisioning-customizations
 ##############################################################
 
-resource "aws_codepipeline" "codestar_account_provisioning_customizations" {
+moved {
+  from = aws_codepipeline.codestar_account_provisioning_customizations
+  to   = aws_codepipeline.codeconnections_account_provisioning_customizations
+}
+resource "aws_codepipeline" "codeconnections_account_provisioning_customizations" {
   count         = local.vcs.is_codecommit ? 0 : 1
   name          = "ct-aft-account-provisioning-customizations"
   role_arn      = aws_iam_role.account_provisioning_customizations_codepipeline_role.arn

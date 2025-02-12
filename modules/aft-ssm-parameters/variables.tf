@@ -222,7 +222,7 @@ variable "account_customizations_repo_branch" {
   type = string
 }
 
-variable "codestar_connection_arn" {
+variable "codeconnections_connection_arn" {
   type = string
 }
 

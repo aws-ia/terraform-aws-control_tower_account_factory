@@ -231,7 +231,7 @@ module "aft_ssm_parameters" {
   aft_customizations_identify_targets_function_arn            = module.aft_customizations.aft_customizations_identify_targets_function_arn
   aft_customizations_execute_pipeline_function_arn            = module.aft_customizations.aft_customizations_execute_pipeline_function_arn
   aft_customizations_get_pipeline_executions_function_arn     = module.aft_customizations.aft_customizations_get_pipeline_executions_function_arn
-  codestar_connection_arn                                     = module.aft_code_repositories.codestar_connection_arn
+  codeconnections_connection_arn                              = module.aft_code_repositories.codeconnections_connection_arn
   aft_log_key_arn                                             = module.aft_feature_options.aws_aft_log_key_arn
   aft_logging_bucket_arn                                      = module.aft_feature_options.aws_aft_logs_s3_bucket_arn
   aft_config_backend_bucket_id                                = module.aft_backend.bucket_id

@@ -2,7 +2,7 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Effect":"Allow",
+      "Effect": "Allow",
       "Action": [
         "s3:Get*",
         "s3:List*",
@@ -19,7 +19,7 @@
         "codebuild:BatchGetBuilds",
         "codebuild:StartBuild"
       ],
-        "Resource": "arn:${data_aws_partition_current_partition}:codebuild:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*customizations*"
+      "Resource": "arn:${data_aws_partition_current_partition}:codebuild:${data_aws_region_current_name}:${data_aws_caller_identity_current_account_id}:*customizations*"
     },
     {
       "Effect": "Allow",
@@ -43,10 +43,13 @@
       ],
       "Resource": "${data_aws_kms_alias_aft_key_target_key_arn}"
     },
-     {
-         "Effect": "Allow",
-         "Action": "codestar-connections:UseConnection",
-         "Resource": "*"
-     }
+    {
+      "Effect": "Allow",
+      "Action": [
+        "codestar-connections:UseConnection",
+        "codeconnections:UseConnection"
+      ],
+      "Resource": "*"
+    }
   ]
 }
