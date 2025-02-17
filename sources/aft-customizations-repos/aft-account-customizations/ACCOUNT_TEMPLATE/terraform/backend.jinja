@@ -1,7 +1,6 @@
 ## Auto generated backend.tf ##
 ## Updated on: {{ timestamp }} ##
 
-{% if tf_distribution_type == "oss" -%}
 terraform {
   required_version = ">= {{ tf_version }}"
   backend "s3" {
@@ -16,13 +15,3 @@ terraform {
     }
   }
 }
-{% else -%}
-terraform {
-    backend "remote" {
-        organization = "{{ terraform_org_name }}"
-        workspaces {
-        name = "{{ terraform_workspace_name }}"
-        }
-    }
-}
-{% endif %}

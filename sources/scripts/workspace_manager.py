@@ -253,16 +253,15 @@ if __name__ == "__main__":
     )
     parser.add_argument("--api_endpoint", type=str, help="Terraform API endpoint")
     parser.add_argument("--api_token", type=str, help="Terraform API token")
-    parser.add_argument("--terraform_version", type=str, help="Terraform Version")
-    parser.add_argument("--config_file", type=str, help="Terraform Config File")
+    parser.add_argument("--tofu_version", type=str, help="OpenTofu Version")
+    parser.add_argument("--config_file", type=str, help="OpenTofu Config File")
 
     args = parser.parse_args()
 
-    TERRAFORM_API_ENDPOINT = args.api_endpoint
     LOCAL_CONFIGURATION_PATH = args.config_file
     TERRAFORM_VERSION = args.terraform_version
 
-    terraform.init(TERRAFORM_API_ENDPOINT, TERRAFORM_VERSION, LOCAL_CONFIGURATION_PATH)
+    terraform.init(TERRAFORM_VERSION, LOCAL_CONFIGURATION_PATH)
 
     if args.operation == "delete":
         delete_workspace(

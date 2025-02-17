@@ -137,11 +137,7 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 | <a name="input_log_archive_account_id"></a> [log\_archive\_account\_id](#input\_log\_archive\_account\_id) | Log Archive Account Id | `string` | n/a | yes |
 | <a name="input_log_archive_bucket_object_expiration_days"></a> [log\_archive\_bucket\_object\_expiration\_days](#input\_log\_archive\_bucket\_object\_expiration\_days) | Amount of days to keep the objects stored in the AFT logging bucket | `number` | `365` | no |
 | <a name="input_maximum_concurrent_customizations"></a> [maximum\_concurrent\_customizations](#input\_maximum\_concurrent\_customizations) | Maximum number of customizations/pipelines to run at once | `number` | `5` | no |
-| <a name="input_terraform_api_endpoint"></a> [terraform\_api\_endpoint](#input\_terraform\_api\_endpoint) | API Endpoint for Terraform. Must be in the format of <https://xxx.xxx>. | `string` | `"https://app.terraform.io/api/v2/"` | no |
-| <a name="input_terraform_distribution"></a> [terraform\_distribution](#input\_terraform\_distribution) | Terraform distribution being used for AFT - valid values are oss, tfc, or tfe | `string` | `"oss"` | no |
-| <a name="input_terraform_org_name"></a> [terraform\_org\_name](#input\_terraform\_org\_name) | Organization name for Terraform Cloud or Enterprise | `string` | `"null"` | no |
-| <a name="input_terraform_token"></a> [terraform\_token](#input\_terraform\_token) | Terraform token for Cloud or Enterprise | `string` | `"null"` | no |
-| <a name="input_terraform_version"></a> [terraform\_version](#input\_terraform\_version) | Terraform version being used for AFT | `string` | `"1.6.0"` | no |
+| <a name="input_tofu_version"></a> [terraform\_version](#input\_terraform\_version) | OpenTofu version being used for AFT | `string` | `"1.9.0"` | no |
 | <a name="input_tf_backend_secondary_region"></a> [tf\_backend\_secondary\_region](#input\_tf\_backend\_secondary\_region) | AFT creates a backend for state tracking for its own state as well as OSS cases. The backend's primary region is the same as the AFT region, but this defines the secondary region to replicate to. | `string` | `""` | no |
 | <a name="input_vcs_provider"></a> [vcs\_provider](#input\_vcs\_provider) | Customer VCS Provider - valid inputs are codecommit, bitbucket, github, githubenterprise, gitlab, or gitLab self-managed | `string` | `"codecommit"` | no |
 
@@ -175,10 +171,7 @@ As of version 1.6.0, AFT collects anonymous operational metrics to help AWS impr
 | <a name="output_global_customizations_repo_name"></a> [global\_customizations\_repo\_name](#output\_global\_customizations\_repo\_name) | n/a |
 | <a name="output_log_archive_account_id"></a> [log\_archive\_account\_id](#output\_log\_archive\_account\_id) | n/a |
 | <a name="output_maximum_concurrent_customizations"></a> [maximum\_concurrent\_customizations](#output\_maximum\_concurrent\_customizations) | n/a |
-| <a name="output_terraform_api_endpoint"></a> [terraform\_api\_endpoint](#output\_terraform\_api\_endpoint) | n/a |
-| <a name="output_terraform_distribution"></a> [terraform\_distribution](#output\_terraform\_distribution) | n/a |
-| <a name="output_terraform_org_name"></a> [terraform\_org\_name](#output\_terraform\_org\_name) | n/a |
-| <a name="output_terraform_version"></a> [terraform\_version](#output\_terraform\_version) | n/a |
+| <a name="output_tofu_version"></a> [tofu\_version](#output\_tofu\_version) | n/a |
 | <a name="output_tf_backend_secondary_region"></a> [tf\_backend\_secondary\_region](#output\_tf\_backend\_secondary\_region) | n/a |
 | <a name="output_vcs_provider"></a> [vcs\_provider](#output\_vcs\_provider) | n/a |
 <!-- END_TF_DOCS -->

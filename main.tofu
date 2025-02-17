@@ -94,7 +94,6 @@ module "aft_code_repositories" {
   github_enterprise_url                           = var.github_enterprise_url
   gitlab_selfmanaged_url                          = var.gitlab_selfmanaged_url
   vcs_provider                                    = var.vcs_provider
-  terraform_distribution                          = var.terraform_distribution
   account_provisioning_customizations_repo_name   = var.account_provisioning_customizations_repo_name
   account_provisioning_customizations_repo_branch = var.account_provisioning_customizations_repo_branch
   account_customizations_repo_branch              = var.account_customizations_repo_branch
@@ -130,7 +129,6 @@ module "aft_customizations" {
   aft_config_backend_kms_key_id                     = module.aft_backend.kms_key_id
   invoke_account_provisioning_sfn_arn               = module.aft_account_provisioning_framework.state_machine_arn
   account_request_table_name                        = module.aft_account_request_framework.request_table_name
-  terraform_distribution                            = var.terraform_distribution
   cloudwatch_log_group_retention                    = var.cloudwatch_log_group_retention
   maximum_concurrent_customizations                 = var.maximum_concurrent_customizations
   customizations_archive_path                       = module.packaging.customizations_archive_path
@@ -246,9 +244,7 @@ module "aft_ssm_parameters" {
   ct_log_archive_account_id                                   = var.log_archive_account_id
   aft_management_account_id                                   = var.aft_management_account_id
   ct_primary_region                                           = var.ct_home_region
-  tf_version                                                  = var.terraform_version
-  tf_distribution                                             = var.terraform_distribution
-  terraform_api_endpoint                                      = var.terraform_api_endpoint
+  tf_version                                                  = var.tofu_version
   account_request_repo_branch                                 = var.account_request_repo_branch
   account_request_repo_name                                   = var.account_request_repo_name
   vcs_provider                                                = var.vcs_provider
@@ -256,9 +252,7 @@ module "aft_ssm_parameters" {
   aft_config_backend_secondary_region                         = var.tf_backend_secondary_region
   aft_framework_repo_url                                      = var.aft_framework_repo_url
   aft_framework_repo_git_ref                                  = local.aft_framework_repo_git_ref
-  terraform_token                                             = var.terraform_token # Null default value #tfsec:ignore:general-secrets-no-plaintext-exposure
-  terraform_version                                           = var.terraform_version
-  terraform_org_name                                          = var.terraform_org_name
+  tofu_version                                                = var.tofu_version
   aft_feature_cloudtrail_data_events                          = var.aft_feature_cloudtrail_data_events
   aft_feature_enterprise_support                              = var.aft_feature_enterprise_support
   aft_feature_delete_default_vpcs_enabled                     = var.aft_feature_delete_default_vpcs_enabled

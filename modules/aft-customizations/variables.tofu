@@ -65,10 +65,6 @@ variable "request_metadata_table_name" {
   type = string
 }
 
-variable "terraform_distribution" {
-  type = string
-}
-
 variable "aft_config_backend_table_id" {
   type = string
 }

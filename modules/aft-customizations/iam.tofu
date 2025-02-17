@@ -166,9 +166,8 @@ resource "aws_iam_role_policy_attachment" "aft_get_pipeline_executions_lambda" {
 }
 
 resource "aws_iam_role_policy" "terraform_oss_backend_codebuild_customizations_policy" {
-  count = var.terraform_distribution == "oss" ? 1 : 0
-  name  = "ct-aft-codebuild-customizations-terraform-oss-backend-policy"
-  role  = aws_iam_role.aft_codebuild_customizations_role.id
+  name = "ct-aft-codebuild-customizations-terraform-oss-backend-policy"
+  role = aws_iam_role.aft_codebuild_customizations_role.id
 
   policy = templatefile("${path.module}/iam/role-policies/ct_aft_codebuild_oss_backend_policy.tpl", {
     data_aws_partition_current_partition              = data.aws_partition.current.partition

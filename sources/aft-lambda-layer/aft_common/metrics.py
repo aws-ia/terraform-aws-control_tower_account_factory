@@ -68,9 +68,9 @@ class AFTMetrics:
             aft_management_session, aft_common.constants.SSM_PARAM_ACCOUNT_AFT_VERSION
         )
 
-        config["terraform_version"] = get_ssm_parameter_value(
+        config["tofu_version"] = get_ssm_parameter_value(
             aft_management_session,
-            aft_common.constants.SSM_PARAM_ACCOUNT_TERRAFORM_VERSION,
+            aft_common.constants.SSM_PARAM_ACCOUNT_TOFU_VERSION,
         )
 
         config["region"] = utils.get_session_info(aft_management_session)["region"]

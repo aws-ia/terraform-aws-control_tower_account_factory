@@ -110,24 +110,12 @@ output "account_provisioning_customizations_repo_branch" {
 # AFT Terraform Distribution Variables
 #########################################
 
-output "terraform_version" {
-  value = var.terraform_version
-}
-
-output "terraform_distribution" {
-  value = var.terraform_distribution
+output "tofu_version" {
+  value = var.tofu_version
 }
 
 output "tf_backend_secondary_region" {
   value = var.tf_backend_secondary_region
-}
-
-output "terraform_org_name" {
-  value = var.terraform_org_name
-}
-
-output "terraform_api_endpoint" {
-  value = var.terraform_api_endpoint
 }
 
 #########################################

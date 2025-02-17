@@ -61,9 +61,8 @@ resource "aws_iam_role_policy" "account_provisioning_customizations_codebuild_po
 }
 
 resource "aws_iam_role_policy" "terraform_oss_backend_account_provisioning_customizations_codebuild_policy" {
-  count = var.terraform_distribution == "oss" ? 1 : 0
-  name  = "ct-aft-codebuild-terraform-oss-backend-policy"
-  role  = aws_iam_role.account_provisioning_customizations_codebuild_role.id
+  name = "ct-aft-codebuild-terraform-oss-backend-policy"
+  role = aws_iam_role.account_provisioning_customizations_codebuild_role.id
 
   policy = templatefile("${path.module}/iam/role-policies/ct_aft_codebuild_oss_backend_policy.tpl", {
     data_aws_partition_current_partition              = data.aws_partition.current.partition
@@ -95,9 +94,8 @@ resource "aws_iam_role_policy" "account_request_codebuild_policy" {
 }
 
 resource "aws_iam_role_policy" "terraform_oss_backend_account_request_codebuild_policy" {
-  count = var.terraform_distribution == "oss" ? 1 : 0
-  name  = "ct-aft-codebuild-terraform-oss-backend-policy"
-  role  = aws_iam_role.account_request_codebuild_role.id
+  name = "ct-aft-codebuild-terraform-oss-backend-policy"
+  role = aws_iam_role.account_request_codebuild_role.id
 
   policy = templatefile("${path.module}/iam/role-policies/ct_aft_codebuild_oss_backend_policy.tpl", {
     data_aws_partition_current_partition              = data.aws_partition.current.partition

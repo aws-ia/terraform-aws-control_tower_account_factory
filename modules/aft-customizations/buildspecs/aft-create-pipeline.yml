@@ -48,8 +48,10 @@ phases:
       # Install OpenTofu
       - cd /tmp
       - echo "Installing OpenTofu"
-      - curl -q -o tofu_${TF_VERSION}_linux_amd64.zip https://github.com/opentofu/opentofu/releases/download/v${TF_VERSION}/tofu_${TF_VERSION}_linux_amd64.zip
-      - unzip -q -o tofu_${TF_VERSION}_linux_amd64.zip && mv tofu /usr/bin
+      - curl --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh
+      - chmod +x install-opentofu.sh
+      - ./install-opentofu.sh --install-method standalone --opentofu-version $TF_VERSION
+      - rm -f install-opentofu.sh
       - tofu --version
 
       # Install Python Dependencies

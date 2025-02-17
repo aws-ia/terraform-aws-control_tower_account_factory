@@ -288,26 +288,16 @@ variable "account_provisioning_customizations_repo_branch" {
 }
 
 #########################################
-# AFT Terraform Distribution Variables
+# AFT OpenTofu Distribution Variables
 #########################################
 
-variable "terraform_version" {
-  description = "Terraform version being used for AFT"
+variable "tofu_version" {
+  description = "Tofu version being used for AFT"
   type        = string
-  default     = "1.6.0"
+  default     = "1.9.0"
   validation {
-    condition     = can(regex("\\bv?\\d+(\\.\\d+)+[\\-\\w]*\\b", var.terraform_version))
-    error_message = "Invalid value for var: terraform_version."
-  }
-}
-
-variable "terraform_distribution" {
-  description = "Terraform distribution being used for AFT - valid values are oss, tfc, or tfe"
-  type        = string
-  default     = "oss"
-  validation {
-    condition     = contains(["oss", "tfc", "tfe"], var.terraform_distribution)
-    error_message = "Valid values for var: terraform_distribution are (oss, tfc, tfe)."
+    condition     = can(regex("\\bv?\\d+(\\.\\d+)+[\\-\\w]*\\b", var.tofu_version))
+    error_message = "Invalid value for var: tofu_version."
   }
 }
 
@@ -318,38 +308,6 @@ variable "tf_backend_secondary_region" {
   validation {
     condition     = var.tf_backend_secondary_region == "" || can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af)-(central|(north|south)?(east|west)?)-\\d", var.tf_backend_secondary_region))
     error_message = "Variable var: tf_backend_secondary_region is not valid."
-  }
-}
-
-# Non-OSS Variables
-variable "terraform_token" {
-  type        = string
-  description = "Terraform token for Cloud or Enterprise"
-  default     = "null" # Non-sensitive default value #tfsec:ignore:general-secrets-no-plaintext-exposure
-  sensitive   = true
-  validation {
-    condition     = length(var.terraform_token) > 0
-    error_message = "Variable var: terraform_token cannot be empty."
-  }
-}
-
-variable "terraform_org_name" {
-  type        = string
-  description = "Organization name for Terraform Cloud or Enterprise"
-  default     = "null"
-  validation {
-    condition     = length(var.terraform_org_name) > 0
-    error_message = "Variable var: terraform_org_name cannot be empty."
-  }
-}
-
-variable "terraform_api_endpoint" {
-  description = "API Endpoint for Terraform. Must be in the format of https://xxx.xxx."
-  type        = string
-  default     = "https://app.terraform.io/api/v2/"
-  validation {
-    condition     = length(var.terraform_api_endpoint) > 0
-    error_message = "Variable var: terraform_api_endpoint cannot be empty."
   }
 }
 

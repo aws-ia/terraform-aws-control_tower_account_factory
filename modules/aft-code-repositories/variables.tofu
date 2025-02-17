@@ -22,10 +22,6 @@ variable "vcs_provider" {
   type = string
 }
 
-variable "terraform_distribution" {
-  type = string
-}
-
 variable "github_enterprise_url" {
   type = string
 }
