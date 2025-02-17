@@ -48,15 +48,15 @@ resource "aws_codepipeline" "codecommit_account_request" {
   # Apply Account Request
   ##############################################################
   stage {
-    name = "terraform-apply"
+    name = "opentofu-apply"
 
     action {
-      name             = "Apply-Terraform"
+      name             = "Apply-OpenTofu"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
       input_artifacts  = ["account-request"]
-      output_artifacts = ["account-request-terraform"]
+      output_artifacts = ["account-request-opentofu"]
       version          = "1"
       run_order        = "2"
       configuration = {
@@ -160,15 +160,15 @@ resource "aws_codepipeline" "codeconnections_account_request" {
   # Apply Account Request
   ##############################################################
   stage {
-    name = "terraform-apply"
+    name = "Tofu-apply"
 
     action {
-      name             = "Apply-Terraform"
+      name             = "Apply-Tofu"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
       input_artifacts  = ["account-request"]
-      output_artifacts = ["account-request-terraform"]
+      output_artifacts = ["account-request-tofu"]
       version          = "1"
       run_order        = "2"
       configuration = {
@@ -222,13 +222,13 @@ resource "aws_codepipeline" "codecommit_account_provisioning_customizations" {
   }
 
   ##############################################################
-  # Account Provisioning Customizations - Terraform Apply
+  # Account Provisioning Customizations - Tofu Apply
   ##############################################################
   stage {
-    name = "terraform-apply"
+    name = "tofu-apply"
 
     action {
-      name             = "Apply-Terraform"
+      name             = "Apply-Tofu"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
@@ -292,13 +292,13 @@ resource "aws_codepipeline" "codeconnections_account_provisioning_customizations
   }
 
   ##############################################################
-  # Account Provisioning Customizations - Terraform Apply
+  # Account Provisioning Customizations - Tofu Apply
   ##############################################################
   stage {
-    name = "terraform-apply"
+    name = "tofu-apply"
 
     action {
-      name             = "Apply-Terraform"
+      name             = "Apply-Tofu"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
