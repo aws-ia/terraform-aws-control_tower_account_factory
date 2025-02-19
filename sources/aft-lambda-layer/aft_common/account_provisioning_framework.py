@@ -31,6 +31,8 @@ else:
 
 logger = logging.getLogger("aft")
 
+iam = boto3.client('iam')
+
 
 AFT_EXEC_ROLE = "AWSAFTExecution"
 
@@ -71,7 +73,7 @@ class ProvisionRoles:
         )
 
     def _deploy_role_in_target_account(
-        self, role_name: str, trust_policy: str, policy_arn: str
+        self, role_name: str, trust_policy: str, policy_arns: List[str]
     ) -> None:
         """
         Since we're creating the AFT roles in the account, we must assume
@@ -96,11 +98,12 @@ class ProvisionRoles:
             role_name=role_name,
             trust_policy=trust_policy,
         )
-        self._put_policy_on_role(
-            target_account_session=target_account_session,
-            role_name=role_name,
-            policy_arn=policy_arn,
-        )
+        for policy_arn in policy_arns:
+            self._put_policy_on_role(
+                target_account_session=target_account_session,
+                role_name=role_name,
+                policy_arn=policy_arn,
+            )
 
     def _put_role(
         self,
@@ -159,8 +162,8 @@ class ProvisionRoles:
             resource: IAMServiceResource = target_account_session.resource("iam")
             role = resource.Role(role_name)
             role.attach_policy(PolicyArn=policy_arn)
-            timeout = datetime.utcnow() + timedelta(minutes=timeout_in_mins)
-            while datetime.utcnow() < timeout:
+            timeout = datetime.now(datetime.timezone.utc) + timedelta(minutes=timeout_in_mins)
+            while datetime.now(datetime.timezone.utc) < timeout:
                 time.sleep(delay)
                 if self.role_policy_is_attached(
                     role_name=role_name,
@@ -215,11 +218,44 @@ class ProvisionRoles:
         ]
 
         logger.info(f"Deploying roles {', '.join(aft_role_names)}")
+
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Action": [
+                        "kms:DescribeKey",
+                        "kms:Decrypt"
+                    ],
+                    "Effect": "Allow",
+                    "Resource": "arn:aws:kms:us-east-1:232020727462:key/24a35263-8de6-4ff1-bf7b-e1b92926e0c3",
+                    "Sid": "CrossAccountAccessKMS"
+                },
+                {
+                    "Action": [
+                        "secretsmanager:GetSecretValue",
+                        "secretsmanager:GetResourcePolicy",
+                        "secretsmanager:DescribeSecret"
+                    ],
+                    "Effect": "Allow",
+                    "Resource": "arn:aws:secretsmanager:us-east-1:232020727462:secret:datadog-setup-8tNIgS",
+                    "Sid": "CrossAccountAccessSecretsManager"
+                }
+            ]
+        }
+
+        response = iam.create_policy(
+            PolicyName='cross-account-datadog-setup-secrets',
+            PolicyDocument=json.dumps(policy_document)
+        )
+
+        policy_arn = response['Policy']['Arn']
+
         for role_name in aft_role_names:
             self._deploy_role_in_target_account(
                 role_name=role_name,
                 trust_policy=trust_policy,
-                policy_arn=self.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN,
+                policy_arns=[self.ADMINISTRATOR_ACCESS_MANAGED_POLICY_ARN, policy_arn],
             )
             logger.info(f"Deployed {role_name} role")
 
