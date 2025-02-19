@@ -36,6 +36,7 @@ data "aws_iam_policy_document" "cross_account_secret_access" {
     actions = [
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetSecretValue",
+      "secretsmanager:GetResourcePolicy",
     ]
     resources = ["arn:aws:secretsmanager:us-east-1:232020727462:secret:datadog-setup-8tNIgS"]
   }
