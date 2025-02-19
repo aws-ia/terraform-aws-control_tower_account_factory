@@ -8,6 +8,7 @@ provider "aws" {
   default_tags {
     tags = {
       managed_by = "AFT"
+      scm-source = "https://github.com/Avodah-Inc/opentofu-aws-control_tower_account_factory"
     }
   }
 }
@@ -22,6 +23,8 @@ provider "aws" {
   default_tags {
     tags = {
       managed_by = "AFT"
+      role_arn   = "arn:${data.aws_partition.current.partition}:iam::${var.aft_management_account_id}:role/AWSControlTowerExecution"
+      scm-source = "https://github.com/Avodah-Inc/opentofu-aws-control_tower_account_factory"
     }
   }
 }
@@ -35,6 +38,8 @@ provider "aws" {
   default_tags {
     tags = {
       managed_by = "AFT"
+      role_arn   = "arn:${data.aws_partition.current.partition}:iam::${var.aft_management_account_id}:role/AWSControlTowerExecution"
+      scm-source = "https://github.com/Avodah-Inc/opentofu-aws-control_tower_account_factory"
     }
   }
 }
@@ -48,6 +53,8 @@ provider "aws" {
   default_tags {
     tags = {
       managed_by = "AFT"
+      role_arn   = "arn:${data.aws_partition.current.partition}:iam::${var.audit_account_id}:role/AWSControlTowerExecution"
+      scm-source = "https://github.com/Avodah-Inc/opentofu-aws-control_tower_account_factory"
     }
   }
 }
@@ -61,6 +68,8 @@ provider "aws" {
   default_tags {
     tags = {
       managed_by = "AFT"
+      role_arn   = "arn:${data.aws_partition.current.partition}:iam::${var.log_archive_account_id}:role/AWSControlTowerExecution"
+      scm-source = "https://github.com/Avodah-Inc/opentofu-aws-control_tower_account_factory"
     }
   }
 }
