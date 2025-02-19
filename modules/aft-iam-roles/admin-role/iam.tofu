@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "cross_account_secret_access" {
       "kms:Decrypt",
       "kms:DescribeKey",
     ]
-    resources = ["arn:aws:kms:us-east-1:232020727462:key/de189df0-e928-4f00-89a8-19cc43776822"]
+    resources = ["arn:aws:kms:us-east-1:232020727462:key/24a35263-8de6-4ff1-bf7b-e1b92926e0c3"]
   }
 
   statement {
@@ -37,7 +37,7 @@ data "aws_iam_policy_document" "cross_account_secret_access" {
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetSecretValue",
     ]
-    resources = ["arn:aws:secretsmanager:us-east-1:232020727462:secret:opentofu-github-pat-for-flux-terraform-provider-20240928210314109300000001-6WHEIx"]
+    resources = ["arn:aws:secretsmanager:us-east-1:232020727462:secret:datadog-setup-8tNIgS"]
   }
 }
 
