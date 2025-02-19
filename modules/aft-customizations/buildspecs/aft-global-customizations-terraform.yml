@@ -58,7 +58,7 @@ phases:
       # Mark helper scripts as executable
       - chmod +x $DEFAULT_PATH/api_helpers/pre-api-helpers.sh
       - chmod +x $DEFAULT_PATH/api_helpers/post-api-helpers.sh
-      
+
   pre_build:
     on-failure: ABORT
     commands:

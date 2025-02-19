@@ -53,7 +53,7 @@ resource "aws_cloudwatch_event_target" "aft_controltower_event_logger" {
   event_bus_name = aws_cloudwatch_event_bus.aft_from_ct_management.name
 }
 
-######### AFT invoke AFT Account Provisioning Framework ######### 
+######### AFT invoke AFT Account Provisioning Framework #########
 
 resource "aws_cloudwatch_event_target" "aft_invoke_aft_account_provisioning_framework" {
   rule           = aws_cloudwatch_event_rule.aft_controltower_event_trigger.name

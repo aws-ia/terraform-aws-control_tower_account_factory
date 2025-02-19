@@ -1,0 +1,25 @@
+---
+default_stages: [commit]  # Override default stages to only be `commit` to allow for faster development
+repos:
+- repo: https://github.com/tofuutils/pre-commit-opentofu
+  rev: v2.1.0
+  hooks:
+  - id: tofu_fmt
+    args:
+    - --args=-recursive
+  - id: tofu_tflint
+    args:
+    - --args=--recursive
+    - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+    - --hook-config=--delegate-chdir  # Allows tflint to determine the full paths for error/warning messages, rather than just module relative paths
+  - id: tofu_trivy
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: check-json
+  - id: check-yaml
+  - id: check-merge-conflict
+  - id: end-of-file-fixer
+  - id: mixed-line-ending
+  - id: trailing-whitespace

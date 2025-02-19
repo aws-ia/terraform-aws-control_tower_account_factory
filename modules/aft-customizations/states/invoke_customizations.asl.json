@@ -30,7 +30,7 @@
             "Resource": "arn:${current_partition}:states:::states:startExecution.sync:2",
             "Parameters": {
               "StateMachineArn": "${invoke_account_provisioning_sfn_arn}",
-              "Input.$": "$.info" 
+              "Input.$": "$.info"
             },
             "End": true
           }

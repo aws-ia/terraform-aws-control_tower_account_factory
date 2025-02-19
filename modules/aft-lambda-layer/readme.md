@@ -10,7 +10,7 @@ It then zips the python/lib/pythonx.x folder, and uploads it to S3.
 
 Terraform then waits for approximately 3 minutes and attempts to create a lambda layer from this S3 bucket and key.
 
-If no object is found at this location, the Terraform apply will fail. If this is an update, and something goes wrong with the buid process, the terraform apply will not record any errors. You are encouraged to impement error-handling notifications and integrate them with the python-layer-builder installation in your environment. 
+If no object is found at this location, the Terraform apply will fail. If this is an update, and something goes wrong with the buid process, the terraform apply will not record any errors. You are encouraged to impement error-handling notifications and integrate them with the python-layer-builder installation in your environment.
 
 # Requirements File
 

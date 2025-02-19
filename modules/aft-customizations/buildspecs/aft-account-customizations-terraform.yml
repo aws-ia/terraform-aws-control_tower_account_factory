@@ -24,14 +24,14 @@ phases:
       - |
         CUSTOMIZATION=$(aws dynamodb get-item --table-name aft-request-metadata --key "{\"id\": {\"S\": \"$VENDED_ACCOUNT_ID\"}}" --attributes-to-get "account_customizations_name" | jq --raw-output ".Item.account_customizations_name.S")
 
-      # Check if customization directory exists       
+      # Check if customization directory exists
       - |
-        if [[ ! -z "$CUSTOMIZATION" ]]; then  
+        if [[ ! -z "$CUSTOMIZATION" ]]; then
           if [[ ! -d "$DEFAULT_PATH/$CUSTOMIZATION" ]]; then
             echo "Error: ${CUSTOMIZATION} directory does not exist"
             exit 1
           fi
-          
+
           echo "Found customization" $CUSTOMIZATION
 
           # Configure Development SSH Key
@@ -48,7 +48,7 @@ phases:
             chmod 600 ~/.ssh/ssh_key
             eval "$(ssh-agent -s)"
             ssh-add ~/.ssh/ssh_key
-          fi   
+          fi
 
           # Clone AFT
           AWS_MODULE_SOURCE=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-url" --query "Parameter.Value" --output text)
@@ -80,7 +80,7 @@ phases:
     on-failure: ABORT
     commands:
       - |
-        if [[ ! -z "$CUSTOMIZATION" ]]; then 
+        if [[ ! -z "$CUSTOMIZATION" ]]; then
           source $DEFAULT_PATH/api-helpers-venv/bin/activate
           export AWS_PROFILE=aft-target
           $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/pre-api-helpers.sh
@@ -106,7 +106,7 @@ phases:
       - tofu -no-color --version
       - cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
       - for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D ct_mgmt_role_arn=$CT_MGMT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$TF_VERSION >> ./$(basename $f .jinja).tofu; done
-      - for f in *.tofu; do echo "\n \n"; echo $f; cat $f; done  
+      - for f in *.tofu; do echo "\n \n"; echo $f; cat $f; done
       - cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
       - export AWS_PROFILE=aft-management-admin
       - tofu init -no-color
@@ -126,7 +126,7 @@ phases:
           exit 1
         fi
       - |
-        if [[ ! -z "$CUSTOMIZATION" ]]; then 
+        if [[ ! -z "$CUSTOMIZATION" ]]; then
           source $DEFAULT_PATH/api-helpers-venv/bin/activate
           export AWS_PROFILE=aft-target
           $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/post-api-helpers.sh

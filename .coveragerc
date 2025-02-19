@@ -10,4 +10,4 @@ show_missing = True
 precision = 1
 exclude_lines =
     # Required due to conditional mypy imports
-    if TYPE_CHECKING: 
+    if TYPE_CHECKING:
