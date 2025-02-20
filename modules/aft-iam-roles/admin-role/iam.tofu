@@ -18,37 +18,3 @@ resource "aws_iam_role_policy_attachment" "administrator-access-attachment" {
   role       = aws_iam_role.role.name
   policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AdministratorAccess"
 }
-
-data "aws_iam_policy_document" "cross_account_secret_access" {
-  statement {
-    sid    = "CrossAccountAccessKMS"
-    effect = "Allow"
-    actions = [
-      "kms:Decrypt",
-      "kms:DescribeKey",
-    ]
-    resources = ["arn:aws:kms:us-east-1:232020727462:key/24a35263-8de6-4ff1-bf7b-e1b92926e0c3"]
-  }
-
-  statement {
-    sid    = "CrossAccountAccessSecretsManager"
-    effect = "Allow"
-    actions = [
-      "secretsmanager:DescribeSecret",
-      "secretsmanager:GetSecretValue",
-      "secretsmanager:GetResourcePolicy",
-    ]
-    resources = ["arn:aws:secretsmanager:us-east-1:232020727462:secret:datadog-setup-8tNIgS"]
-  }
-}
-
-resource "aws_iam_policy" "cross_account_secret_access" {
-  name        = "cross-account-secret-access"
-  description = "Allows access to secrets in the secret manager"
-  policy      = data.aws_iam_policy_document.cross_account_secret_access.json
-}
-
-resource "aws_iam_role_policy_attachment" "cross_account_secret_access" {
-  role       = aws_iam_role.role.name
-  policy_arn = aws_iam_policy.cross_account_secret_access.arn
-}
