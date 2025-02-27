@@ -255,8 +255,8 @@ class OrganizationsAgent:
         tags: Sequence[TagTypeDef],
         rollback: bool = False,
     ) -> None:
+        current_tags = self.orgs_client.list_tags_for_resource(ResourceId=resource)['Tags']
         if rollback:
-            current_tags = self.orgs_client.list_tags_for_resource(ResourceId=resource)
             self.orgs_client.untag_resource(
                 ResourceId=resource, TagKeys=[tag["Key"] for tag in tags]
             )
@@ -265,6 +265,9 @@ class OrganizationsAgent:
             )
 
         else:
+            self.orgs_client.untag_resource(
+                ResourceId=resource, TagKeys=[tag["Key"] for tag in current_tags]
+            )
             self.orgs_client.tag_resource(ResourceId=resource, Tags=tags)
 
     def list_tags_for_resource(self, resource: str) -> List[TagTypeDef]:
