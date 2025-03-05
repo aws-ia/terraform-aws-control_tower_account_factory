@@ -22,13 +22,25 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    
+    environment_variable {
+      name  = "SPACELIFT_TERRAFORMRC"
+      value = "/aft/config/terraform/spacelift-terraformrc"
+      type  = "PARAMETER_STORE"
+    }
 
     environment_variable {
       name  = "SPACELIFT_API_CREDENTIALS_JSON"
-      value = var.spacelift_api_credentials_ssm_path
+      value = "/aft/config/spacelift/api-credentials"
       type  = "PARAMETER_STORE"
     }
-    
+
+    environment_variable {
+      name  = "DATADOG_API_CREDENTIALS_JSON"
+      value = "/aft/config/datadog/api-credentials"
+      type  = "PARAMETER_STORE"
+    }
+
     environment_variable {
       name  = "AWS_PARTITION"
       value = data.aws_partition.current.partition

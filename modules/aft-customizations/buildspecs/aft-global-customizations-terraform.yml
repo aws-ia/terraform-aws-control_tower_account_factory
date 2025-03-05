@@ -19,10 +19,13 @@ phases:
       - AFT_ADMIN_ROLE_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-administrator-role-name | jq --raw-output ".Parameter.Value")
       - AFT_ADMIN_ROLE_ARN=arn:$AWS_PARTITION:iam::$AFT_MGMT_ACCOUNT:role/$AFT_ADMIN_ROLE_NAME
       - ROLE_SESSION_NAME=$(aws ssm get-parameter --name /aft/resources/iam/aft-session-name | jq --raw-output ".Parameter.Value")
-      - aws ssm get-parameter --name /aft/config/terraform/spacelift-terraformrc --with-decryption | jq --raw-output ".Parameter.Value" > ~/.terraformrc
+      - echo -E $SPACELIFT_TERRAFORMRC > ~/.terraformrc
       - export SPACELIFT_API_KEY_ENDPOINT=$(echo -E $SPACELIFT_API_CREDENTIALS_JSON | jq -r '.api_key_endpoint')
       - export SPACELIFT_API_KEY_ID=$(echo -E $SPACELIFT_API_CREDENTIALS_JSON | jq -r '.api_key_id')
       - export SPACELIFT_API_KEY_SECRET=$(echo -E $SPACELIFT_API_CREDENTIALS_JSON | jq -r '.api_key_secret')
+      - export DD_API_KEY=$(echo -E $datadog | jq -r '.api_key')
+      - export DD_APP_KEY=$(echo -E $datadog | jq -r '.app_key')
+      - export DD_HOST=$(echo -E $datadog | jq -r '.api_url')
 
       # Configure Development SSH Key
       - |

@@ -138,7 +138,6 @@ module "aft_customizations" {
   global_codebuild_timeout                          = var.global_codebuild_timeout
   lambda_runtime_python_version                     = local.lambda_runtime_python_version
   aft_enable_vpc                                    = var.aft_enable_vpc
-  spacelift_api_credentials_ssm_path                = local.ssm_paths_custom.spacelift_api_credentials
 }
 
 module "aft_feature_options" {

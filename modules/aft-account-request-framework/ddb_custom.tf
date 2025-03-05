@@ -1,9 +1,8 @@
 # MDLZ CUSTOMIZATION
 resource "aws_dynamodb_table" "aft_application_request" {
   name           = "aft-application-request"
-  read_capacity  = 1
-  write_capacity = 1
   hash_key       = "ApplicationName"
+  billing_mode   = "PAY_PER_REQUEST"
 
   attribute {
     name = "ApplicationName"
@@ -23,9 +22,8 @@ resource "aws_dynamodb_table" "aft_application_request" {
 # MDLZ CUSTOMIZATION
 resource "aws_dynamodb_table" "aft_network_request_configuration" {
   name           = "aft-network-request-configuration"
-  read_capacity  = 1
-  write_capacity = 1
   hash_key       = "NetworkName"
+  billing_mode   = "PAY_PER_REQUEST"
 
   attribute {
     name = "NetworkName"
@@ -44,10 +42,9 @@ resource "aws_dynamodb_table" "aft_network_request_configuration" {
 
 resource "aws_dynamodb_table" "aft_network_request_grant" {
   name           = "aft-network-request-grant"
-  read_capacity  = 1
-  write_capacity = 1
   hash_key       = "NetworkName"
   range_key      = "AccountSlug"
+  billing_mode   = "PAY_PER_REQUEST"
 
   attribute {
     name = "NetworkName"
