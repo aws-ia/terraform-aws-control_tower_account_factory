@@ -137,7 +137,7 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   dynamic "stage" {
     for_each = local.workflow_type == "apply-with-approval" ? [1] : []
     content {
-      name = "Global-Customizations"
+      name = "Global-Customizations-1"
       action {
         name            = "Plan"
         category        = "Build"
@@ -168,7 +168,7 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   dynamic "stage" {
     for_each = local.workflow_type == "apply-with-approval" ? [1] : []
     content {
-      name = "Global-Customizations"
+      name = "Global-Customizations-2"
       action {
         name            = "Approval"
         category        = "Approval"
@@ -184,7 +184,7 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   dynamic "stage" {
     for_each = local.workflow_type == "apply-with-approval" ? [1] : []
     content {
-      name = "Global-Customizations"
+      name = "Global-Customizations-3"
       action {
         name            = "Apply"
         category        = "Build"
@@ -218,7 +218,7 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   dynamic "stage" {
     for_each = local.workflow_type == "apply-with-approval" ? [1] : []
     content {
-      name = "Account-Customizations"
+      name = "Account-Customizations-1"
 
       action {
         name            = "Plan"
@@ -250,7 +250,7 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   dynamic "stage" {
     for_each = local.workflow_type == "apply-with-approval" ? [1] : []
     content {
-      name = "Account-Customizations"
+      name = "Account-Customizations-2"
 
       action {
         name            = "Approval"
@@ -268,7 +268,7 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   dynamic "stage" {
     for_each = local.workflow_type == "apply-with-approval" ? [1] : []
     content {
-      name = "Account-Customizations"
+      name = "Account-Customizations-3"
 
       action {
         name            = "Apply"
