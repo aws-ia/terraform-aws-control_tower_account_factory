@@ -63,7 +63,7 @@ resource "aws_lambda_function" "aft_account_request_action_trigger" {
   source_code_hash = var.request_framework_archive_hash
   memory_size      = 1024
   runtime          = var.lambda_runtime_python_version
-  timeout          = "300"
+  timeout          = "600"
   layers           = [var.aft_common_layer_arn]
 
   dynamic "vpc_config" {
