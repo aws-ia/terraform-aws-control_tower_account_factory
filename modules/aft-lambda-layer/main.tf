@@ -20,4 +20,5 @@ resource "aws_lambda_layer_version" "layer_version" {
   compatible_runtimes = ["python${var.lambda_layer_python_version}"]
   s3_bucket           = var.s3_bucket_name
   s3_key              = "layer.zip"
+  source_code_hash    = data.aws_s3_bucket_object.aft_lambda_layer.etag
 }
