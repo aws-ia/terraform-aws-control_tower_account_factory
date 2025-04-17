@@ -73,7 +73,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
         )
 
         existing_keys = set(params)
-        new_keys = set(custom_fields.keys())
+        new_keys = set([SSM_PARAMETER_PATH + key for key in custom_fields.keys()])
 
         # Delete SSM parameters which do not exist in new custom fields
         params_to_remove = list(existing_keys.difference(new_keys))
