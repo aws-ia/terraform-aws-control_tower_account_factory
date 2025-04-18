@@ -241,6 +241,18 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
       value = data.aws_partition.current.partition
       type  = "PLAINTEXT"
     }
+
+    environment_variable {
+      name  = "SPACELIFT_API_CREDENTIALS_JSON"
+      value = "/aft/config/spacelift/api-credentials"
+      type  = "PARAMETER_STORE"
+    }
+
+    environment_variable {
+      name  = "SPACELIFT_STACK_ID"
+      value = data.aws_organizations_organization.current.id == "o-5aeujgjaxs" ? "aws-vending-production-organization" : "aws-vending-platform-test-organization"
+      type  = "PLAINTEXT"
+    }
   }
 
   logs_config {
