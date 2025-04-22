@@ -67,6 +67,12 @@ resource "aws_ssm_parameter" "aft_failure_sns_topic_arn" {
   value = var.aft_failure_sns_topic_arn
 }
 
+resource "aws_ssm_parameter" "aft_codepipeline_sns_topic_arn" {
+  name  = "/aft/account/aft-management/sns/codepipeline-topic-arn"
+  type  = "String"
+  value = var.aft_codepipeline_sns_topic_arn
+}
+
 resource "aws_ssm_parameter" "aft_request_action_trigger_function_arn" {
   name  = "/aft/resources/lambda/aft-account-request-action-trigger-function-arn"
   type  = "String"

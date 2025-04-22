@@ -89,6 +89,10 @@ variable "aft_customizations_get_pipeline_executions_function_arn" {
   type = string
 }
 
+variable "aft_codepipeline_sns_topic_arn" {
+  type = string
+}
+
 variable "vcs_provider" {
   type = string
 }

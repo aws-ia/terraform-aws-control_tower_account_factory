@@ -42,6 +42,10 @@ data "aws_s3_bucket" "aft_codepipeline_customizations_bucket" {
   bucket = "aft-customizations-pipeline-${data.aws_caller_identity.current.account_id}"
 }
 
+data "aws_ssm_parameter" "aft_codepipeline_customizations_sns_topic" {
+  name = "/aft/config/vcs/provider"
+}
+
 data "aws_ssm_parameter" "vcs_provider" {
   name = "/aft/config/vcs/provider"
 }

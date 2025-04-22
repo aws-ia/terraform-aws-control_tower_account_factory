@@ -53,6 +53,12 @@ variable "aft_tf_aws_customizations_module_git_ref_ssm_path" {
   default     = "/aft/config/aft-pipeline-code-source/repo-git-ref"
 }
 
+variable "aft_tf_sns_codepipeline_notifications_topic_arn_ssm_path" {
+  type        = string
+  description = "CodePipeline Notifications SNS Topic ARN"
+  default     = "/aft/account/aft-management/sns/codepipeline-topic-arn"
+}
+
 variable "aft_account_customizations_api_helpers_codebuild_name" {
   type        = string
   description = "CodeBuild Project Name"
