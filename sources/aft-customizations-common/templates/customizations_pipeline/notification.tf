@@ -1,4 +1,4 @@
-resource "aws_codestarnotifications_notification_rule" "commits" {
+resource "aws_codestarnotifications_notification_rule" "codepipeline_events" {
   detail_type    = "BASIC"
   event_type_ids = ["codepipeline-pipeline-pipeline-execution-failed",
                     "codepipeline-pipeline-pipeline-execution-canceled",
