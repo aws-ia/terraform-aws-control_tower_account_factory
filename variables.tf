@@ -149,6 +149,12 @@ variable "global_codebuild_timeout" {
   }
 }
 
+variable "tags" {
+  description = "Map of tags to apply to resources deployed by AFT."
+  type        = map(any)
+  default     = null
+}
+
 #########################################
 # AFT Feature Flags
 #########################################
@@ -343,6 +349,16 @@ variable "terraform_org_name" {
   }
 }
 
+variable "terraform_project_name" {
+  type        = string
+  description = "Project name for Terraform Cloud or Enterprise - project must exist before deployment"
+  default     = "Default Project"
+  validation {
+    condition     = length(var.terraform_project_name) > 0
+    error_message = "Variable var: terraform_project_name cannot be empty."
+  }
+}
+
 variable "terraform_api_endpoint" {
   description = "API Endpoint for Terraform. Must be in the format of https://xxx.xxx."
   type        = string
@@ -414,6 +430,18 @@ variable "aft_vpc_public_subnet_02_cidr" {
     condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.aft_vpc_public_subnet_02_cidr))
     error_message = "Variable var: aft_vpc_public_subnet_02_cidr value must be a valid network CIDR, x.x.x.x/y."
   }
+}
+
+variable "aft_customer_vpc_id" {
+  type        = string
+  description = "The VPC ID to deploy AFT resources in, if customer is providing an existing VPC. Only supported for new deployments."
+  default     = null
+}
+
+variable "aft_customer_private_subnets" {
+  type        = list(string)
+  description = "A list of private subnets to deploy AFT resources in, if customer is providing an existing VPC. Only supported for new deployments."
+  default     = []
 }
 
 #########################################

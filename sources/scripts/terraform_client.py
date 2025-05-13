@@ -38,8 +38,10 @@ def check_workspace_exists(organization_name, workspace_name, api_token):
     return None
 
 
-def create_workspace(organization_name, workspace_name, api_token):
+def create_workspace(organization_name, workspace_name, api_token, project_name):
     workspace_id = check_workspace_exists(organization_name, workspace_name, api_token)
+    project_id = get_project_id(organization_name, project_name, api_token)
+
     if workspace_id:
         return workspace_id
     else:
@@ -55,10 +57,32 @@ def create_workspace(organization_name, workspace_name, api_token):
                     "auto-apply": True,
                 },
                 "type": "workspaces",
+                "relationships": {
+                    "project": {"data": {"type": "projects", "id": project_id}}
+                },
             }
         }
         response = __post(endpoint, headers, payload)
         return response["data"]["id"]
+
+
+def get_project_id(organization_name, project_name, api_token):
+    endpoint = "{}/organizations/{}/projects".format(
+        TERRAFORM_API_ENDPOINT, organization_name
+    )
+    headers = __build_standard_headers(api_token)
+    response = __get(endpoint, headers)
+    projects = response["data"]
+
+    for project in projects:
+        if project["attributes"]["name"] == project_name:
+            return project["id"]
+
+    raise ValueError(
+        "Project '{}' not found in organization '{}'".format(
+            project_name, organization_name
+        )
+    )
 
 
 def create_configuration_version(workspace_id, api_token):

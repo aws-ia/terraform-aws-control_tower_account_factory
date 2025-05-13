@@ -25,6 +25,7 @@ locals {
   delete_default_vpc_lambda_function_name          = "aft-delete-default-vpc"
   enroll_support_lambda_function_name              = "aft-enroll-support"
   enable_cloudtrail_lambda_function_name           = "aft-enable-cloudtrail"
+  aft_tags                                         = merge(var.tags, { managed_by = "AFT" })
   ssm_paths = {
     aft_tf_aws_customizations_module_url_ssm_path     = "/aft/config/aft-pipeline-code-source/repo-url"
     aft_tf_aws_customizations_module_git_ref_ssm_path = "/aft/config/aft-pipeline-code-source/repo-git-ref"

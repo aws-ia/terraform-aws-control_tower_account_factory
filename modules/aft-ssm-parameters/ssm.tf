@@ -205,6 +205,12 @@ resource "aws_ssm_parameter" "terraform_org_name" {
   value = var.terraform_org_name
 }
 
+resource "aws_ssm_parameter" "terraform_project_name" {
+  name  = "/aft/config/terraform/project-name"
+  type  = "String"
+  value = var.terraform_project_name
+}
+
 resource "aws_ssm_parameter" "aft_execution_role_name" {
   name  = "/aft/resources/iam/aft-execution-role-name"
   type  = "String"
@@ -265,8 +271,6 @@ resource "aws_ssm_parameter" "aft_framework_repo_git_ref" {
   type  = "String"
   value = var.aft_framework_repo_git_ref
 }
-
-
 
 resource "aws_ssm_parameter" "aft_feature_cloudtrail_data_events" {
   name  = "/aft/config/feature/cloudtrail-data-events-enabled"

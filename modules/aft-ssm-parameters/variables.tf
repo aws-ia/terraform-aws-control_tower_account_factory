@@ -150,6 +150,10 @@ variable "terraform_org_name" {
   type = string
 }
 
+variable "terraform_project_name" {
+  type = string
+}
+
 variable "aft_execution_role_name" {
   type = string
 }

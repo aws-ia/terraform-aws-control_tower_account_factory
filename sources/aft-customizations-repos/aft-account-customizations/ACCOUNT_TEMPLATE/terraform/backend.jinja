@@ -11,18 +11,18 @@ terraform {
     dynamodb_table = "{{ dynamodb_table }}"
     encrypt        = "true"
     kms_key_id     = "{{ kms_key_id }}"
-    assume_role {
-      role_arn     = "{{ aft_admin_role_arn }}"
+    assume_role = {
+      role_arn = "{{ aft_admin_role_arn }}"
     }
   }
 }
 {% else -%}
 terraform {
-    backend "remote" {
-        organization = "{{ terraform_org_name }}"
-        workspaces {
-        name = "{{ terraform_workspace_name }}"
-        }
+  backend "remote" {
+    organization = "{{ terraform_org_name }}"
+    workspaces {
+      name = "{{ terraform_workspace_name }}"
     }
+  }
 }
 {% endif %}

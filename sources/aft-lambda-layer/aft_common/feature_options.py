@@ -284,7 +284,7 @@ def get_log_bucket_arns(session: Session) -> List[str]:
 
 
 def get_target_account_and_customization_id_from_event(
-    event: Dict[str, Any]
+    event: Dict[str, Any],
 ) -> Tuple[str, str]:
     request_id = event["customization_request_id"]
     target_account_id = event.get("account_info", {}).get("account", {}).get("id", "")

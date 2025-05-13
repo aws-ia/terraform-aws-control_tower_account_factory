@@ -18,7 +18,7 @@ module "aft_account_provisioning_framework" {
   aft_failure_sns_topic_arn                        = module.aft_account_request_framework.aft_failure_sns_topic_arn
   aft_common_layer_arn                             = module.aft_lambda_layer.layer_version_arn
   aft_kms_key_arn                                  = module.aft_account_request_framework.aft_kms_key_arn
-  aft_enable_vpc                                   = var.aft_enable_vpc
+  aft_enable_vpc                                   = module.aft_account_request_framework.vpc_deployment
   aft_vpc_private_subnets                          = module.aft_account_request_framework.aft_vpc_private_subnets
   aft_vpc_default_sg                               = module.aft_account_request_framework.aft_vpc_default_sg
   cloudwatch_log_group_retention                   = var.cloudwatch_log_group_retention
@@ -56,9 +56,9 @@ module "aft_account_request_framework" {
   request_framework_archive_hash              = module.packaging.request_framework_archive_hash
   lambda_runtime_python_version               = local.lambda_runtime_python_version
   backup_recovery_point_retention             = var.backup_recovery_point_retention
+  aft_customer_vpc_id                         = var.aft_customer_vpc_id
+  aft_customer_private_subnets                = var.aft_customer_private_subnets
 }
-
-
 
 module "aft_backend" {
   providers = {
@@ -101,7 +101,7 @@ module "aft_code_repositories" {
   global_customizations_repo_branch               = var.global_customizations_repo_branch
   log_group_retention                             = var.cloudwatch_log_group_retention
   global_codebuild_timeout                        = var.global_codebuild_timeout
-  aft_enable_vpc                                  = var.aft_enable_vpc
+  aft_enable_vpc                                  = module.aft_account_request_framework.vpc_deployment
 }
 
 module "aft_customizations" {
@@ -137,7 +137,7 @@ module "aft_customizations" {
   customizations_archive_hash                       = module.packaging.customizations_archive_hash
   global_codebuild_timeout                          = var.global_codebuild_timeout
   lambda_runtime_python_version                     = local.lambda_runtime_python_version
-  aft_enable_vpc                                    = var.aft_enable_vpc
+  aft_enable_vpc                                    = module.aft_account_request_framework.vpc_deployment
 }
 
 module "aft_feature_options" {
@@ -167,7 +167,7 @@ module "aft_feature_options" {
   enroll_support_lambda_function_name       = local.enroll_support_lambda_function_name
   enable_cloudtrail_lambda_function_name    = local.enable_cloudtrail_lambda_function_name
   lambda_runtime_python_version             = local.lambda_runtime_python_version
-  aft_enable_vpc                            = var.aft_enable_vpc
+  aft_enable_vpc                            = module.aft_account_request_framework.vpc_deployment
 }
 
 module "aft_iam_roles" {
@@ -201,7 +201,7 @@ module "aft_lambda_layer" {
   builder_archive_path                              = module.packaging.builder_archive_path
   builder_archive_hash                              = module.packaging.builder_archive_hash
   cloudwatch_log_group_retention                    = var.cloudwatch_log_group_retention
-  aft_enable_vpc                                    = var.aft_enable_vpc
+  aft_enable_vpc                                    = module.aft_account_request_framework.vpc_deployment
 }
 
 module "aft_ssm_parameters" {
@@ -259,6 +259,7 @@ module "aft_ssm_parameters" {
   terraform_token                                             = var.terraform_token # Null default value #tfsec:ignore:general-secrets-no-plaintext-exposure
   terraform_version                                           = var.terraform_version
   terraform_org_name                                          = var.terraform_org_name
+  terraform_project_name                                      = var.terraform_project_name
   aft_feature_cloudtrail_data_events                          = var.aft_feature_cloudtrail_data_events
   aft_feature_enterprise_support                              = var.aft_feature_enterprise_support
   aft_feature_delete_default_vpcs_enabled                     = var.aft_feature_delete_default_vpcs_enabled

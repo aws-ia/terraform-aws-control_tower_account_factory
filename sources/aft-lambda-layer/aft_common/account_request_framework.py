@@ -90,7 +90,7 @@ def build_sqs_message(record: Dict[str, Any], new_account: bool) -> Dict[str, An
 
 
 def build_aft_account_provisioning_framework_event(
-    record: Dict[str, Any]
+    record: Dict[str, Any],
 ) -> Dict[str, Any]:
     account_request = ddb.unmarshal_ddb_item(record["dynamodb"]["NewImage"])
     aft_account_provisioning_framework_event = {
