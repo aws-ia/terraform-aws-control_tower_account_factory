@@ -13,7 +13,7 @@ locals {
   # public subnets are only applicable when AFT deploys the VPC
   vpc_public_subnet_ids = var.aft_enable_vpc && var.aft_customer_vpc_id == null ? tolist([aws_subnet.aft_vpc_public_subnet_01[0].id, aws_subnet.aft_vpc_public_subnet_02[0].id]) : []
 
-  vpc_cidr       = data.aws_vpc.aft.cidr_block
+  vpc_cidr       = local.vpc_deployment ? data.aws_vpc.aft[0].cidr_block : null
   vpc_deployment = var.aft_enable_vpc || var.aft_customer_vpc_id != null ? true : false
   vpc_id         = var.aft_enable_vpc || var.aft_customer_vpc_id != null ? try(aws_vpc.aft_vpc[0].id, var.aft_customer_vpc_id) : null
 }

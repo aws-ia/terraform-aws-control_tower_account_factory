@@ -24,6 +24,8 @@ data "aws_availability_zones" "available" {
 }
 
 data "aws_vpc" "aft" {
+  count = local.vpc_deployment ? 1 : 0
+
   id = local.vpc_id
 }
 
