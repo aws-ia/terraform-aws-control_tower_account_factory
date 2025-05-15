@@ -50,6 +50,15 @@
         "codeconnections:UseConnection"
       ],
       "Resource": "*"
+    },
+    {
+      "Effect" : "Allow",
+      "Action" : [
+        "sns:Publish"
+      ],
+      "Resource" : [
+        "${aft_sns_codepipeline_notification_topic_arn}"
+      ]
     }
   ]
 }

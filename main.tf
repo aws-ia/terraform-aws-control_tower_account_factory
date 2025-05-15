@@ -220,6 +220,7 @@ module "aft_ssm_parameters" {
   aft_account_provisioning_framework_sfn_name                 = module.aft_account_request_framework.aft_account_provisioning_framework_sfn_name
   aft_sns_topic_arn                                           = module.aft_account_request_framework.sns_topic_arn
   aft_failure_sns_topic_arn                                   = module.aft_account_request_framework.failure_sns_topic_arn
+  aft_codepipeline_sns_topic_arn                              = module.aft_customizations.aft_codepipeline_customizations_notifications_topic_arn
   request_action_trigger_function_arn                         = module.aft_account_request_framework.request_action_trigger_function_arn
   request_audit_trigger_function_arn                          = module.aft_account_request_framework.request_audit_trigger_function_arn
   request_processor_function_arn                              = module.aft_account_request_framework.request_processor_function_arn

@@ -20,3 +20,7 @@ output "aft_codepipeline_customizations_bucket_name" {
 output "aft_codepipeline_customizations_bucket_arn" {
   value = aws_s3_bucket.aft_codepipeline_customizations_bucket.arn
 }
+
+output "aft_codepipeline_customizations_notifications_topic_arn" {
+  value = aws_sns_topic.aft_codepipeline_customizations_notifications.arn
+}
