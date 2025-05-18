@@ -34,6 +34,9 @@ resource "aws_s3_bucket" "secondary-backend-bucket" {
 }
 
 resource "aws_s3_bucket_replication_configuration" "primary-backend-bucket-replication" {
+
+  depends_on = [aws_s3_bucket_versioning.secondary-backend-bucket-versioning]
+
   count    = var.secondary_region == "" ? 0 : 1
   provider = aws.primary_region
   bucket   = aws_s3_bucket.primary-backend-bucket.id
