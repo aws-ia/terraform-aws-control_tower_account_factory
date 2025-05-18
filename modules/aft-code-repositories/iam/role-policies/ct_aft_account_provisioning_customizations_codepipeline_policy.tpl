@@ -48,7 +48,10 @@
     },
     {
         "Effect": "Allow",
-        "Action": "codestar-connections:UseConnection",
+        "Action": [
+          "codestar-connections:UseConnection",
+          "codeconnections:UseConnection"
+        ],
         "Resource": "*"
     }
   ]

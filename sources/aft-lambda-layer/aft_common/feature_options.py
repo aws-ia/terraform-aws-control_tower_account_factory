@@ -161,7 +161,7 @@ def get_vpc_security_groups(resource: EC2ServiceResource, vpc: str) -> List[str]
     sgs = []
     for s in vpc_resource.security_groups.all():
         sgs.append(s.id)
-    logger.info("SGs: " + str(sgs))
+    logger.info("SGs: " + utils.sanitize_input_for_logging(sgs))
     return sgs
 
 
@@ -284,7 +284,7 @@ def get_log_bucket_arns(session: Session) -> List[str]:
 
 
 def get_target_account_and_customization_id_from_event(
-    event: Dict[str, Any]
+    event: Dict[str, Any],
 ) -> Tuple[str, str]:
     request_id = event["customization_request_id"]
     target_account_id = event.get("account_info", {}).get("account", {}).get("id", "")

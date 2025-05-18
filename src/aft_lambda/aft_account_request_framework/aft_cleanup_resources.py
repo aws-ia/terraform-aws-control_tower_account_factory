@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict
 
 from aft_common import codepipeline, ddb
+from aft_common.aft_utils import sanitize_input_for_logging
 from aft_common.auth import AuthClient
 from aft_common.constants import SSM_PARAM_AFT_DDB_META_TABLE
 from aft_common.logger import configure_aft_logger
@@ -33,7 +34,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
             "id"
         ]  # the account email is stored in "id" field
 
-        logger.info(f"Beginnning resource cleanup for {account_email}")
+        logger.info(
+            f"Beginning resource cleanup for {sanitize_input_for_logging(account_email)}"
+        )
 
         orgs_agent = OrganizationsAgent(
             ct_management_session=auth.get_ct_management_session()

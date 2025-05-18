@@ -190,13 +190,15 @@
             "Resource": "*"
         },
         {
-            "Sid": "CodeStarConnectionsReadOnlyAccess",
+            "Sid": "CodeConnectionsConnectionsReadOnlyAccess",
             "Effect": "Allow",
             "Action": [
                 "codestar-connections:ListConnections",
                 "codestar-connections:GetConnection"
+                "codeconnections:ListConnections",
+                "codeconnections:GetConnection",
             ],
-            "Resource": "arn:${data_aws_partition_current_partition}:codestar-connections:*:*:connection/*"
+            "Resource": "arn:${data_aws_partition_current_partition}:codeconnections:*:*:connection/*"
         }
     ]
 }

@@ -174,7 +174,7 @@ class ProvisionRoles:
     def role_policy_is_attached(
         role_name: str, policy_arn: str, target_account_session: Session
     ) -> bool:
-        logger.info("Determining if {policy_arn} is attached to {role_name}")
+        logger.info(f"Determining if {policy_arn} is attached to {role_name}")
         resource: IAMServiceResource = target_account_session.resource("iam")
         role = resource.Role(role_name)
         policy_iterator = role.attached_policies.all()

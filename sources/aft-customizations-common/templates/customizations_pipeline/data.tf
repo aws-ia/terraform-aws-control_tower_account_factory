@@ -9,8 +9,8 @@ data "aws_ssm_parameter" "aft_vcs_type" {
   name = "/aft/config/vcs/provider"
 }
 
-data "aws_ssm_parameter" "codestar_connection_arn" {
-  name = "/aft/config/vcs/codestar-connection-arn"
+data "aws_ssm_parameter" "codeconnections_connection_arn" {
+  name = "/aft/config/vcs/codeconnections-connection-arn"
 }
 
 data "aws_ssm_parameter" "aft_global_customizations_repo_name" {

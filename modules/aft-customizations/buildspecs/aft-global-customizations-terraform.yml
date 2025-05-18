@@ -102,6 +102,7 @@ phases:
           TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
           TF_TOKEN=$(aws ssm get-parameter --name "/aft/config/terraform/token" --with-decryption --query "Parameter.Value" --output text)
           TF_ENDPOINT=$(aws ssm get-parameter --name "/aft/config/terraform/api-endpoint" --query "Parameter.Value" --output text)
+          TF_PROJECT_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/project-name" --query "Parameter.Value" --output text)
           TF_WORKSPACE_NAME=$VENDED_ACCOUNT_ID-aft-global-customizations
           TF_CONFIG_PATH="./temp_configuration_file.tar.gz"
           cd $DEFAULT_PATH/terraform
@@ -109,7 +110,7 @@ phases:
           for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
           cd $DEFAULT_PATH
           tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
-          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH
+          python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH --project_name "$TF_PROJECT_NAME"
         fi
 
   post_build:

@@ -62,7 +62,7 @@ def delete_ddb_item(
 
 
 def unmarshal_ddb_item(
-    low_level_data: Dict[str, AttributeValueTypeDef]
+    low_level_data: Dict[str, AttributeValueTypeDef],
 ) -> Dict[str, Any]:
     # To go from low-level format to python
 

@@ -41,7 +41,7 @@ def receive_sqs_message(session: Session, sqs_queue: str) -> Optional[MessageTyp
         logger.info("There are messages pending processing")
         message = response["Messages"][0]
         logger.info("Message retrieved")
-        logger.info(message)
+        logger.info(utils.sanitize_input_for_logging(message))
         return message
     else:
         logger.info("There are no messages pending processing")

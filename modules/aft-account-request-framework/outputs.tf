@@ -80,17 +80,21 @@ output "aft_failure_sns_topic_arn" {
 #########################################
 
 output "aft_vpc_id" {
-  value = var.aft_enable_vpc ? aws_vpc.aft_vpc[0].id : null
+  value = local.vpc_deployment ? local.vpc_id : null
 }
 
 output "aft_vpc_public_subnets" {
-  value = var.aft_enable_vpc ? tolist([aws_subnet.aft_vpc_public_subnet_01[0].id, aws_subnet.aft_vpc_public_subnet_02[0].id]) : null
+  value = local.vpc_public_subnet_ids
 }
 
 output "aft_vpc_private_subnets" {
-  value = var.aft_enable_vpc ? tolist(var.aft_enable_vpc ? [aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id] : []) : null
+  value = local.vpc_deployment ? local.vpc_private_subnet_ids : null
 }
 
 output "aft_vpc_default_sg" {
-  value = var.aft_enable_vpc ? tolist([aws_security_group.aft_vpc_default_sg[0].id]) : null
+  value = local.vpc_deployment ? tolist([aws_security_group.aft_vpc_default_sg[0].id]) : null
+}
+
+output "vpc_deployment" {
+  value = local.vpc_deployment
 }

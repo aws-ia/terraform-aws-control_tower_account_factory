@@ -69,3 +69,11 @@ variable "backup_recovery_point_retention" {
 variable "aft_enable_vpc" {
   type = bool
 }
+
+variable "aft_customer_vpc_id" {
+  type = string
+}
+
+variable "aft_customer_private_subnets" {
+  type = list(string)
+}

@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
-  count    = local.vcs.is_codecommit ? 1 : 0
-  name     = "${var.account_id}-customizations-pipeline"
-  role_arn = data.aws_iam_role.aft_codepipeline_customizations_role.arn
+  count         = local.vcs.is_codecommit ? 1 : 0
+  name          = "${var.account_id}-customizations-pipeline"
+  role_arn      = data.aws_iam_role.aft_codepipeline_customizations_role.arn
+  pipeline_type = "V2"
 
   artifact_store {
     location = data.aws_s3_bucket.aft_codepipeline_customizations_bucket.id
@@ -107,10 +108,15 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   }
 }
 
-resource "aws_codepipeline" "aft_codestar_customizations_codepipeline" {
-  count    = local.vcs.is_codecommit ? 0 : 1
-  name     = "${var.account_id}-customizations-pipeline"
-  role_arn = data.aws_iam_role.aft_codepipeline_customizations_role.arn
+moved {
+  from = aws_codepipeline.aft_codestar_customizations_codepipeline
+  to   = aws_codepipeline.aft_codeconnections_customizations_codepipeline
+}
+resource "aws_codepipeline" "aft_codeconnections_customizations_codepipeline" {
+  count         = local.vcs.is_codecommit ? 0 : 1
+  name          = "${var.account_id}-customizations-pipeline"
+  role_arn      = data.aws_iam_role.aft_codepipeline_customizations_role.arn
+  pipeline_type = "V2"
 
   artifact_store {
     location = data.aws_s3_bucket.aft_codepipeline_customizations_bucket.id
@@ -137,7 +143,7 @@ resource "aws_codepipeline" "aft_codestar_customizations_codepipeline" {
       output_artifacts = ["source-aft-global-customizations"]
 
       configuration = {
-        ConnectionArn        = data.aws_ssm_parameter.codestar_connection_arn.value
+        ConnectionArn        = data.aws_ssm_parameter.codeconnections_connection_arn.value
         FullRepositoryId     = data.aws_ssm_parameter.aft_global_customizations_repo_name.value
         BranchName           = data.aws_ssm_parameter.aft_global_customizations_repo_branch.value
         DetectChanges        = false
@@ -154,7 +160,7 @@ resource "aws_codepipeline" "aft_codestar_customizations_codepipeline" {
       output_artifacts = ["source-aft-account-customizations"]
 
       configuration = {
-        ConnectionArn        = data.aws_ssm_parameter.codestar_connection_arn.value
+        ConnectionArn        = data.aws_ssm_parameter.codeconnections_connection_arn.value
         FullRepositoryId     = data.aws_ssm_parameter.aft_account_customizations_repo_name.value
         BranchName           = data.aws_ssm_parameter.aft_account_customizations_repo_branch.value
         DetectChanges        = false

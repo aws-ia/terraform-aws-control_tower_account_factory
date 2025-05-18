@@ -205,6 +205,12 @@ resource "aws_ssm_parameter" "terraform_org_name" {
   value = var.terraform_org_name
 }
 
+resource "aws_ssm_parameter" "terraform_project_name" {
+  name  = "/aft/config/terraform/project-name"
+  type  = "String"
+  value = var.terraform_project_name
+}
+
 resource "aws_ssm_parameter" "aft_execution_role_name" {
   name  = "/aft/resources/iam/aft-execution-role-name"
   type  = "String"
@@ -265,8 +271,6 @@ resource "aws_ssm_parameter" "aft_framework_repo_git_ref" {
   type  = "String"
   value = var.aft_framework_repo_git_ref
 }
-
-
 
 resource "aws_ssm_parameter" "aft_feature_cloudtrail_data_events" {
   name  = "/aft/config/feature/cloudtrail-data-events-enabled"
@@ -334,10 +338,10 @@ resource "aws_ssm_parameter" "account_provisioning_customizations_repo_branch" {
   value = var.account_provisioning_customizations_repo_branch
 }
 
-resource "aws_ssm_parameter" "codestar_connection_arn" {
-  name  = "/aft/config/vcs/codestar-connection-arn"
+resource "aws_ssm_parameter" "codeconnections_connection_arn" {
+  name  = "/aft/config/vcs/codeconnections-connection-arn"
   type  = "String"
-  value = var.codestar_connection_arn
+  value = var.codeconnections_connection_arn
 }
 
 resource "aws_ssm_parameter" "github_enterprise_url" {
