@@ -118,6 +118,8 @@ phases:
               /opt/aft/bin/terraform plan -no-color
             elif [[ "apply" == ${ACTION} ]] ; then
               /opt/aft/bin/terraform apply -no-color --auto-approve
+            elif [[ -z "${ACTION}"" ]] ; then
+              /opt/aft/bin/terraform apply -no-color --auto-approve
             fi
           else
             TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)

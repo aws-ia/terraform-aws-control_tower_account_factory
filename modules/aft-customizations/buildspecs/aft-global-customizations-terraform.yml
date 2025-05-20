@@ -101,6 +101,8 @@ phases:
             /opt/aft/bin/terraform plan -no-color
           elif [[ "apply" == ${ACTION} ]] ; then
             /opt/aft/bin/terraform apply -no-color --auto-approve
+          elif [[ -z "${ACTION}"" ]] ; then
+            /opt/aft/bin/terraform apply -no-color --auto-approve
           fi
         else
           TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
