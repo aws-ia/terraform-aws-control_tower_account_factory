@@ -17,7 +17,6 @@ phases:
       - TF_DDB_TABLE=$(aws ssm get-parameter --name $SSM_TF_DDB_TABLE --query "Parameter.Value" --output text)
       - TF_VERSION=$(aws ssm get-parameter --name $SSM_TF_VERSION --query "Parameter.Value" --output text)
 
-
       # Configure Development SSH Key
       - |
         ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
@@ -69,4 +68,4 @@ phases:
     commands:
       - export AWS_PROFILE=aft-management-admin
       - terraform init -no-color
-      - terraform apply -var="account_id=$VENDED_ACCOUNT_ID" -no-color --auto-approve
+      - terraform apply -var="account_id=$VENDED_ACCOUNT_ID" -var="workflow_type=$WORKFLOW_TYPE" -no-color --auto-approve
