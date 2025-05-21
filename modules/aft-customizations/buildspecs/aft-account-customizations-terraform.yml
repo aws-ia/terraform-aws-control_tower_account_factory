@@ -118,7 +118,7 @@ phases:
               /opt/aft/bin/terraform plan -no-color
             elif [[ "apply" == ${ACTION} ]] ; then
               /opt/aft/bin/terraform apply -no-color --auto-approve
-            elif [[ -z "${ACTION}"" ]] ; then
+            elif [[ -z "${ACTION}" ]] ; then
               /opt/aft/bin/terraform apply -no-color --auto-approve
             fi
           else
