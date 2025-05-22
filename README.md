@@ -2,6 +2,7 @@
 AWS Control Tower Account Factory for Terraform (AFT) follows a GitOps model to automate the processes of account provisioning and account updating in AWS Control Tower. You'll create an *account request* Terraform file, which provides the necessary input that triggers the AFT workflow for account provisioning.
 
 
+
 For more information on AFT, see [Overview of AWS Control Tower Account Factory for Terraform](https://docs.aws.amazon.com/controltower/latest/userguide/aft-overview.html)
 
 ## Getting started
