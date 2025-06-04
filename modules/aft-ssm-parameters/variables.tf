@@ -255,3 +255,9 @@ variable "aft_version" {
 variable "aft_metrics_reporting" {
   type = string
 }
+
+variable "aft_approval_notification_emails" {
+  type        = list(string)
+  description = "List of email addresses to notify for pipeline approval steps"
+  default     = []
+}

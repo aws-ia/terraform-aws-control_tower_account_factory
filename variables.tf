@@ -457,3 +457,20 @@ variable "aft_metrics_reporting" {
     error_message = "Valid values for var: aft_metrics_reporting are (true, false)."
   }
 }
+
+#########################################
+# AFT Pipeline Approval Notifications
+#########################################
+
+variable "aft_customizations_approval_notification_emails" {
+  type        = list(string)
+  description = "List of email addresses to notify for customizations pipeline approval steps"
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for email in var.aft_customizations_approval_notification_emails : can(regex("^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$", email))
+    ])
+    error_message = "All email addresses must be valid email format."
+  }
+}

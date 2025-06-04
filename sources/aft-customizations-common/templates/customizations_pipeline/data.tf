@@ -45,3 +45,7 @@ data "aws_s3_bucket" "aft_codepipeline_customizations_bucket" {
 data "aws_ssm_parameter" "vcs_provider" {
   name = "/aft/config/vcs/provider"
 }
+
+data "aws_ssm_parameter" "aft_approval_notification_emails" {
+  name = "/aft/config/approval-notification-emails"
+}

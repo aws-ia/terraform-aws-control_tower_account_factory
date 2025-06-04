@@ -1,6 +1,28 @@
 # Copyright Amazon.com, Inc. or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
+
+locals {
+  # Parse comma-separated email string from SSM parameter
+  notification_emails = data.aws_ssm_parameter.aft_approval_notification_emails.value != "" ? split(",", data.aws_ssm_parameter.aft_approval_notification_emails.value) : []
+}
+
+# SNS Topic for approval notifications
+resource "aws_sns_topic" "aft_approval_notifications" {
+  count = length(local.notification_emails) > 0 ? 1 : 0
+  name  = "${var.account_id}-aft-approval-notifications"
+  
+  kms_master_key_id = data.aws_kms_alias.aft_key.arn
+}
+
+# SNS Topic Subscriptions for approval notifications  
+resource "aws_sns_topic_subscription" "aft_approval_email_notifications" {
+  count     = length(local.notification_emails)
+  topic_arn = aws_sns_topic.aft_approval_notifications[0].arn
+  protocol  = "email"
+  endpoint  = local.notification_emails[count.index]
+}
+
 resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   count         = local.vcs.is_codecommit ? 1 : 0
   name          = "${var.account_id}-customizations-pipeline"
@@ -55,19 +77,19 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   }
 
   ##############################################################
-  # Apply-AFT-Global-Customizations
+  # Global-Plan
   ##############################################################
-
   stage {
-    name = "Global-Customizations"
+    name = "Global-Plan"
+    
     action {
-      name            = "Apply"
+      name            = "Plan"
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
       input_artifacts = ["source-aft-global-customizations"]
       version         = "1"
-      run_order       = "2"
+      run_order       = "1"
       configuration = {
         ProjectName = var.aft_global_customizations_terraform_codebuild_name
         EnvironmentVariables = jsonencode([
@@ -75,16 +97,125 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
             type  = "PLAINTEXT"
+          },
+          {
+            name  = "ACTION",
+            value = "plan",
+            type  = "PLAINTEXT"
           }
         ])
       }
     }
   }
+
   ##############################################################
-  # Apply-AFT-Account-Customizations
+  # Global-Approval-Step
   ##############################################################
   stage {
-    name = "Account-Customizations"
+    name = "Global-Approval-Step"
+    
+    action {
+      name            = "Approval"
+      category        = "Approval"
+      owner           = "AWS"
+      provider        = "Manual"
+      input_artifacts = []
+      version         = "1"
+      run_order       = "1"
+      
+      configuration = length(local.notification_emails) > 0 ? {
+        NotificationArn = aws_sns_topic.aft_approval_notifications[0].arn
+        CustomData      = "Global customizations for account ${var.account_id} require approval before applying."
+      } : {}
+    }
+  }
+
+  ##############################################################
+  # Global-Apply
+  ##############################################################
+  stage {
+    name = "Global-Apply"
+    
+    action {
+      name            = "Apply"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      input_artifacts = ["source-aft-global-customizations"]
+      version         = "1"
+      run_order       = "1"
+      configuration = {
+        ProjectName = var.aft_global_customizations_terraform_codebuild_name
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "VENDED_ACCOUNT_ID",
+            value = var.account_id,
+            type  = "PLAINTEXT"
+          },
+          {
+            name  = "ACTION",
+            value = "apply",
+            type  = "PLAINTEXT"
+          }
+        ])
+      }
+    }
+  }
+
+  ##############################################################
+  # Specific-Plan
+  ##############################################################
+  stage {
+    name = "Specific-Plan"
+
+    action {
+      name            = "Plan"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      input_artifacts = ["source-aft-account-customizations"]
+      version         = "1"
+      run_order       = "1"
+      configuration = {
+        ProjectName = var.aft_account_customizations_terraform_codebuild_name
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "VENDED_ACCOUNT_ID",
+            value = var.account_id,
+            type  = "PLAINTEXT"
+          },
+          {
+            name  = "ACTION",
+            value = "plan",
+            type  = "PLAINTEXT"
+          }
+        ])
+      }
+    }
+  }
+
+  ##############################################################
+  # Specific-Plan-Approval-Step
+  ##############################################################
+  stage {
+    name = "Specific-Plan-Approval-Step"
+
+    action {
+      name            = "Approval"
+      category        = "Approval"
+      owner           = "AWS"
+      provider        = "Manual"
+      input_artifacts = []
+      version         = "1"
+      run_order       = "1"
+    }
+  }
+
+  ##############################################################
+  # Specific-Apply
+  ##############################################################
+  stage {
+    name = "Specific-Apply"
 
     action {
       name            = "Apply"
@@ -93,13 +224,18 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
       provider        = "CodeBuild"
       input_artifacts = ["source-aft-account-customizations"]
       version         = "1"
-      run_order       = "2"
+      run_order       = "1"
       configuration = {
         ProjectName = var.aft_account_customizations_terraform_codebuild_name
         EnvironmentVariables = jsonencode([
           {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
+            type  = "PLAINTEXT"
+          },
+          {
+            name  = "ACTION",
+            value = "apply",
             type  = "PLAINTEXT"
           }
         ])
@@ -170,20 +306,19 @@ resource "aws_codepipeline" "aft_codeconnections_customizations_codepipeline" {
   }
 
   ##############################################################
-  # Apply-AFT-Global-Customizations
+  # Global-Plan
   ##############################################################
-
   stage {
-    name = "AFT-Global-Customizations"
-
+    name = "Global-Plan"
+    
     action {
-      name            = "Apply"
+      name            = "Plan"
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
       input_artifacts = ["source-aft-global-customizations"]
       version         = "1"
-      run_order       = "2"
+      run_order       = "1"
       configuration = {
         ProjectName = var.aft_global_customizations_terraform_codebuild_name
         EnvironmentVariables = jsonencode([
@@ -191,18 +326,126 @@ resource "aws_codepipeline" "aft_codeconnections_customizations_codepipeline" {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
             type  = "PLAINTEXT"
+          },
+          {
+            name  = "ACTION",
+            value = "plan",
+            type  = "PLAINTEXT"
           }
         ])
       }
     }
-
   }
-  ##############################################################
-  # Apply-AFT-Account-Customizations
-  ##############################################################
 
+  ##############################################################
+  # Global-Approval-Step
+  ##############################################################
   stage {
-    name = "AFT-Account-Customizations"
+    name = "Global-Approval-Step"
+    
+    action {
+      name            = "Approval"
+      category        = "Approval"
+      owner           = "AWS"
+      provider        = "Manual"
+      input_artifacts = []
+      version         = "1"
+      run_order       = "1"
+      
+      configuration = length(local.notification_emails) > 0 ? {
+        NotificationArn = aws_sns_topic.aft_approval_notifications[0].arn
+        CustomData      = "Global customizations for account ${var.account_id} require approval before applying."
+      } : {}
+    }
+  }
+
+  ##############################################################
+  # Global-Apply
+  ##############################################################
+  stage {
+    name = "Global-Apply"
+    
+    action {
+      name            = "Apply"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      input_artifacts = ["source-aft-global-customizations"]
+      version         = "1"
+      run_order       = "1"
+      configuration = {
+        ProjectName = var.aft_global_customizations_terraform_codebuild_name
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "VENDED_ACCOUNT_ID",
+            value = var.account_id,
+            type  = "PLAINTEXT"
+          },
+          {
+            name  = "ACTION",
+            value = "apply",
+            type  = "PLAINTEXT"
+          }
+        ])
+      }
+    }
+  }
+
+  ##############################################################
+  # Specific-Plan
+  ##############################################################
+  stage {
+    name = "Specific-Plan"
+
+    action {
+      name            = "Plan"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      input_artifacts = ["source-aft-account-customizations"]
+      version         = "1"
+      run_order       = "1"
+      configuration = {
+        ProjectName = var.aft_account_customizations_terraform_codebuild_name
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "VENDED_ACCOUNT_ID",
+            value = var.account_id,
+            type  = "PLAINTEXT"
+          },
+          {
+            name  = "ACTION",
+            value = "plan",
+            type  = "PLAINTEXT"
+          }
+        ])
+      }
+    }
+  }
+
+  ##############################################################
+  # Specific-Plan-Approval-Step
+  ##############################################################
+  stage {
+    name = "Specific-Plan-Approval-Step"
+
+    action {
+      name            = "Approval"
+      category        = "Approval"
+      owner           = "AWS"
+      provider        = "Manual"
+      input_artifacts = []
+      version         = "1"
+      run_order       = "1"
+    }
+  }
+
+  ##############################################################
+  # Specific-Apply
+  ##############################################################
+  stage {
+    name = "Specific-Apply"
+
     action {
       name            = "Apply"
       category        = "Build"
@@ -210,13 +453,18 @@ resource "aws_codepipeline" "aft_codeconnections_customizations_codepipeline" {
       provider        = "CodeBuild"
       input_artifacts = ["source-aft-account-customizations"]
       version         = "1"
-      run_order       = "2"
+      run_order       = "1"
       configuration = {
         ProjectName = var.aft_account_customizations_terraform_codebuild_name
         EnvironmentVariables = jsonencode([
           {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
+            type  = "PLAINTEXT"
+          },
+          {
+            name  = "ACTION",
+            value = "apply",
             type  = "PLAINTEXT"
           }
         ])

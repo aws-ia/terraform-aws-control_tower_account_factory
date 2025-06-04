@@ -388,3 +388,9 @@ resource "aws_ssm_parameter" "aft_metrics_reporting_uuid" {
   value = random_uuid.metrics_reporting_uuid.result
   type  = "String"
 }
+
+resource "aws_ssm_parameter" "aft_approval_notification_emails" {
+  name  = "/aft/config/approval-notification-emails"
+  value = length(var.aft_approval_notification_emails) > 0 ? join(",", var.aft_approval_notification_emails) : ""
+  type  = "String"
+}
