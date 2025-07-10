@@ -47,6 +47,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "aft_logging_bucket_lifecycle_c
     noncurrent_version_expiration {
       noncurrent_days = var.log_archive_bucket_object_expiration_days
     }
+
+    filter {}
   }
 
 }
