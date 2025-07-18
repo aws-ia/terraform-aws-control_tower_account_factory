@@ -171,7 +171,7 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
     image_pull_credentials_type = "CODEBUILD"
 
     environment_variable {
-      name  = "ACCOUNT_ID"
+      name  = "VENDED_ACCOUNT_ID"
       value = "TBD"
       type  = "PLAINTEXT"
     }
