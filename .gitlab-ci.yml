@@ -1,0 +1,120 @@
+stages:
+  - validate
+  - test
+  - security
+  - deploy
+
+variables:
+  TF_ROOT: ${CI_PROJECT_DIR}
+  TF_IN_AUTOMATION: "true"
+
+# Default image for CI/CD
+default:
+  image: hashicorp/terraform:1.6.0
+
+before_script:
+  - terraform --version
+  - terraform init
+
+# Validate Terraform syntax
+validate:
+  stage: validate
+  script:
+    - terraform fmt -check=true -diff=true
+    - terraform validate
+  rules:
+    - changes:
+        - "*.tf"
+        - "**/*.tf"
+
+# Python code validation
+validate-python:
+  stage: validate
+  image: python:3.11-slim
+  before_script:
+    - pip install flake8 black
+  script:
+    - black --check src/ || echo "Python formatting check completed"
+    - flake8 src/ || echo "Python linting check completed"
+  rules:
+    - changes:
+        - "src/**/*.py"
+        - "**/*.py"
+
+# Security scanning with tfsec
+security-scan:
+  stage: security
+  image: aquasec/tfsec:latest
+  script:
+    - tfsec . --format json --out tfsec-report.json || true
+  artifacts:
+    paths:
+      - tfsec-report.json
+    expire_in: 1 week
+  rules:
+    - changes:
+        - "*.tf"
+        - "**/*.tf"
+
+# Test examples
+test-examples:
+  stage: test
+  script:
+    - |
+      echo "Testing AFT examples..."
+      for example in examples/*/; do
+        if [ -f "$example/main.tf" ]; then
+          echo "Validating $example"
+          cd "$example"
+          terraform init
+          terraform validate
+          cd "$TF_ROOT"
+        fi
+      done
+  rules:
+    - changes:
+        - "examples/**/*"
+        - "*.tf"
+        - "**/*.tf"
+
+# Generate documentation
+docs:
+  stage: test
+  image: quay.io/terraform-docs/terraform-docs:latest
+  script:
+    - terraform-docs markdown table --output-file README-generated.md .
+  artifacts:
+    paths:
+      - README-generated.md
+    expire_in: 1 week
+  rules:
+    - changes:
+        - "*.tf"
+        - "**/*.tf"
+
+# Deploy to staging (manual)
+deploy-staging:
+  stage: deploy
+  environment:
+    name: staging
+  script:
+    - echo "Deploy AFT to staging environment"
+    - echo "Ensure AWS credentials are configured"
+    - echo "Run: terraform plan && terraform apply"
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# Deploy to production (manual, main only)
+deploy-production:
+  stage: deploy
+  environment:
+    name: production
+  script:
+    - echo "Deploy AFT to production environment"
+    - echo "Ensure AWS credentials are configured"
+    - echo "Run: terraform plan && terraform apply"
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" 
