@@ -20,6 +20,8 @@ resource "aws_iam_role_policy" "aft_features_sfn" {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
     data_aws_region_aft-management_name                = data.aws_region.current.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.current.id
+    sns_topic_enable_cmk_encryption                    = var.sns_topic_enable_cmk_encryption
+    aws_kms_key_aft_arn                                = var.aft_kms_key_arn
   })
 
 }

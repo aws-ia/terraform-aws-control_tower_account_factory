@@ -16,7 +16,7 @@ resource "aws_codepipeline" "codecommit_account_request" {
     type     = "S3"
 
     encryption_key {
-      id   = var.aft_key_arn
+      id   = var.aft_kms_key_arn
       type = "KMS"
     }
   }
@@ -127,7 +127,7 @@ resource "aws_codepipeline" "codeconnections_account_request" {
     type     = "S3"
 
     encryption_key {
-      id   = var.aft_key_arn
+      id   = var.aft_kms_key_arn
       type = "KMS"
     }
   }
@@ -193,7 +193,7 @@ resource "aws_codepipeline" "codecommit_account_provisioning_customizations" {
     type     = "S3"
 
     encryption_key {
-      id   = var.aft_key_arn
+      id   = var.aft_kms_key_arn
       type = "KMS"
     }
   }
@@ -262,7 +262,7 @@ resource "aws_codepipeline" "codeconnections_account_provisioning_customizations
     type     = "S3"
 
     encryption_key {
-      id   = var.aft_key_arn
+      id   = var.aft_kms_key_arn
       type = "KMS"
     }
   }

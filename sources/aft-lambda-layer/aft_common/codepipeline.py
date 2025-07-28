@@ -63,7 +63,7 @@ def pipeline_is_running(session: Session, name: str) -> bool:
         return False
 
     latest_execution = sorted(
-        pipeline_execution_summaries, key=lambda i: i["startTime"], reverse=True  # type: ignore
+        pipeline_execution_summaries, key=lambda i: i["startTime"], reverse=True
     )[0]
 
     logger.info(f"Latest Execution: {latest_execution}")
@@ -122,7 +122,7 @@ def get_running_pipeline_count(session: Session, pipeline_names: List[str]) -> i
             continue
         else:
             latest_execution = sorted(
-                pipeline_execution_summaries, key=lambda i: i["startTime"], reverse=True  # type: ignore
+                pipeline_execution_summaries, key=lambda i: i["startTime"], reverse=True
             )[0]
             logger.info("Latest Execution: ")
             logger.info(latest_execution)

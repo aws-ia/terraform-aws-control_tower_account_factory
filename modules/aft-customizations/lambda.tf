@@ -27,10 +27,10 @@ resource "aws_lambda_function" "aft_customizations_identify_targets" {
   }
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_customizations_identify_targets" {
   name              = "/aws/lambda/${aws_lambda_function.aft_customizations_identify_targets.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }
 
 
@@ -59,10 +59,10 @@ resource "aws_lambda_function" "aft_customizations_execute_pipeline" {
   }
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_execute_pipeline" {
   name              = "/aws/lambda/${aws_lambda_function.aft_customizations_execute_pipeline.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }
 
 ######## customizations_get_pipeline_executions ########
@@ -91,14 +91,14 @@ resource "aws_lambda_function" "aft_customizations_get_pipeline_executions" {
 
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_get_pipeline_executions" {
   name              = "/aws/lambda/${aws_lambda_function.aft_customizations_get_pipeline_executions.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_customizations_invoke_account_provisioning" {
   name              = "/aws/lambda/aft-customizations-invoke-account-provisioning"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }

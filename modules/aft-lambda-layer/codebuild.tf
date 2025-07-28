@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "codebuild_loggroup" {
   name              = "/aws/codebuild/${local.common_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }
 
 resource "aws_codebuild_project" "codebuild" {
@@ -20,7 +20,7 @@ resource "aws_codebuild_project" "codebuild" {
   }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_MEDIUM"
+    compute_type                = var.codebuild_compute_type
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"

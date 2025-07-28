@@ -35,3 +35,8 @@ output "aws_aft_log_key_arn" {
   value       = aws_kms_key.aft_log_key.arn
   description = "The ARN of the KMS key used to encrypt contents in the Log bucket"
 }
+
+output "state_machine_arn" {
+  value       = aws_sfn_state_machine.aft_features.arn
+  description = "The ARN of the Step Functions state machine"
+}

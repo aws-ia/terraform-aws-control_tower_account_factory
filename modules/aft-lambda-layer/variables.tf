@@ -71,6 +71,14 @@ variable "cloudwatch_log_group_retention" {
   type = string
 }
 
+variable "cloudwatch_log_group_enable_cmk_encryption" {
+  type = bool
+}
+
 variable "aft_enable_vpc" {
   type = bool
+}
+
+variable "codebuild_compute_type" {
+  type = string
 }

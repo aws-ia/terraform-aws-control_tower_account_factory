@@ -77,6 +77,12 @@ variable "cloudwatch_log_group_retention" {
   }
 }
 
+variable "cloudwatch_log_group_enable_cmk_encryption" {
+  type        = bool
+  description = "Flag toggling CloudWatch Log Groups encryption by using the AFT customer managed key stored in KMS. Additional charges apply. Otherwise, logs will use CloudWatch managed server-side encryption."
+  default     = false
+}
+
 variable "backup_recovery_point_retention" {
   description = "Number of days to keep backup recovery points in AFT DynamoDB tables. Default = Never Expire"
   type        = number
@@ -442,6 +448,22 @@ variable "aft_customer_private_subnets" {
   type        = list(string)
   description = "A list of private subnets to deploy AFT resources in, if customer is providing an existing VPC. Only supported for new deployments."
   default     = []
+}
+
+variable "aft_codebuild_compute_type" {
+  type        = string
+  description = "The CodeBuild compute type that build projects will use."
+  default     = "BUILD_GENERAL1_MEDIUM"
+  validation {
+    condition     = can(regex("^BUILD_", var.aft_codebuild_compute_type))
+    error_message = "aft_codebuild_compute_type value should start with `BUILD_`"
+  }
+}
+
+variable "sns_topic_enable_cmk_encryption" {
+  type        = bool
+  description = "Flag toggling SNS topics encryption by using the AFT Customer managed key stored in KMS. Additional charges apply. Otherwise the SNS topics are encrypted using the AWS-managed KMS key."
+  default     = false
 }
 
 #########################################

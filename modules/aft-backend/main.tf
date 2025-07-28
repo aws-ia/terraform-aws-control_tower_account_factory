@@ -16,6 +16,15 @@ resource "aws_s3_bucket" "primary-backend-bucket" {
     "Name" = "aft-backend-${data.aws_caller_identity.current.account_id}-primary-region"
   }
 }
+
+resource "aws_s3_bucket_policy" "primary-backend-bucket" {
+  provider = aws.primary_region
+  bucket   = aws_s3_bucket.primary-backend-bucket.id
+  policy = templatefile("${path.module}/s3/bucket-policies/aft_backend_bucket.tpl", {
+    aws_s3_bucket_backend_arn = aws_s3_bucket.primary-backend-bucket.arn
+  })
+}
+
 resource "aws_s3_bucket_logging" "primary-backend-bucket-logging" {
   provider      = aws.primary_region
   bucket        = aws_s3_bucket.primary-backend-bucket.id
@@ -31,6 +40,15 @@ resource "aws_s3_bucket" "secondary-backend-bucket" {
   tags = {
     "Name" = "aft-backend-${data.aws_caller_identity.current.account_id}-secondary-region"
   }
+}
+
+resource "aws_s3_bucket_policy" "secondary-backend-bucket" {
+  count    = var.secondary_region == "" ? 0 : 1
+  provider = aws.secondary_region
+  bucket   = aws_s3_bucket.secondary-backend-bucket[0].id
+  policy = templatefile("${path.module}/s3/bucket-policies/aft_backend_bucket.tpl", {
+    aws_s3_bucket_backend_arn = aws_s3_bucket.secondary-backend-bucket[0].arn
+  })
 }
 
 resource "aws_s3_bucket_replication_configuration" "primary-backend-bucket-replication" {
