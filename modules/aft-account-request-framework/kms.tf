@@ -4,20 +4,14 @@
 resource "aws_kms_key" "aft" {
   description         = "AFT KMS key"
   enable_key_rotation = "true"
-}
-
-resource "aws_kms_alias" "aft" {
-  name          = "alias/aft"
-  target_key_id = aws_kms_key.aft.key_id
-}
-
-resource "aws_kms_key_policy" "aft" {
-  key_id = aws_kms_key.aft.id
+  # Use inline policy instead of 'aws_kms_key_policy' resource
+  # to always make sure policy is fully propagated before the key is used
+  # e.g. for CloudWatch Log Groups
   policy = jsonencode(
     {
       "Version" : "2012-10-17",
       "Id" : "key-default-1",
-      "Statement" : [
+      "Statement" : concat([
         {
           "Sid" : "Enable IAM User Permissions",
           "Effect" : "Allow",
@@ -26,10 +20,8 @@ resource "aws_kms_key_policy" "aft" {
           },
           "Action" : "kms:*",
           "Resource" : "*"
-        },
-        # Reference: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/encrypt-log-data-kms.html
-        {
-          "Sid" : "Allow CloudWatch Logs access",
+          }], var.cloudwatch_log_group_enable_cmk_encryption ? [{
+          "Sid" : "Allow CloudWatch Logs access", # Reference: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/encrypt-log-data-kms.html
           "Effect" : "Allow",
           "Principal" : {
             "Service" : "logs.${data.aws_region.aft-management.name}.amazonaws.com"
@@ -48,8 +40,12 @@ resource "aws_kms_key_policy" "aft" {
               "kms:EncryptionContext:aws:logs:arn" : "arn:${data.aws_partition.current.partition}:logs:${data.aws_region.aft-management.name}:${data.aws_caller_identity.aft-management.account_id}:*"
             }
           }
-        }
-      ]
-    }
-  )
+      }] : [])
+  })
+}
+
+
+resource "aws_kms_alias" "aft" {
+  name          = "alias/aft"
+  target_key_id = aws_kms_key.aft.key_id
 }
