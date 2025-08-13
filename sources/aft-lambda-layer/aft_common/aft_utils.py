@@ -3,6 +3,7 @@
 #
 import logging
 import random
+import re
 import time
 from functools import wraps
 from typing import (
@@ -78,14 +79,17 @@ def resubmit_request_on_boto_throttle(
                 return func(*args, **kwargs)
             except ClientError as e:
                 if e.response["Error"]["Code"] in BOTO3_CLIENT_ERROR_THROTTLING_CODES:
+                    sanitized_max_requests = sanitize_input_for_logging(max_requests)
+                    sanitized_retry_sleep_sec = sanitize_input_for_logging(
+                        retry_sleep_sec
+                    )
                     if requests >= max_requests:
                         logger.info(
-                            f"Exceeded max fresh-request retry attempts ({max_requests})"
+                            f"Exceeded max fresh-request retry attempts ({sanitized_max_requests})"
                         )
                         raise e
-
                     logger.info(
-                        f"Exceeded max boto3 retries on previous request. Retrying with fresh request in {retry_sleep_sec} seconds."
+                        f"Exceeded max boto3 retries on previous request. Retrying with fresh request in {sanitized_retry_sleep_sec} seconds."
                     )
                     requests += 1
                     time.sleep(retry_sleep_sec)
@@ -124,14 +128,16 @@ def invoke_lambda(
     payload: Union[bytes, IO[bytes], StreamingBody],
 ) -> InvocationResponseTypeDef:
     client: LambdaClient = session.client("lambda")
-    logger.info(f"Invoking Lambda: {function_name}")
+    sanitized_function_name = sanitize_input_for_logging(function_name)
+    logger.info(f"Invoking Lambda: {sanitized_function_name}")
     response = client.invoke(
         FunctionName=function_name,
         InvocationType="Event",
         LogType="Tail",
         Payload=payload,
     )
-    logger.info(response)
+    sanitized_response = sanitize_input_for_logging(response)
+    logger.info(sanitized_response)
     return response
 
 
@@ -153,9 +159,10 @@ def invoke_step_function(
 ) -> StartExecutionOutputTypeDef:
     client: SFNClient = session.client("stepfunctions")
     sfn_arn = build_sfn_arn(session, sfn_name)
-    logger.info("Starting SFN execution of " + sfn_arn)
+    sanitized_sfn_arn = sanitize_input_for_logging(sfn_arn)
+    logger.info("Starting SFN execution of " + sanitized_sfn_arn)
     response = client.start_execution(stateMachineArn=sfn_arn, input=input)
-    logger.debug(response)
+    logger.debug(sanitize_input_for_logging(response))
     return response
 
 
@@ -187,12 +194,20 @@ def get_aws_partition(session: Session, region: Optional[str] = None) -> str:
 
 
 def yield_batches_from_list(
-    input: Sequence[Any], batch_size: int
+    items: Sequence[Any], batch_size: int
 ) -> Iterable[Sequence[Any]]:
-    if batch_size <= 0:
-        return []
 
-    idx = 0
-    while idx < len(input):
-        yield input[idx : idx + batch_size]
-        idx += batch_size
+    if batch_size <= 0 or not items:
+        yield from []
+        return
+
+    for idx in range(0, len(items), batch_size):
+        yield items[idx : idx + batch_size]
+
+
+def sanitize_input_for_logging(input: Any) -> str:
+    """
+    Sanitize the input string by replacing newline characters, tabs with their literal string representations.
+    """
+    input_str = str(input)
+    return input_str.encode("unicode_escape").decode()

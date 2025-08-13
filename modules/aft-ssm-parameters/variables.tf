@@ -150,6 +150,10 @@ variable "terraform_org_name" {
   type = string
 }
 
+variable "terraform_project_name" {
+  type = string
+}
+
 variable "aft_execution_role_name" {
   type = string
 }
@@ -222,14 +226,16 @@ variable "account_customizations_repo_branch" {
   type = string
 }
 
-variable "codestar_connection_arn" {
+variable "codeconnections_connection_arn" {
   type = string
 }
 
 variable "github_enterprise_url" {
   type = string
 }
-
+variable "gitlab_selfmanaged_url" {
+  type = string
+}
 variable "aft_logging_bucket_arn" {
   type = string
 }

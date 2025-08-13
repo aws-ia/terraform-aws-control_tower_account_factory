@@ -13,7 +13,6 @@ resource "aws_lambda_function" "codebuild_trigger" {
   memory_size      = 1024
   runtime          = var.lambda_runtime_python_version
   timeout          = 900
-
   dynamic "vpc_config" {
     for_each = var.aft_enable_vpc ? [1] : []
     content {
@@ -23,10 +22,10 @@ resource "aws_lambda_function" "codebuild_trigger" {
   }
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "codebuild_trigger_loggroup" {
   name              = "/aws/lambda/${aws_lambda_function.codebuild_trigger.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }
 
 data "aws_lambda_invocation" "trigger_codebuild_job" {

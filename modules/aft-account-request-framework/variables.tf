@@ -9,6 +9,10 @@ variable "cloudwatch_log_group_retention" {
   type = string
 }
 
+variable "cloudwatch_log_group_enable_cmk_encryption" {
+  type = bool
+}
+
 variable "aft_account_provisioning_framework_sfn_name" {
   type = string
 }
@@ -67,5 +71,17 @@ variable "backup_recovery_point_retention" {
 }
 
 variable "aft_enable_vpc" {
+  type = bool
+}
+
+variable "aft_customer_vpc_id" {
+  type = string
+}
+
+variable "aft_customer_private_subnets" {
+  type = list(string)
+}
+
+variable "sns_topic_enable_cmk_encryption" {
   type = bool
 }

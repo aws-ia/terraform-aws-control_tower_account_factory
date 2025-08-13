@@ -23,6 +23,36 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+data "aws_vpc" "aft" {
+  count = local.vpc_deployment ? 1 : 0
+
+  id = local.vpc_id
+}
+
+# Lookup route tables associated to customer provided subnets 
+# for Gateway endpoint deployments
+data "aws_route_tables" "aft_private_route_tables" {
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
+
+  vpc_id = local.vpc_id
+
+  filter {
+    name   = "association.subnet-id"
+    values = local.vpc_private_subnet_ids
+  }
+}
+
+data "aws_route_tables" "aft_public_route_tables" {
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
+
+  vpc_id = local.vpc_id
+
+  filter {
+    name   = "association.subnet-id"
+    values = local.vpc_public_subnet_ids
+  }
+}
+
 ######################################
 # VPC Endpoints
 ######################################
@@ -30,21 +60,21 @@ data "aws_availability_zones" "available" {
 #### CodeBuild ####
 
 data "aws_vpc_endpoint_service" "codebuild" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "codebuild"
 }
 
 data "aws_subnets" "codebuild" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
 
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -56,20 +86,20 @@ data "aws_subnets" "codebuild" {
 #### CodeCommit ####
 
 data "aws_vpc_endpoint_service" "codecommit" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "codecommit"
 }
 
 data "aws_subnets" "codecommit" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -81,21 +111,21 @@ data "aws_subnets" "codecommit" {
 #### git-codecommit ####
 
 data "aws_vpc_endpoint_service" "git-codecommit" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "git-codecommit"
 }
 
 data "aws_subnets" "git-codecommit" {
 
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -107,21 +137,21 @@ data "aws_subnets" "git-codecommit" {
 #### codepipeline ####
 
 data "aws_vpc_endpoint_service" "codepipeline" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "codepipeline"
 }
 
 data "aws_subnets" "codepipeline" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
 
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -133,20 +163,20 @@ data "aws_subnets" "codepipeline" {
 #### servicecatalog ####
 
 data "aws_vpc_endpoint_service" "servicecatalog" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "servicecatalog"
 }
 
 data "aws_subnets" "servicecatalog" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -158,19 +188,19 @@ data "aws_subnets" "servicecatalog" {
 #### lambda ####
 
 data "aws_vpc_endpoint_service" "lambda" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "lambda"
 }
 
 data "aws_subnets" "lambda" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -182,20 +212,20 @@ data "aws_subnets" "lambda" {
 #### kms ####
 
 data "aws_vpc_endpoint_service" "kms" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "kms"
 }
 
 data "aws_subnets" "kms" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -207,20 +237,20 @@ data "aws_subnets" "kms" {
 #### logs ####
 
 data "aws_vpc_endpoint_service" "logs" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "logs"
 }
 
 data "aws_subnets" "logs" {
 
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -232,20 +262,20 @@ data "aws_subnets" "logs" {
 #### events ####
 
 data "aws_vpc_endpoint_service" "events" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "events"
 }
 
 data "aws_subnets" "events" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -254,22 +284,48 @@ data "aws_subnets" "events" {
   }
 }
 
+#### organizations ####
+
+data "aws_vpc_endpoint_service" "organizations" {
+  count   = local.vpc_deployment && var.aft_vpc_endpoints && local.orgs_endpoint_supported ? 1 : 0
+  service = "organizations"
+}
+
+data "aws_subnets" "organizations" {
+  count = local.vpc_deployment && var.aft_vpc_endpoints && local.orgs_endpoint_supported ? 1 : 0
+
+  filter {
+    name   = "vpc-id"
+    values = [local.vpc_id]
+  }
+
+  filter {
+    name   = "subnet-id"
+    values = local.vpc_private_subnet_ids
+  }
+
+  filter {
+    name   = "availability-zone"
+    values = data.aws_vpc_endpoint_service.organizations[0].availability_zones
+  }
+}
+
 #### states ####
 
 data "aws_vpc_endpoint_service" "states" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "states"
 }
 
 data "aws_subnets" "states" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -281,21 +337,21 @@ data "aws_subnets" "states" {
 #### ssm ####
 
 data "aws_vpc_endpoint_service" "ssm" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "ssm"
 }
 
 data "aws_subnets" "ssm" {
 
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -307,20 +363,20 @@ data "aws_subnets" "ssm" {
 #### sns ####
 
 data "aws_vpc_endpoint_service" "sns" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "sns"
 }
 
 data "aws_subnets" "sns" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -332,20 +388,20 @@ data "aws_subnets" "sns" {
 #### sqs ####
 
 data "aws_vpc_endpoint_service" "sqs" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "sqs"
 }
 
 data "aws_subnets" "sqs" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {
@@ -357,20 +413,20 @@ data "aws_subnets" "sqs" {
 #### sts ####
 
 data "aws_vpc_endpoint_service" "sts" {
-  count   = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   service = "sts"
 }
 
 data "aws_subnets" "sts" {
-  count = var.aft_enable_vpc && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.aft_vpc[0].id]
+    values = [local.vpc_id]
   }
 
   filter {
     name   = "subnet-id"
-    values = local.vpc_endpoint_subnet_ids
+    values = local.vpc_private_subnet_ids
   }
 
   filter {

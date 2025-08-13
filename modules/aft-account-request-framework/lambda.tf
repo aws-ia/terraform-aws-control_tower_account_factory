@@ -19,10 +19,10 @@ resource "aws_lambda_function" "aft_account_request_audit_trigger" {
   layers           = [var.aft_common_layer_arn]
 
   dynamic "vpc_config" {
-    for_each = var.aft_enable_vpc ? [1] : []
+    for_each = local.vpc_deployment ? [1] : []
 
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
+      subnet_ids         = local.vpc_private_subnet_ids
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg[0].id])
     }
   }
@@ -43,10 +43,10 @@ resource "aws_lambda_event_source_mapping" "aft_account_request_audit_trigger" {
   maximum_retry_attempts = 1
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_account_request_audit_trigger" {
   name              = "/aws/lambda/${aws_lambda_function.aft_account_request_audit_trigger.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? aws_kms_key.aft.arn : null
 }
 
 ######## aft_account_request_action_trigger ########
@@ -63,14 +63,14 @@ resource "aws_lambda_function" "aft_account_request_action_trigger" {
   source_code_hash = var.request_framework_archive_hash
   memory_size      = 1024
   runtime          = var.lambda_runtime_python_version
-  timeout          = "300"
+  timeout          = "600"
   layers           = [var.aft_common_layer_arn]
 
   dynamic "vpc_config" {
-    for_each = var.aft_enable_vpc ? [1] : []
+    for_each = local.vpc_deployment ? [1] : []
 
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
+      subnet_ids         = local.vpc_private_subnet_ids
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg[0].id])
     }
   }
@@ -85,10 +85,10 @@ resource "aws_lambda_event_source_mapping" "aft_account_request_action_trigger" 
   maximum_retry_attempts = 1
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_account_request_action_trigger" {
   name              = "/aws/lambda/${aws_lambda_function.aft_account_request_action_trigger.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? aws_kms_key.aft.arn : null
 }
 
 ######## aft_controltower_event_logger ########
@@ -109,10 +109,10 @@ resource "aws_lambda_function" "aft_controltower_event_logger" {
   layers           = [var.aft_common_layer_arn]
 
   dynamic "vpc_config" {
-    for_each = var.aft_enable_vpc ? [1] : []
+    for_each = local.vpc_deployment ? [1] : []
 
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
+      subnet_ids         = local.vpc_private_subnet_ids
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg[0].id])
     }
   }
@@ -127,10 +127,10 @@ resource "aws_lambda_permission" "aft_controltower_event_logger" {
   source_arn    = aws_cloudwatch_event_rule.aft_controltower_event_trigger.arn
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_controltower_event_logger" {
   name              = "/aws/lambda/${aws_lambda_function.aft_controltower_event_logger.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? aws_kms_key.aft.arn : null
 }
 
 ######## aft_account_request_processor ########
@@ -157,10 +157,10 @@ resource "aws_lambda_function" "aft_account_request_processor" {
   }
 
   dynamic "vpc_config" {
-    for_each = var.aft_enable_vpc ? [1] : []
+    for_each = local.vpc_deployment ? [1] : []
 
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
+      subnet_ids         = local.vpc_private_subnet_ids
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg[0].id])
     }
   }
@@ -175,10 +175,10 @@ resource "aws_lambda_permission" "aft_account_request_processor" {
   source_arn    = aws_cloudwatch_event_rule.aft_account_request_processor.arn
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_account_request_processor" {
   name              = "/aws/lambda/${aws_lambda_function.aft_account_request_processor.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? aws_kms_key.aft.arn : null
 }
 
 ######## aft_invoke_aft_account_provisioning_framework ########
@@ -199,10 +199,10 @@ resource "aws_lambda_function" "aft_invoke_aft_account_provisioning_framework" {
   layers           = [var.aft_common_layer_arn]
 
   dynamic "vpc_config" {
-    for_each = var.aft_enable_vpc ? [1] : []
+    for_each = local.vpc_deployment ? [1] : []
 
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
+      subnet_ids         = local.vpc_private_subnet_ids
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg[0].id])
     }
   }
@@ -216,10 +216,10 @@ resource "aws_lambda_permission" "aft_invoke_aft_account_provisioning_framework"
   source_arn    = aws_cloudwatch_event_rule.aft_controltower_event_trigger.arn
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_invoke_aft_account_provisioning_framework" {
   name              = "/aws/lambda/${aws_lambda_function.aft_invoke_aft_account_provisioning_framework.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? aws_kms_key.aft.arn : null
 }
 
 ######## aft_cleanup_resources ########
@@ -240,18 +240,18 @@ resource "aws_lambda_function" "aft_cleanup_resources" {
   layers           = [var.aft_common_layer_arn]
 
   dynamic "vpc_config" {
-    for_each = var.aft_enable_vpc ? [1] : []
+    for_each = local.vpc_deployment ? [1] : []
 
     content {
-      subnet_ids         = tolist([aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id])
+      subnet_ids         = local.vpc_private_subnet_ids
       security_group_ids = tolist([aws_security_group.aft_vpc_default_sg[0].id])
     }
   }
 
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "aft_cleanup_resources" {
   name              = "/aws/lambda/${aws_lambda_function.aft_cleanup_resources.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? aws_kms_key.aft.arn : null
 }

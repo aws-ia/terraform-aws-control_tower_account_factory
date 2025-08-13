@@ -90,7 +90,7 @@ def build_sqs_message(record: Dict[str, Any], new_account: bool) -> Dict[str, An
 
 
 def build_aft_account_provisioning_framework_event(
-    record: Dict[str, Any]
+    record: Dict[str, Any],
 ) -> Dict[str, Any]:
     account_request = ddb.unmarshal_ddb_item(record["dynamodb"]["NewImage"])
     aft_account_provisioning_framework_event = {
@@ -112,7 +112,8 @@ def put_audit_record(
     item["ddb_event_name"] = {"S": event_name}
     logger.info("Inserting item into " + table + " table: " + str(item))
     response = dynamodb.put_item(TableName=table, Item=item)
-    logger.info(response)
+    sanitized_response = utils.sanitize_input_for_logging(response)
+    logger.info(sanitized_response)
     return response
 
 
@@ -152,10 +153,12 @@ def modify_ct_request_is_valid(request: Dict[str, Any]) -> bool:
     old_ct_parameters = request.get("old_control_tower_parameters", {})
     new_ct_parameters = request["control_tower_parameters"]
 
-    for i in old_ct_parameters.keys():
-        if i != "ManagedOrganizationalUnit":
-            if old_ct_parameters[i] != new_ct_parameters[i]:
-                logger.error(f"Control Tower parameter {i} cannot be modified")
+    for param_name in old_ct_parameters.keys():
+        if param_name != "ManagedOrganizationalUnit":
+            if old_ct_parameters[param_name] != new_ct_parameters[param_name]:
+                logger.error(
+                    f"Control Tower parameter {utils.sanitize_input_for_logging(param_name)} cannot be modified"
+                )
                 return False
     return True
 
@@ -192,7 +195,8 @@ def create_new_account(
         provisioning_parameters.append({"Key": k, "Value": v})
 
     logger.info(
-        "Creating new account leveraging parameters: " + str(provisioning_parameters)
+        "Creating new account leveraging parameters: "
+        + utils.sanitize_input_for_logging(str(provisioning_parameters))
     )
     provisioned_product_name = create_provisioned_product_name(
         account_name=request["control_tower_parameters"]["AccountName"]
@@ -210,7 +214,8 @@ def create_new_account(
         ),
         ProvisionToken=str(uuid.uuid1()),
     )
-    logger.info(response)
+    sanitized_response = utils.sanitize_input_for_logging(response)
+    logger.info(sanitized_response)
     return response
 
 
@@ -273,7 +278,7 @@ def update_existing_account(
 
     logger.info(
         "Modifying existing account leveraging parameters: "
-        + str(provisioning_parameters)
+        + utils.sanitize_input_for_logging(str(provisioning_parameters))
         + " with provisioned product ID "
         + target_product["Id"]
     )
@@ -286,7 +291,7 @@ def update_existing_account(
         ProvisioningParameters=provisioning_parameters,
         UpdateToken=str(uuid.uuid1()),
     )
-    logger.info(update_response)
+    logger.info(utils.sanitize_input_for_logging(update_response))
 
 
 def get_account_request_record(
@@ -305,7 +310,7 @@ def get_account_request_record(
     )
     if item:
         logger.info("Record found")
-        logger.info(item)
+        logger.info(utils.sanitize_input_for_logging(item))
         return item
     else:
         raise Exception(f"Account {request_table_id}  not found in {table_name}")

@@ -62,7 +62,7 @@ variable "ct_home_region" {
   description = "The region from which this module will be executed. This MUST be the same region as Control Tower is deployed."
   type        = string
   validation {
-    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
+    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
     error_message = "Variable var: region is not valid."
   }
 }
@@ -75,6 +75,12 @@ variable "cloudwatch_log_group_retention" {
     condition     = contains(["1", "3", "5", "7", "14", "30", "60", "90", "120", "150", "180", "365", "400", "545", "731", "1827", "3653", "0"], var.cloudwatch_log_group_retention)
     error_message = "Valid values for var: cloudwatch_log_group_retention are (1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653, and 0)."
   }
+}
+
+variable "cloudwatch_log_group_enable_cmk_encryption" {
+  type        = bool
+  description = "Flag toggling CloudWatch Log Groups encryption by using the AFT customer managed key stored in KMS. Additional charges apply. Otherwise, logs will use CloudWatch managed server-side encryption."
+  default     = false
 }
 
 variable "backup_recovery_point_retention" {
@@ -93,6 +99,16 @@ variable "log_archive_bucket_object_expiration_days" {
   validation {
     condition     = var.log_archive_bucket_object_expiration_days > 0
     error_message = "Log_archive_bucket_object_expiration_days must be an integer greater than 0."
+  }
+}
+
+variable "aft_backend_bucket_access_logs_object_expiration_days" {
+  description = "Amount of days to keep the objects stored in the access logs bucket for AFT backend buckets"
+  type        = number
+  default     = 365
+  validation {
+    condition     = var.aft_backend_bucket_access_logs_object_expiration_days > 0
+    error_message = "Aft_backend_bucket_access_logs_object_expiration_days must be an integer greater than 0."
   }
 }
 
@@ -139,6 +155,12 @@ variable "global_codebuild_timeout" {
   }
 }
 
+variable "tags" {
+  description = "Map of tags to apply to resources deployed by AFT."
+  type        = map(any)
+  default     = null
+}
+
 #########################################
 # AFT Feature Flags
 #########################################
@@ -178,12 +200,12 @@ variable "aft_feature_delete_default_vpcs_enabled" {
 
 
 variable "vcs_provider" {
-  description = "Customer VCS Provider - valid inputs are codecommit, bitbucket, github, or githubenterprise"
+  description = "Customer VCS Provider - valid inputs are codecommit, bitbucket, github, githubenterprise, gitlab, or gitLab self-managed"
   type        = string
   default     = "codecommit"
   validation {
-    condition     = contains(["codecommit", "bitbucket", "github", "githubenterprise"], var.vcs_provider)
-    error_message = "Valid values for var: vcs_provider are (codecommit, bitbucket, github, githubenterprise)."
+    condition     = contains(["codecommit", "bitbucket", "github", "githubenterprise", "gitlab", "gitlabselfmanaged"], var.vcs_provider)
+    error_message = "Valid values for var: vcs_provider are (codecommit, bitbucket, github, githubenterprise, gitlab, gitlabselfmanaged)."
   }
 }
 
@@ -192,7 +214,11 @@ variable "github_enterprise_url" {
   type        = string
   default     = "null"
 }
-
+variable "gitlab_selfmanaged_url" {
+  description = "GitLab SelfManaged URL, if GitLab SelfManaged is being used"
+  type        = string
+  default     = "null"
+}
 variable "account_request_repo_name" {
   description = "Repository name for the account request files. For non-CodeCommit repos, name should be in the format of Org/Repo"
   type        = string
@@ -280,7 +306,7 @@ variable "account_provisioning_customizations_repo_branch" {
 variable "terraform_version" {
   description = "Terraform version being used for AFT"
   type        = string
-  default     = "1.5.7"
+  default     = "1.6.0"
   validation {
     condition     = can(regex("\\bv?\\d+(\\.\\d+)+[\\-\\w]*\\b", var.terraform_version))
     error_message = "Invalid value for var: terraform_version."
@@ -326,6 +352,16 @@ variable "terraform_org_name" {
   validation {
     condition     = length(var.terraform_org_name) > 0
     error_message = "Variable var: terraform_org_name cannot be empty."
+  }
+}
+
+variable "terraform_project_name" {
+  type        = string
+  description = "Project name for Terraform Cloud or Enterprise - project must exist before deployment"
+  default     = "Default Project"
+  validation {
+    condition     = length(var.terraform_project_name) > 0
+    error_message = "Variable var: terraform_project_name cannot be empty."
   }
 }
 
@@ -400,6 +436,34 @@ variable "aft_vpc_public_subnet_02_cidr" {
     condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.aft_vpc_public_subnet_02_cidr))
     error_message = "Variable var: aft_vpc_public_subnet_02_cidr value must be a valid network CIDR, x.x.x.x/y."
   }
+}
+
+variable "aft_customer_vpc_id" {
+  type        = string
+  description = "The VPC ID to deploy AFT resources in, if customer is providing an existing VPC. Only supported for new deployments."
+  default     = null
+}
+
+variable "aft_customer_private_subnets" {
+  type        = list(string)
+  description = "A list of private subnets to deploy AFT resources in, if customer is providing an existing VPC. Only supported for new deployments."
+  default     = []
+}
+
+variable "aft_codebuild_compute_type" {
+  type        = string
+  description = "The CodeBuild compute type that build projects will use."
+  default     = "BUILD_GENERAL1_MEDIUM"
+  validation {
+    condition     = can(regex("^BUILD_", var.aft_codebuild_compute_type))
+    error_message = "aft_codebuild_compute_type value should start with `BUILD_`"
+  }
+}
+
+variable "sns_topic_enable_cmk_encryption" {
+  type        = bool
+  description = "Flag toggling SNS topics encryption by using the AFT Customer managed key stored in KMS. Additional charges apply. Otherwise the SNS topics are encrypted using the AWS-managed KMS key."
+  default     = false
 }
 
 #########################################

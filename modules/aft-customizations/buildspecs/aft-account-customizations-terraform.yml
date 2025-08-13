@@ -111,7 +111,17 @@ phases:
             tofu -no-color --version
 
             cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
-            for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D tf_distribution_type=$TF_DISTRIBUTION -D provider_region=$CT_MGMT_REGION -D region=$TF_BACKEND_REGION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$TF_VERSION >> ./$(basename $f .jinja).tf; done
+            if ls *.jinja >/dev/null 2>&1; then
+              for f in *.jinja; do
+                jinja2 "$f" -D timestamp="$TIMESTAMP" -D tf_distribution_type="$TF_DISTRIBUTION" \
+                  -D provider_region="$CT_MGMT_REGION" -D region="$TF_BACKEND_REGION" \
+                  -D aft_admin_role_arn="$AFT_EXEC_ROLE_ARN" -D target_admin_role_arn="$VENDED_EXEC_ROLE_ARN" \
+                  -D bucket="$TF_S3_BUCKET" -D key="$TF_S3_KEY" -D dynamodb_table="$TF_DDB_TABLE" \
+                  -D kms_key_id="$TF_KMS_KEY_ID" -D tf_version="$TF_VERSION" >> "./$(basename "$f" .jinja).tf"
+              done
+            else
+              echo "No Jinja2 templates found - skipping template processing"
+            fi
             for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
             
             cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
@@ -123,16 +133,26 @@ phases:
             TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
             TF_TOKEN=$(aws ssm get-parameter --name "/aft/config/terraform/token" --with-decryption --query "Parameter.Value" --output text)
             TF_ENDPOINT=$(aws ssm get-parameter --name "/aft/config/terraform/api-endpoint" --query "Parameter.Value" --output text)
+            TF_PROJECT_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/project-name" --query "Parameter.Value" --output text)
             TF_WORKSPACE_NAME=$VENDED_ACCOUNT_ID-aft-account-customizations
             TF_CONFIG_PATH="./temp_configuration_file.tar.gz"
 
             cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
-            for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D provider_region=$CT_MGMT_REGION -D tf_distribution_type=$TF_DISTRIBUTION -D aft_admin_role_arn=$AFT_EXEC_ROLE_ARN -D target_admin_role_arn=$VENDED_EXEC_ROLE_ARN -D terraform_org_name=$TF_ORG_NAME -D terraform_workspace_name=$TF_WORKSPACE_NAME  >> ./$(basename $f .jinja).tf; done
+            if ls *.jinja >/dev/null 2>&1; then
+              for f in *.jinja; do
+                jinja2 "$f" -D timestamp="$TIMESTAMP" -D provider_region="$CT_MGMT_REGION" \
+                  -D tf_distribution_type="$TF_DISTRIBUTION" -D aft_admin_role_arn="$AFT_EXEC_ROLE_ARN" \
+                  -D target_admin_role_arn="$VENDED_EXEC_ROLE_ARN" -D terraform_org_name="$TF_ORG_NAME" \
+                  -D terraform_workspace_name="$TF_WORKSPACE_NAME"  >> "./$(basename "$f" .jinja).tf"
+              done
+            else
+              echo "No Jinja2 templates found - skipping template processing"
+            fi
             for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
             
             cd $DEFAULT_PATH/$CUSTOMIZATION
             tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
-            python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH
+            python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH --project_name "$TF_PROJECT_NAME"
           fi
         fi
   post_build:

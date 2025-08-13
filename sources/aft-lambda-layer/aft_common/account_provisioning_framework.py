@@ -11,6 +11,7 @@ import aft_common.aft_utils as utils
 import aft_common.constants
 import aft_common.ssm
 from aft_common import ddb
+from aft_common.aft_utils import sanitize_input_for_logging
 from aft_common.auth import AuthClient
 from aft_common.organizations import OrganizationsAgent
 from boto3.session import Session
@@ -173,7 +174,7 @@ class ProvisionRoles:
     def role_policy_is_attached(
         role_name: str, policy_arn: str, target_account_session: Session
     ) -> bool:
-        logger.info("Determining if {policy_arn} is attached to {role_name}")
+        logger.info(f"Determining if {policy_arn} is attached to {role_name}")
         resource: IAMServiceResource = target_account_session.resource("iam")
         role = resource.Role(role_name)
         policy_iterator = role.attached_policies.all()
@@ -259,8 +260,8 @@ def persist_metadata(
     logger.info(item)
 
     response = ddb.put_ddb_item(session, metadata_table_name, item)
-
-    logger.info(response)
+    sanitized_response = sanitize_input_for_logging(response)
+    logger.info(sanitized_response)
     return response
 
 

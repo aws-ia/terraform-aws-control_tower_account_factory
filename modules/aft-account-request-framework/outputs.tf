@@ -2,23 +2,28 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 output "sns_topic_arn" {
-  description = "arn of aft notifications sns topic"
+  description = "ARN of aft notifications sns topic"
   value       = aws_sns_topic.aft_notifications.arn
 }
 
 output "failure_sns_topic_arn" {
-  description = "arn of failure_notifications sns topic"
+  description = "ARN of failure_notifications sns topic"
   value       = aws_sns_topic.aft_failure_notifications.arn
 }
 
 output "aft_kms_key_arn" {
-  description = "Arn for the AFT CMK Key"
+  description = "ARN for the AFT CMK Key"
   value       = aws_kms_key.aft.arn
 }
 
 output "aft_kms_key_id" {
   description = "ID for the AFT CMK Key"
   value       = aws_kms_key.aft.id
+}
+
+output "aft_kms_key_alias_arn" {
+  description = "ARN for the AFT CMK Key alias"
+  value       = aws_kms_alias.aft.id
 }
 
 output "request_action_trigger_function_arn" {
@@ -80,17 +85,21 @@ output "aft_failure_sns_topic_arn" {
 #########################################
 
 output "aft_vpc_id" {
-  value = var.aft_enable_vpc ? aws_vpc.aft_vpc[0].id : null
+  value = local.vpc_deployment ? local.vpc_id : null
 }
 
 output "aft_vpc_public_subnets" {
-  value = var.aft_enable_vpc ? tolist([aws_subnet.aft_vpc_public_subnet_01[0].id, aws_subnet.aft_vpc_public_subnet_02[0].id]) : null
+  value = local.vpc_public_subnet_ids
 }
 
 output "aft_vpc_private_subnets" {
-  value = var.aft_enable_vpc ? tolist(var.aft_enable_vpc ? [aws_subnet.aft_vpc_private_subnet_01[0].id, aws_subnet.aft_vpc_private_subnet_02[0].id] : []) : null
+  value = local.vpc_deployment ? local.vpc_private_subnet_ids : null
 }
 
 output "aft_vpc_default_sg" {
-  value = var.aft_enable_vpc ? tolist([aws_security_group.aft_vpc_default_sg[0].id]) : null
+  value = local.vpc_deployment ? tolist([aws_security_group.aft_vpc_default_sg[0].id]) : null
+}
+
+output "vpc_deployment" {
+  value = local.vpc_deployment
 }

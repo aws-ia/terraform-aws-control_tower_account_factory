@@ -25,10 +25,10 @@ resource "aws_lambda_function" "create_role" {
   }
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "create_role" {
   name              = "/aws/lambda/${aws_lambda_function.create_role.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }
 
 
@@ -55,10 +55,10 @@ resource "aws_lambda_function" "tag_account" {
   }
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "tag_account" {
   name              = "/aws/lambda/${aws_lambda_function.tag_account.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }
 
 ###  PERSIST METADATA FUNCTION
@@ -84,10 +84,10 @@ resource "aws_lambda_function" "persist_metadata" {
   }
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "persist_metadata" {
   name              = "/aws/lambda/${aws_lambda_function.persist_metadata.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }
 
 ###  Account Metadata SSM Function
@@ -115,8 +115,8 @@ resource "aws_lambda_function" "account_metadata_ssm" {
   }
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "account_metadata_ssm" {
   name              = "/aws/lambda/${aws_lambda_function.account_metadata_ssm.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }

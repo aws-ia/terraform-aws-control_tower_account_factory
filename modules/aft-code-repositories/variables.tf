@@ -14,8 +14,12 @@ variable "security_group_ids" {
   type = list(string)
 }
 
-variable "log_group_retention" {
+variable "cloudwatch_log_group_retention" {
   type = string
+}
+
+variable "cloudwatch_log_group_enable_cmk_encryption" {
+  type = bool
 }
 
 variable "vcs_provider" {
@@ -27,6 +31,10 @@ variable "terraform_distribution" {
 }
 
 variable "github_enterprise_url" {
+  type = string
+}
+
+variable "gitlab_selfmanaged_url" {
   type = string
 }
 
@@ -54,7 +62,7 @@ variable "codepipeline_s3_bucket_arn" {
   type = string
 }
 
-variable "aft_key_arn" {
+variable "aft_kms_key_arn" {
   type = string
 }
 
@@ -96,4 +104,8 @@ variable "global_codebuild_timeout" {
 
 variable "aft_enable_vpc" {
   type = bool
+}
+
+variable "codebuild_compute_type" {
+  type = string
 }

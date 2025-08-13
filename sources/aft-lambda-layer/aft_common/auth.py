@@ -17,10 +17,10 @@ from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from mypy_boto3_sts import STSClient
-    from mypy_boto3_sts.type_defs import AssumeRoleRequestRequestTypeDef
+    from mypy_boto3_sts.type_defs import AssumeRoleRequestTypeDef
 else:
     STSClient = object
-    AssumeRoleRequestRequestTypeDef = object
+    AssumeRoleRequestTypeDef = object
 
 logger = logging.getLogger("aft")
 
@@ -79,7 +79,7 @@ class AuthClient:
         external_id: Optional[str] = None,
     ) -> Session:
         sts: STSClient = session.client("sts")
-        params: AssumeRoleRequestRequestTypeDef = dict(
+        params: AssumeRoleRequestTypeDef = dict(
             RoleArn=role_arn,
             RoleSessionName=assume_role_session_name,
             DurationSeconds=assume_role_session_duration,

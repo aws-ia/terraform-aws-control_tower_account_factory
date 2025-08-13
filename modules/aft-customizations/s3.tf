@@ -7,6 +7,13 @@ resource "aws_s3_bucket" "aft_codepipeline_customizations_bucket" {
   bucket = "aft-customizations-pipeline-${data.aws_caller_identity.current.account_id}"
 }
 
+resource "aws_s3_bucket_policy" "aft_codepipeline_customizations_bucket" {
+  bucket = aws_s3_bucket.aft_codepipeline_customizations_bucket.id
+  policy = templatefile("${path.module}/s3/bucket-policies/aft_codepipeline_customizations_bucket.tpl", {
+    aft_codepipeline_customizations_bucket_arn = aws_s3_bucket.aft_codepipeline_customizations_bucket.arn
+  })
+}
+
 resource "aws_s3_bucket_public_access_block" "aft-codepipeline-customizations-block-public-access" {
   bucket = aws_s3_bucket.aft_codepipeline_customizations_bucket.id
 

@@ -67,7 +67,8 @@ resource "aws_iam_role_policy" "aft_invoke_customizations_sfn" {
     data_aws_region_aft-management_name                = data.aws_region.aft_management.name
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
     invoke_account_provisioning_sfn_arn                = var.invoke_account_provisioning_sfn_arn
-
+    aws_kms_key_aft_arn                                = var.aft_kms_key_arn
+    sns_topic_enable_cmk_encryption                    = var.sns_topic_enable_cmk_encryption
   })
 
 }

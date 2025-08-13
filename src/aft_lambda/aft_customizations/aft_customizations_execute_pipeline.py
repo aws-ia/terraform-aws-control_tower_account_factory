@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Dict
 import aft_common.ssm
 from aft_common import constants as utils
 from aft_common import notifications
+from aft_common.aft_utils import sanitize_input_for_logging
 from aft_common.codepipeline import execute_pipeline
 from aft_common.logger import configure_aft_logger, customization_request_logger
 from boto3.session import Session
@@ -38,7 +39,8 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
             execute_pipeline(session, str(account_id))
             accounts.remove(account_id)
         logger.info("Accounts remaining to be executed - ")
-        logger.info(accounts)
+        sanitized_accounts = sanitize_input_for_logging(accounts)
+        logger.info(sanitized_accounts)
         return {"number_pending_accounts": len(accounts), "pending_accounts": accounts}
 
     except Exception as error:
