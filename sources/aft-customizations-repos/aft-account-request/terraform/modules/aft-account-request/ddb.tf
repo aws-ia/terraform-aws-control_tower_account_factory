@@ -11,9 +11,7 @@ resource "aws_dynamodb_table_item" "account-request" {
       AccountEmail              = { S = lookup(var.control_tower_parameters, "AccountEmail") }
       AccountName               = { S = lookup(var.control_tower_parameters, "AccountName") }
       ManagedOrganizationalUnit = { S = lookup(var.control_tower_parameters, "ManagedOrganizationalUnit") }
-      SSOUserEmail              = { S = lookup(var.control_tower_parameters, "SSOUserEmail") }
-      SSOUserFirstName          = { S = lookup(var.control_tower_parameters, "SSOUserFirstName") }
-      SSOUserLastName           = { S = lookup(var.control_tower_parameters, "SSOUserLastName") }
+      SSOUserEmail              = { S = lookup(var.control_tower_parameters, "AccountEmail") }
       }
     }
     change_management_parameters = { M = {

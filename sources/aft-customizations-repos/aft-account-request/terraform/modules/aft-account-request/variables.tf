@@ -18,9 +18,6 @@ variable "control_tower_parameters" {
     AccountEmail              = string
     AccountName               = string
     ManagedOrganizationalUnit = string
-    SSOUserEmail              = string
-    SSOUserFirstName          = string
-    SSOUserLastName           = string
   })
 }
 

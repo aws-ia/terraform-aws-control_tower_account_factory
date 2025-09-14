@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source                = "hashicorp/aws"
-      version               = ">= 4.27.0"
+      version               = ">= 6.0.0, < 7.0.0"
       configuration_aliases = [aws.primary_region, aws.secondary_region]
     }
   }

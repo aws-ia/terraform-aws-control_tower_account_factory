@@ -25,10 +25,7 @@ Using this state machine integration, customers may define Account Provisioning 
     "custom_fields": "{}",
     "id": "Account Email",
     "control_tower_parameters": {
-      "SSOUserEmail": "",
       "AccountEmail": "",
-      "SSOUserFirstName": "",
-      "SSOUserLastName": "",
       "ManagedOrganizationalUnit": "Sandbox",
       "AccountName": "sandbox03"
     },

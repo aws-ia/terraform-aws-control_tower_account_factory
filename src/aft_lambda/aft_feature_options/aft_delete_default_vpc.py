@@ -61,14 +61,20 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
         ):
             for region in regions:
                 logger.info(
-                    "Deleting default VPC for AFT management account in region "
+                    "Deleting default VPC for account in region "
                     + region
                 )
-                session = boto3.session.Session(region_name=region)
+                #session = boto3.session.Session(region_name=region)
+                # https://github.com/aws-ia/terraform-aws-control_tower_account_factory/issues/536
+                session = auth.get_target_account_session(
+                    account_id=target_account_id,
+                    role_name=ProvisionRoles.SERVICE_ROLE_NAME,
+                    region=region,
+                )
                 client = session.client("ec2")
                 vpc = get_default_vpc(client)
                 if vpc is not None:
-                    resource: EC2ServiceResource = boto3.resource(
+                    resource: EC2ServiceResource = session.resource(
                         "ec2", region_name=region
                     )
                     # Get Resources

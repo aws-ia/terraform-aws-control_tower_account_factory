@@ -45,12 +45,12 @@ phases:
       - chmod +x $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
       - $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
 
-      # Install Terraform
+      # Install Tofu
       - cd /tmp
-      - echo "Installing Terraform"
-      - curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
-      - unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
-      - terraform --version
+      - echo "Installing Tofu"
+      - curl -L -o tofu_${TF_VERSION}_linux_amd64.zip https://github.com/opentofu/opentofu/releases/download/v${TF_VERSION}/tofu_${TF_VERSION}_linux_amd64.zip
+      - unzip -o tofu_${TF_VERSION}_linux_amd64.zip && mv tofu /usr/bin
+      - tofu --version
 
       # Install Python Dependencies
       - python3 -m venv ./venv
@@ -77,5 +77,5 @@ phases:
     on-failure: ABORT
     commands:
       - export AWS_PROFILE=aft-management-admin
-      - terraform init -no-color
-      - terraform apply -var="account_id=$VENDED_ACCOUNT_ID" -no-color --auto-approve
+      - tofu init
+      - tofu apply -var="account_id=$VENDED_ACCOUNT_ID" --auto-approve

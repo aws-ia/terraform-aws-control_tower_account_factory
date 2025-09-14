@@ -261,7 +261,6 @@ module "aft_ssm_parameters" {
   ct_primary_region                                           = var.ct_home_region
   tf_version                                                  = var.terraform_version
   tf_distribution                                             = var.terraform_distribution
-  terraform_api_endpoint                                      = var.terraform_api_endpoint
   account_request_repo_branch                                 = var.account_request_repo_branch
   account_request_repo_name                                   = var.account_request_repo_name
   vcs_provider                                                = var.vcs_provider
@@ -269,10 +268,7 @@ module "aft_ssm_parameters" {
   aft_config_backend_secondary_region                         = var.tf_backend_secondary_region
   aft_framework_repo_url                                      = var.aft_framework_repo_url
   aft_framework_repo_git_ref                                  = local.aft_framework_repo_git_ref
-  terraform_token                                             = var.terraform_token # Null default value #tfsec:ignore:general-secrets-no-plaintext-exposure
   terraform_version                                           = var.terraform_version
-  terraform_org_name                                          = var.terraform_org_name
-  terraform_project_name                                      = var.terraform_project_name
   aft_feature_cloudtrail_data_events                          = var.aft_feature_cloudtrail_data_events
   aft_feature_enterprise_support                              = var.aft_feature_enterprise_support
   aft_feature_delete_default_vpcs_enabled                     = var.aft_feature_delete_default_vpcs_enabled

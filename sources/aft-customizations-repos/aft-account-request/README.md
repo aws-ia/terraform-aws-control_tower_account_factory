@@ -17,9 +17,6 @@ Git push action will trigger ct-aft-account-request AWS CodePipeline in AFT mana
     - AccountEmail
     - AccountName
     - ManagedOrganizationalUnit
-    - SSOUserEmail
-    - SSOUserFirstName
-    - SSOUserLastName
   
 
    Refer to https://docs.aws.amazon.com/controltower/latest/userguide/account-factory.html for more information.

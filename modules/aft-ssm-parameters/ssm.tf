@@ -187,30 +187,6 @@ resource "aws_ssm_parameter" "tf_distribution" {
   value = var.tf_distribution
 }
 
-resource "aws_ssm_parameter" "terraform_api_endpoint" {
-  name  = "/aft/config/terraform/api-endpoint"
-  type  = "String"
-  value = var.terraform_api_endpoint
-}
-
-resource "aws_ssm_parameter" "terraform_token" {
-  name  = "/aft/config/terraform/token"
-  type  = "SecureString"
-  value = var.terraform_token
-}
-
-resource "aws_ssm_parameter" "terraform_org_name" {
-  name  = "/aft/config/terraform/org-name"
-  type  = "String"
-  value = var.terraform_org_name
-}
-
-resource "aws_ssm_parameter" "terraform_project_name" {
-  name  = "/aft/config/terraform/project-name"
-  type  = "String"
-  value = var.terraform_project_name
-}
-
 resource "aws_ssm_parameter" "aft_execution_role_name" {
   name  = "/aft/resources/iam/aft-execution-role-name"
   type  = "String"

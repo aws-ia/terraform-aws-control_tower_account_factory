@@ -333,48 +333,6 @@ variable "tf_backend_secondary_region" {
   }
 }
 
-# Non-OSS Variables
-variable "terraform_token" {
-  type        = string
-  description = "Terraform token for Cloud or Enterprise"
-  default     = "null" # Non-sensitive default value #tfsec:ignore:general-secrets-no-plaintext-exposure
-  sensitive   = true
-  validation {
-    condition     = length(var.terraform_token) > 0
-    error_message = "Variable var: terraform_token cannot be empty."
-  }
-}
-
-variable "terraform_org_name" {
-  type        = string
-  description = "Organization name for Terraform Cloud or Enterprise"
-  default     = "null"
-  validation {
-    condition     = length(var.terraform_org_name) > 0
-    error_message = "Variable var: terraform_org_name cannot be empty."
-  }
-}
-
-variable "terraform_project_name" {
-  type        = string
-  description = "Project name for Terraform Cloud or Enterprise - project must exist before deployment"
-  default     = "Default Project"
-  validation {
-    condition     = length(var.terraform_project_name) > 0
-    error_message = "Variable var: terraform_project_name cannot be empty."
-  }
-}
-
-variable "terraform_api_endpoint" {
-  description = "API Endpoint for Terraform. Must be in the format of https://xxx.xxx."
-  type        = string
-  default     = "https://app.terraform.io/api/v2/"
-  validation {
-    condition     = length(var.terraform_api_endpoint) > 0
-    error_message = "Variable var: terraform_api_endpoint cannot be empty."
-  }
-}
-
 #########################################
 # AFT VPC Variables
 #########################################

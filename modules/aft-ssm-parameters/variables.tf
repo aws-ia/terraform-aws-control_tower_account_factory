@@ -121,14 +121,6 @@ variable "tf_distribution" {
   type = string
 }
 
-variable "terraform_api_endpoint" {
-  type = string
-}
-
-variable "terraform_token" {
-  type      = string
-  sensitive = true
-}
 
 variable "account_request_repo_name" {
   type = string
@@ -143,14 +135,6 @@ variable "account_provisioning_customizations_repo_name" {
 }
 
 variable "account_provisioning_customizations_repo_branch" {
-  type = string
-}
-
-variable "terraform_org_name" {
-  type = string
-}
-
-variable "terraform_project_name" {
   type = string
 }
 
