@@ -374,6 +374,12 @@ resource "aws_ssm_parameter" "aft_maximum_concurrent_customizations" {
   type  = "String"
 }
 
+resource "aws_ssm_parameter" "aft_codepipeline_customizations_bucket_id" {
+  name  = "/aft/config/customizations/aft_codepipeline_customizations_bucket_id"
+  value = var.aft_codepipeline_customizations_bucket_id
+  type  = "String"
+}
+
 resource "aws_ssm_parameter" "aft_metrics_reporting" {
   name  = "/aft/config/metrics-reporting"
   value = var.aft_metrics_reporting

@@ -58,7 +58,7 @@ phases:
 
           # Install AFT Python Dependencies
           python3 -m venv $DEFAULT_PATH/aft-venv
-          $DEFAULT_PATH/aft-venv/bin/pip install pip==22.1.2
+          $DEFAULT_PATH/aft-venv/bin/pip install -U pip
           $DEFAULT_PATH/aft-venv/bin/pip install jinja2-cli==0.7.0 Jinja2==3.0.1 MarkupSafe==2.0.1 boto3==1.18.56 requests==2.26.0
 
           # Install API Helper Python Dependencies

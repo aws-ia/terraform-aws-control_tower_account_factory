@@ -17,6 +17,7 @@ from aft_common.customizations import (
     get_excluded_accounts,
     get_included_accounts,
     get_target_accounts,
+    upload_target_account_info,
     validate_identify_targets_request,
 )
 from aft_common.logger import configure_aft_logger
@@ -46,6 +47,10 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
         if not validate_identify_targets_request(payload):
             raise ValueError("Invalid 'identify_targets_request' payload")
         else:
+            execution_id = payload["get_execution_id"]["execution_id"]
+            sanitized_execution_id = sanitize_input_for_logging(execution_id)
+            logger.info(f"Identify Targets for execution_id: {sanitized_execution_id}")
+
             included_accounts = get_included_accounts(
                 aft_management_session, ct_mgmt_session, orgs_agent, payload["include"]
             )
@@ -97,7 +102,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
             return {
                 "number_pending_accounts": len(target_accounts),
                 "pending_accounts": target_accounts,
-                "target_accounts_info": target_account_info,
+                "target_accounts_info": upload_target_account_info(
+                    aft_management_session, target_account_info, execution_id
+                ),
             }
 
     except Exception as error:

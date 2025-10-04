@@ -18,7 +18,7 @@
             "Resource": [
                 "arn:${data_aws_partition_current_partition}:sns:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:aft-*"
             ]
-        }%{ if sns_topic_enable_cmk_encryption },
+        },
         {
             "Effect": "Allow",
             "Action": [
@@ -29,7 +29,7 @@
             "Resource": [
                 "${aws_kms_key_aft_arn}"
             ]
-       }%{ endif },
+        },
         {
             "Effect": "Allow",
             "Action": [
@@ -58,6 +58,15 @@
             ],
             "Resource": [
                 "arn:${data_aws_partition_current_partition}:states:${data_aws_region_aft-management_name}:${data_aws_caller_identity_aft-management_account_id}:execution:aft-*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject*"
+            ],
+            "Resource": [
+                "${aws_s3_bucket_aft_codepipeline_customizations_bucket_arn}/sfn/*"
             ]
         }
     ]

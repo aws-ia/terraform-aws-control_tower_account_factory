@@ -53,6 +53,15 @@
         "${aft_sns_topic_arn}",
         "${aft_failure_sns_topic_arn}"
       ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:Put*"
+      ],
+      "Resource": [
+        "${aws_s3_bucket_aft_codepipeline_customizations_bucket_arn}/*"
+      ]
     }
   ]
 }

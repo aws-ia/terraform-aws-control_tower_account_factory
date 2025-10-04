@@ -112,6 +112,12 @@ variable "aft_backend_bucket_access_logs_object_expiration_days" {
   }
 }
 
+variable "sfn_s3_bucket_object_expiration_days" {
+  description = "Amount of days to keep the objects stored in the CodePipeline bucket for AFT Step Functions"
+  type        = number
+  default     = 90
+}
+
 variable "maximum_concurrent_customizations" {
   description = "Maximum number of customizations/pipelines to run at once"
   type        = number

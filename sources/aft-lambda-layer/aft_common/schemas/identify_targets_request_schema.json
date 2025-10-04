@@ -5,9 +5,27 @@
     "title": "Root",
     "type": "object",
     "required": [
+        "get_execution_id",
         "include"
     ],
     "properties": {
+        "get_execution_id": {
+            "$id": "#root/get_execution_id",
+            "title": "Get Execution Id",
+            "type": "object",
+            "required": [
+                "execution_id"
+            ],
+            "properties": {
+                "type": {
+                    "$id": "#root/get_execution_id/items/execution_id",
+                    "title": "Execution Id",
+                    "type": "string",
+                    "default": "",
+                    "pattern": "^.*$"
+                }
+            }
+        },
         "include": {
             "$id": "#root/include",
             "title": "Include",

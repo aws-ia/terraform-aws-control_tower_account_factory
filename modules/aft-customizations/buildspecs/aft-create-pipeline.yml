@@ -55,7 +55,7 @@ phases:
       # Install Python Dependencies
       - python3 -m venv ./venv
       - source ./venv/bin/activate
-      - pip install pip==22.1.2
+      - pip install -U pip
       - pip install jinja2-cli==0.7.0 Jinja2==3.0.1
 
   pre_build:

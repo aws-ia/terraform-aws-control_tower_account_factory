@@ -63,6 +63,10 @@ SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID = "/aft/account/log-archive/account-id"
 SSM_PARAM_ACCOUNT_AFT_MANAGEMENT_ACCOUNT_ID = "/aft/account/aft-management/account-id"
 SSM_PARAM_ACCOUNT_AFT_VERSION = "/aft/config/aft/version"
 SSM_PARAM_ACCOUNT_TERRAFORM_VERSION = "/aft/config/terraform/version"
+SSM_PARAM_AFT_CODEPIPELINE_CUSTOMIZATIONS_BUCKET_ID = (
+    "/aft/config/customizations/aft_codepipeline_customizations_bucket_id"
+)
+
 SSM_PARAM_AFT_METRICS_REPORTING = "/aft/config/metrics-reporting"
 SSM_PARAM_AFT_METRICS_REPORTING_UUID = "/aft/config/metrics-reporting-uuid"
 SSM_PARAMETER_PATH = "/aft/account-request/custom-fields/"

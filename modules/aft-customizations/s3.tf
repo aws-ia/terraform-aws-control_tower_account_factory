@@ -40,3 +40,17 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "aft-codepipeline-
     }
   }
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "aft_codepipeline_customizations_bucket" {
+  bucket = aws_s3_bucket.aft_codepipeline_customizations_bucket.id
+  rule {
+    id = "sfn-data"
+    filter {
+      prefix = "sfn/"
+    }
+    expiration {
+      days = var.sfn_s3_bucket_object_expiration_days
+    }
+    status = "Enabled"
+  }
+}

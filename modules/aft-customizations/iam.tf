@@ -63,12 +63,13 @@ resource "aws_iam_role_policy" "aft_invoke_customizations_sfn" {
   role = aws_iam_role.aft_invoke_customizations_sfn.id
 
   policy = templatefile("${path.module}/iam/role-policies/aft_states_invoke_customizations_policy.tpl", {
-    data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft_management.name
-    data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
-    invoke_account_provisioning_sfn_arn                = var.invoke_account_provisioning_sfn_arn
-    aws_kms_key_aft_arn                                = var.aft_kms_key_arn
-    sns_topic_enable_cmk_encryption                    = var.sns_topic_enable_cmk_encryption
+    data_aws_partition_current_partition                     = data.aws_partition.current.partition
+    data_aws_region_aft-management_name                      = data.aws_region.aft_management.name
+    data_aws_caller_identity_aft-management_account_id       = data.aws_caller_identity.aft_management.account_id
+    invoke_account_provisioning_sfn_arn                      = var.invoke_account_provisioning_sfn_arn
+    aws_kms_key_aft_arn                                      = var.aft_kms_key_arn
+    sns_topic_enable_cmk_encryption                          = var.sns_topic_enable_cmk_encryption
+    aws_s3_bucket_aft_codepipeline_customizations_bucket_arn = aws_s3_bucket.aft_codepipeline_customizations_bucket.arn
   })
 
 }
@@ -87,15 +88,16 @@ resource "aws_iam_role_policy" "aft_identify_targets_lambda" {
   role = aws_iam_role.aft_customizations_identify_targets_lambda.id
 
   policy = templatefile("${path.module}/iam/role-policies/aft_identify_targets_lambda.tpl", {
-    data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
-    data_aws_partition_current_partition        = data.aws_partition.current.partition
-    data_aws_region_current_name                = data.aws_region.current.name
-    request_metadata_table_name                 = var.request_metadata_table_name
-    account_request_table_name                  = var.account_request_table_name
-    aws_kms_key_aft_arn                         = var.aft_kms_key_arn
-    aft_sns_topic_arn                           = var.aft_sns_topic_arn
-    aft_failure_sns_topic_arn                   = var.aft_failure_sns_topic_arn
-    invoke_account_provisioning_arn             = var.invoke_account_provisioning_sfn_arn
+    data_aws_caller_identity_current_account_id              = data.aws_caller_identity.current.account_id
+    data_aws_partition_current_partition                     = data.aws_partition.current.partition
+    data_aws_region_current_name                             = data.aws_region.current.name
+    request_metadata_table_name                              = var.request_metadata_table_name
+    account_request_table_name                               = var.account_request_table_name
+    aws_kms_key_aft_arn                                      = var.aft_kms_key_arn
+    aft_sns_topic_arn                                        = var.aft_sns_topic_arn
+    aft_failure_sns_topic_arn                                = var.aft_failure_sns_topic_arn
+    invoke_account_provisioning_arn                          = var.invoke_account_provisioning_sfn_arn
+    aws_s3_bucket_aft_codepipeline_customizations_bucket_arn = aws_s3_bucket.aft_codepipeline_customizations_bucket.arn
   })
 
 }

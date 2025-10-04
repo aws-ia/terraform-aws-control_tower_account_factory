@@ -147,6 +147,7 @@ module "aft_customizations" {
   aft_enable_vpc                                    = module.aft_account_request_framework.vpc_deployment
   codebuild_compute_type                            = var.aft_codebuild_compute_type
   sns_topic_enable_cmk_encryption                   = var.sns_topic_enable_cmk_encryption
+  sfn_s3_bucket_object_expiration_days              = var.sfn_s3_bucket_object_expiration_days
 }
 
 module "aft_feature_options" {
@@ -285,5 +286,6 @@ module "aft_ssm_parameters" {
   maximum_concurrent_customizations                           = var.maximum_concurrent_customizations
   github_enterprise_url                                       = var.github_enterprise_url
   gitlab_selfmanaged_url                                      = var.gitlab_selfmanaged_url
+  aft_codepipeline_customizations_bucket_id                   = module.aft_customizations.aft_codepipeline_customizations_bucket_name
   aft_metrics_reporting                                       = var.aft_metrics_reporting
 }

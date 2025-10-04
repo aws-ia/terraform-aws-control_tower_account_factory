@@ -131,3 +131,7 @@ variable "codebuild_compute_type" {
 variable "sns_topic_enable_cmk_encryption" {
   type = bool
 }
+
+variable "sfn_s3_bucket_object_expiration_days" {
+  type = number
+}
