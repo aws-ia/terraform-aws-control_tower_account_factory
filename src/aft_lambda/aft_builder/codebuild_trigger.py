@@ -38,8 +38,8 @@ def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> LayerBuild
         time.sleep(30)
 
         # 15min Lambda hard-timeout, soft-timeout at 14min
-        end_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=14)
-        while datetime.datetime.utcnow() <= end_time:
+        end_time = datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=14)
+        while datetime.datetime.now(datetime.UTC) <= end_time:
             # We pass exactly 1 job ID, so the build list should contain exactly 1 object
             job_status = client.batch_get_builds(ids=[job_id])["builds"][0][
                 "buildStatus"
