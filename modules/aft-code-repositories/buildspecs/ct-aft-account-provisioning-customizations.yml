@@ -4,6 +4,24 @@
 version: 0.2
 
 phases:
+  install:
+    commands:
+      - set -e
+      - DEFAULT_PATH=$(pwd)
+
+      # Install AFT Python Dependencies
+      - python3 -m venv $DEFAULT_PATH/aft-venv
+      - $DEFAULT_PATH/aft-venv/bin/pip install pip==22.1.2
+      - $DEFAULT_PATH/aft-venv/bin/pip install jinja2-cli==0.7.0 Jinja2==3.0.1 MarkupSafe==2.0.1 boto3==1.18.56 requests==2.26.0
+
+      # Install API Helper Python Dependencies
+      - python3 -m venv $DEFAULT_PATH/api-helpers-venv
+      - $DEFAULT_PATH/api-helpers-venv/bin/pip install -r $DEFAULT_PATH/api_helpers/python/requirements.txt
+
+      # Mark helper scripts as executable
+      - chmod +x $DEFAULT_PATH/api_helpers/pre-api-helpers.sh
+      - chmod +x $DEFAULT_PATH/api_helpers/post-api-helpers.sh
+
   pre_build:
     commands:
       - DEFAULT_PATH=$(pwd)
@@ -32,6 +50,8 @@ phases:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/ssh_key
         fi
+      - source $DEFAULT_PATH/api-helpers-venv/bin/activate
+      - $DEFAULT_PATH/api_helpers/pre-api-helpers.sh
       - git config --global credential.helper '!aws codecommit credential-helper $@'
       - git config --global credential.UseHttpPath true
       - git clone -b $AWS_MODULE_GIT_REF $AWS_MODULE_SOURCE aws-aft-core-framework
@@ -102,3 +122,5 @@ phases:
   post_build:
     commands:
       - echo "Post-Build"
+      - source $DEFAULT_PATH/api-helpers-venv/bin/activate
+      - $DEFAULT_PATH/api_helpers/post-api-helpers.sh
