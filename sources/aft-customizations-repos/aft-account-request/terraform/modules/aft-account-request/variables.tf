@@ -48,3 +48,13 @@ variable "account_customizations_name" {
   default     = ""
   description = "The name of the account customizations to apply"
 }
+
+variable "workflow_type" {
+  type        = string
+  default     = "apply"
+  description = "Type of pipeline workflow, it can be apply, apply-with-approval"
+  validation {
+    condition     = var.workflow_type == "apply" || var.workflow_type == "apply-with-approval"
+    error_message = "The workflow_type must be apply or apply-with-approval."
+  }
+}

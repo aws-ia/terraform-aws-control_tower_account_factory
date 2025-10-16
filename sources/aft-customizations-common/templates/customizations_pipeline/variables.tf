@@ -11,6 +11,15 @@ variable "account_id" {
   description = "Account ID for which the pipeline is being created"
 }
 
+variable "workflow_type" {
+  type        = string
+  description = "Type of pipeline workflow, it can be apply, apply-with-approval"
+  validation {
+    condition     = var.workflow_type == "apply" || var.workflow_type == "apply-with-approval"
+    error_message = "The value must be apply or apply-with-approval."
+  }
+}
+
 variable "aft_tf_s3_bucket_ssm_path" {
   type        = string
   description = "SSM Parameter path for the AFT Terraform S3 Bucket"
