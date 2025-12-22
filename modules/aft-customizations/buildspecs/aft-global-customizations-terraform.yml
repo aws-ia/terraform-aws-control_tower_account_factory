@@ -65,7 +65,7 @@ phases:
     commands:
       - source $DEFAULT_PATH/api-helpers-venv/bin/activate
       - export AWS_PROFILE=aft-target
-      - $DEFAULT_PATH/api_helpers/pre-api-helpers.sh
+      - $DEFAULT_PATH/api_helpers/pre-api-helpers.sh || exit 1
       - unset AWS_PROFILE
 
   build:
@@ -145,4 +145,4 @@ phases:
         fi
       - source $DEFAULT_PATH/api-helpers-venv/bin/activate
       - export AWS_PROFILE=aft-target
-      - $DEFAULT_PATH/api_helpers/post-api-helpers.sh
+      - $DEFAULT_PATH/api_helpers/post-api-helpers.sh || exit 1

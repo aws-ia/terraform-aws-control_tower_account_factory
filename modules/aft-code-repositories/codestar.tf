@@ -64,3 +64,9 @@ resource "aws_codeconnections_host" "gitlabselfmanaged" {
     }
   }
 }
+
+resource "aws_codeconnections_connection" "azuredevops" {
+  count         = local.vcs.is_azuredevops ? 1 : 0
+  name          = "ct-aft-azuredevops-connection"
+  provider_type = "AzureDevOps"
+}

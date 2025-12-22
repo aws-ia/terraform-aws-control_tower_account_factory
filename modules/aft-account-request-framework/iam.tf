@@ -37,7 +37,7 @@ resource "aws_iam_role_policy" "aft_account_request_audit_trigger" {
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-account-request-audit-trigger.tpl", {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft-management.name
+    data_aws_region_aft-management_name                = data.aws_region.aft-management.region
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
     aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
     aws_sns_topic_aft_failure_notifications_arn        = aws_sns_topic.aft_failure_notifications.arn
@@ -67,7 +67,7 @@ resource "aws_iam_role_policy" "aft_account_request_action_trigger" {
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-account-request-action-trigger.tpl", {
     data_aws_partition_current_partition                              = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                               = data.aws_region.aft-management.name
+    data_aws_region_aft-management_name                               = data.aws_region.aft-management.region
     data_aws_caller_identity_aft-management_account_id                = data.aws_caller_identity.aft-management.account_id
     aws_sns_topic_aft_notifications_arn                               = aws_sns_topic.aft_notifications.arn
     aws_sns_topic_aft_failure_notifications_arn                       = aws_sns_topic.aft_failure_notifications.arn
@@ -98,7 +98,7 @@ resource "aws_iam_role_policy" "aft_controltower_event_logger" {
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-controltower-event-logger.tpl", {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft-management.name
+    data_aws_region_aft-management_name                = data.aws_region.aft-management.region
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
     aws_dynamodb_table_controltower-events_name        = aws_dynamodb_table.aft_controltower_events.name
     aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
@@ -125,7 +125,7 @@ resource "aws_iam_role_policy" "aft_account_request_processor" {
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-account-request-processor.tpl", {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft-management.name
+    data_aws_region_aft-management_name                = data.aws_region.aft-management.region
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
     aws_kms_key_aft_arn                                = aws_kms_key.aft.arn
     aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
@@ -154,7 +154,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework" {
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-invoke-aft-account-provisioning-framework.tpl", {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft-management.name
+    data_aws_region_aft-management_name                = data.aws_region.aft-management.region
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
     aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
     aws_sns_topic_aft_failure_notifications_arn        = aws_sns_topic.aft_failure_notifications.arn
@@ -182,7 +182,7 @@ resource "aws_iam_role_policy" "aft_cleanup_resources" {
 
   policy = templatefile("${path.module}/iam/role-policies/lambda-aft-cleanup-resources.tpl", {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft-management.name
+    data_aws_region_aft-management_name                = data.aws_region.aft-management.region
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft-management.account_id
     aws_sns_topic_aft_notifications_arn                = aws_sns_topic.aft_notifications.arn
     aws_sns_topic_aft_failure_notifications_arn        = aws_sns_topic.aft_failure_notifications.arn

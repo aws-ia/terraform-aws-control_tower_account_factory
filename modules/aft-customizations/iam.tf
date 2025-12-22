@@ -17,7 +17,7 @@ resource "aws_iam_role_policy" "aft_codepipeline_customizations_policy" {
   policy = templatefile("${path.module}/iam/role-policies/aft_codepipeline_customizations_policy.tpl", {
     aws_s3_bucket_aft_codepipeline_customizations_bucket_arn = aws_s3_bucket.aft_codepipeline_customizations_bucket.arn
     data_aws_partition_current_partition                     = data.aws_partition.current.partition
-    data_aws_region_current_name                             = data.aws_region.current.name
+    data_aws_region_current_name                             = data.aws_region.current.region
     data_aws_caller_identity_current_account_id              = data.aws_caller_identity.current.account_id
     data_aws_kms_alias_aft_key_target_key_arn                = var.aft_kms_key_arn
   })
@@ -37,7 +37,7 @@ resource "aws_iam_role_policy" "aft_codebuild_customizations_policy" {
   policy = templatefile("${path.module}/iam/role-policies/aft_codebuild_customizations_policy.tpl", {
     aws_s3_bucket_aft_codepipeline_customizations_bucket_arn = aws_s3_bucket.aft_codepipeline_customizations_bucket.arn
     data_aws_partition_current_partition                     = data.aws_partition.current.partition
-    data_aws_region_current_name                             = data.aws_region.current.name
+    data_aws_region_current_name                             = data.aws_region.current.region
     data_aws_caller_identity_current_account_id              = data.aws_caller_identity.current.account_id
     data_aws_kms_alias_aft_key_target_key_arn                = var.aft_kms_key_arn
     data_aws_dynamo_account_metadata_table                   = var.request_metadata_table_name
@@ -64,7 +64,7 @@ resource "aws_iam_role_policy" "aft_invoke_customizations_sfn" {
 
   policy = templatefile("${path.module}/iam/role-policies/aft_states_invoke_customizations_policy.tpl", {
     data_aws_partition_current_partition                     = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                      = data.aws_region.aft_management.name
+    data_aws_region_aft-management_name                      = data.aws_region.aft_management.region
     data_aws_caller_identity_aft-management_account_id       = data.aws_caller_identity.aft_management.account_id
     invoke_account_provisioning_sfn_arn                      = var.invoke_account_provisioning_sfn_arn
     aws_kms_key_aft_arn                                      = var.aft_kms_key_arn
@@ -90,7 +90,7 @@ resource "aws_iam_role_policy" "aft_identify_targets_lambda" {
   policy = templatefile("${path.module}/iam/role-policies/aft_identify_targets_lambda.tpl", {
     data_aws_caller_identity_current_account_id              = data.aws_caller_identity.current.account_id
     data_aws_partition_current_partition                     = data.aws_partition.current.partition
-    data_aws_region_current_name                             = data.aws_region.current.name
+    data_aws_region_current_name                             = data.aws_region.current.region
     request_metadata_table_name                              = var.request_metadata_table_name
     account_request_table_name                               = var.account_request_table_name
     aws_kms_key_aft_arn                                      = var.aft_kms_key_arn
@@ -123,7 +123,7 @@ resource "aws_iam_role_policy" "aft_execute_pipeline_lambda" {
 
   policy = templatefile("${path.module}/iam/role-policies/aft_execute_pipeline_lambda.tpl", {
     data_aws_partition_current_partition        = data.aws_partition.current.partition
-    data_aws_region_current_name                = data.aws_region.current.name
+    data_aws_region_current_name                = data.aws_region.current.region
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
     aft_sns_topic_arn                           = var.aft_sns_topic_arn
@@ -153,7 +153,7 @@ resource "aws_iam_role_policy" "aft_get_pipeline_executions_lambda" {
 
   policy = templatefile("${path.module}/iam/role-policies/aft_get_pipeline_status_lambda.tpl", {
     data_aws_partition_current_partition        = data.aws_partition.current.partition
-    data_aws_region_current_name                = data.aws_region.current.name
+    data_aws_region_current_name                = data.aws_region.current.region
     data_aws_caller_identity_current_account_id = data.aws_caller_identity.current.account_id
     aws_kms_key_aft_arn                         = var.aft_kms_key_arn
     aft_sns_topic_arn                           = var.aft_sns_topic_arn
@@ -175,7 +175,7 @@ resource "aws_iam_role_policy" "terraform_oss_backend_codebuild_customizations_p
 
   policy = templatefile("${path.module}/iam/role-policies/ct_aft_codebuild_oss_backend_policy.tpl", {
     data_aws_partition_current_partition              = data.aws_partition.current.partition
-    data_aws_region_current_name                      = data.aws_region.current.name
+    data_aws_region_current_name                      = data.aws_region.current.region
     data_aws_caller_identity_current_account_id       = data.aws_caller_identity.current.account_id
     data_aws_dynamo_terraform_oss_backend_table       = var.aft_config_backend_table_id
     aws_s3_bucket_aft_terraform_oss_backend_bucket_id = var.aft_config_backend_bucket_id

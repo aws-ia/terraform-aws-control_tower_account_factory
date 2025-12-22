@@ -210,8 +210,8 @@ variable "vcs_provider" {
   type        = string
   default     = "codecommit"
   validation {
-    condition     = contains(["codecommit", "bitbucket", "github", "githubenterprise", "gitlab", "gitlabselfmanaged"], var.vcs_provider)
-    error_message = "Valid values for var: vcs_provider are (codecommit, bitbucket, github, githubenterprise, gitlab, gitlabselfmanaged)."
+    condition     = contains(["codecommit", "bitbucket", "github", "githubenterprise", "gitlab", "gitlabselfmanaged", "azuredevops"], var.vcs_provider)
+    error_message = "Valid values for var: vcs_provider are (codecommit, bitbucket, github, githubenterprise, gitlab, gitlabselfmanaged, azuredevops)."
   }
 }
 
