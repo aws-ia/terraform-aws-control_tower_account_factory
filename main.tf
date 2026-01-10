@@ -55,6 +55,7 @@ module "aft_account_request_framework" {
   aft_vpc_public_subnet_02_cidr               = var.aft_vpc_public_subnet_02_cidr
   aft_vpc_endpoints                           = var.aft_vpc_endpoints
   concurrent_account_factory_actions          = var.concurrent_account_factory_actions
+  account_request_processor_scheduling        = var.account_request_processor_scheduling
   request_framework_archive_path              = module.packaging.request_framework_archive_path
   request_framework_archive_hash              = module.packaging.request_framework_archive_hash
   lambda_runtime_python_version               = local.lambda_runtime_python_version

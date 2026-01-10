@@ -62,6 +62,10 @@ variable "concurrent_account_factory_actions" {
   type = number
 }
 
+variable "account_request_processor_scheduling" {
+  type = number
+}
+
 variable "lambda_runtime_python_version" {
   type = string
 }

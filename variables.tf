@@ -161,6 +161,17 @@ variable "global_codebuild_timeout" {
   }
 }
 
+variable "account_request_processor_scheduling" {
+  type        = number
+  description = "Rate in minutes in which new account requests are processed"
+  default     = 5
+
+  validation {
+    condition     = var.account_request_processor_scheduling >= 1
+    error_message = "Account request processing rate must be greater or equal than 1 minute."
+  }
+}
+
 variable "tags" {
   description = "Map of tags to apply to resources deployed by AFT."
   type        = map(any)
