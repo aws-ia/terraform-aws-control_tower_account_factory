@@ -7,7 +7,7 @@
 
 resource "aws_s3_bucket" "aft_logging_bucket" {
   provider = aws.log_archive
-  bucket   = "${var.log_archive_bucket_name}-${var.log_archive_account_id}-${data.aws_region.current.name}"
+  bucket   = "${var.log_archive_bucket_name}-${var.log_archive_account_id}-${data.aws_region.current.region}"
 }
 
 resource "aws_s3_bucket_logging" "aft_logging_bucket_logging" {
@@ -44,6 +44,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "aft_logging_bucket_lifecycle_c
     status = "Enabled"
     id     = "aft_logging_bucket_lifecycle_configuration_rule"
 
+    filter {
+      prefix = ""
+    }
+
     noncurrent_version_expiration {
       noncurrent_days = var.log_archive_bucket_object_expiration_days
     }
@@ -72,7 +76,7 @@ resource "aws_s3_bucket_public_access_block" "aft_logging_bucket" {
 #tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "aft_access_logs" {
   provider = aws.log_archive
-  bucket   = "${var.log_archive_access_logs_bucket_name}-${var.log_archive_account_id}-${data.aws_region.current.name}"
+  bucket   = "${var.log_archive_access_logs_bucket_name}-${var.log_archive_account_id}-${data.aws_region.current.region}"
 }
 
 resource "aws_s3_bucket_policy" "aft_access_logs" {

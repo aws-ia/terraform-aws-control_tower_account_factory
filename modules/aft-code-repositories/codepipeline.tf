@@ -16,7 +16,7 @@ resource "aws_codepipeline" "codecommit_account_request" {
     type     = "S3"
 
     encryption_key {
-      id   = var.aft_key_arn
+      id   = var.aft_kms_key_arn
       type = "KMS"
     }
   }
@@ -127,7 +127,7 @@ resource "aws_codepipeline" "codeconnections_account_request" {
     type     = "S3"
 
     encryption_key {
-      id   = var.aft_key_arn
+      id   = var.aft_kms_key_arn
       type = "KMS"
     }
   }
@@ -147,7 +147,7 @@ resource "aws_codepipeline" "codeconnections_account_request" {
       output_artifacts = ["account-request"]
 
       configuration = {
-        ConnectionArn        = lookup({ github = local.connection_arn.github, bitbucket = local.connection_arn.bitbucket, githubenterprise = local.connection_arn.githubenterprise, gitlab = local.connection_arn.gitlab, gitlabselfmanaged = local.connection_arn.gitlabselfmanaged }, var.vcs_provider)
+        ConnectionArn        = lookup({ github = local.connection_arn.github, bitbucket = local.connection_arn.bitbucket, githubenterprise = local.connection_arn.githubenterprise, gitlab = local.connection_arn.gitlab, gitlabselfmanaged = local.connection_arn.gitlabselfmanaged, azuredevops = local.connection_arn.azuredevops }, var.vcs_provider)
         FullRepositoryId     = var.account_request_repo_name
         BranchName           = var.account_request_repo_branch
         DetectChanges        = true
@@ -193,7 +193,7 @@ resource "aws_codepipeline" "codecommit_account_provisioning_customizations" {
     type     = "S3"
 
     encryption_key {
-      id   = var.aft_key_arn
+      id   = var.aft_kms_key_arn
       type = "KMS"
     }
   }
@@ -262,7 +262,7 @@ resource "aws_codepipeline" "codeconnections_account_provisioning_customizations
     type     = "S3"
 
     encryption_key {
-      id   = var.aft_key_arn
+      id   = var.aft_kms_key_arn
       type = "KMS"
     }
   }
@@ -282,7 +282,7 @@ resource "aws_codepipeline" "codeconnections_account_provisioning_customizations
       output_artifacts = ["account-provisioning-customizations"]
 
       configuration = {
-        ConnectionArn        = lookup({ github = local.connection_arn.github, bitbucket = local.connection_arn.bitbucket, githubenterprise = local.connection_arn.githubenterprise, gitlab = local.connection_arn.gitlab, gitlabselfmanaged = local.connection_arn.gitlabselfmanaged }, var.vcs_provider)
+        ConnectionArn        = lookup({ github = local.connection_arn.github, bitbucket = local.connection_arn.bitbucket, githubenterprise = local.connection_arn.githubenterprise, gitlab = local.connection_arn.gitlab, gitlabselfmanaged = local.connection_arn.gitlabselfmanaged, azuredevops = local.connection_arn.azuredevops }, var.vcs_provider)
         FullRepositoryId     = var.account_provisioning_customizations_repo_name
         BranchName           = var.account_provisioning_customizations_repo_branch
         DetectChanges        = true

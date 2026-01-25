@@ -11,9 +11,9 @@ locals {
     account_metadata_ssm_function_name                                = aws_lambda_function.account_metadata_ssm.function_name
     aft_notification_arn                                              = var.aft_sns_topic_arn
     aft_failure_notification_arn                                      = var.aft_failure_sns_topic_arn
-    aft_account_provisioning_customizations_state_machine_arn         = "arn:${data.aws_partition.current.partition}:states:${data.aws_region.aft_management.name}:${data.aws_caller_identity.aft_management.account_id}:stateMachine:${var.aft_account_provisioning_customizations_sfn_name}"
-    customizations_trigger_state_machine_arn                          = "arn:${data.aws_partition.current.partition}:states:${data.aws_region.aft_management.name}:${data.aws_caller_identity.aft_management.account_id}:stateMachine:${var.trigger_customizations_sfn_name}"
-    aft_account_provisioning_framework_aft_features_state_machine_arn = "arn:${data.aws_partition.current.partition}:states:${data.aws_region.aft_management.name}:${data.aws_caller_identity.aft_management.account_id}:stateMachine:${var.aft_features_sfn_name}"
+    aft_account_provisioning_customizations_state_machine_arn         = "arn:${data.aws_partition.current.partition}:states:${data.aws_region.aft_management.region}:${data.aws_caller_identity.aft_management.account_id}:stateMachine:${var.aft_account_provisioning_customizations_sfn_name}"
+    customizations_trigger_state_machine_arn                          = "arn:${data.aws_partition.current.partition}:states:${data.aws_region.aft_management.region}:${data.aws_caller_identity.aft_management.account_id}:stateMachine:${var.trigger_customizations_sfn_name}"
+    aft_account_provisioning_framework_aft_features_state_machine_arn = "arn:${data.aws_partition.current.partition}:states:${data.aws_region.aft_management.region}:${data.aws_caller_identity.aft_management.account_id}:stateMachine:${var.aft_features_sfn_name}"
   }
 }
 

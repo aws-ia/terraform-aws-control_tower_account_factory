@@ -9,11 +9,6 @@ data "local_file" "python_version" {
   filename = "${path.module}/PYTHON_VERSION"
 }
 
-data "aws_ssm_parameters_by_path" "servicecatalog_regional_data" {
-  count = data.aws_partition.current.partition == "aws" ? 1 : 0
-  path  = "/aws/service/global-infrastructure/services/servicecatalog/regions"
-}
-
 data "aws_service" "home_region_validation" {
   service_id = "controltower"
   lifecycle {

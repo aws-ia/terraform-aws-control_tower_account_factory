@@ -22,10 +22,10 @@ resource "aws_lambda_function" "codebuild_trigger" {
   }
 }
 
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "codebuild_trigger_loggroup" {
   name              = "/aws/lambda/${aws_lambda_function.codebuild_trigger.function_name}"
   retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
 }
 
 data "aws_lambda_invocation" "trigger_codebuild_job" {

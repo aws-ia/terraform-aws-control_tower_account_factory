@@ -194,15 +194,15 @@ def get_aws_partition(session: Session, region: Optional[str] = None) -> str:
 
 
 def yield_batches_from_list(
-    input: Sequence[Any], batch_size: int
+    items: Sequence[Any], batch_size: int
 ) -> Iterable[Sequence[Any]]:
-    if batch_size <= 0:
-        return []
 
-    idx = 0
-    while idx < len(input):
-        yield input[idx : idx + batch_size]
-        idx += batch_size
+    if batch_size <= 0 or not items:
+        yield from []
+        return
+
+    for idx in range(0, len(items), batch_size):
+        yield items[idx : idx + batch_size]
 
 
 def sanitize_input_for_logging(input: Any) -> str:

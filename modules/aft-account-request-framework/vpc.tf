@@ -246,7 +246,7 @@ resource "aws_vpc_endpoint" "s3" {
 
   vpc_id            = local.vpc_id
   vpc_endpoint_type = "Gateway"
-  service_name      = "com.amazonaws.${data.aws_region.aft-management.name}.s3"
+  service_name      = "com.amazonaws.${data.aws_region.aft-management.region}.s3"
   route_table_ids   = local.vpc_route_table_ids
 }
 
@@ -255,7 +255,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
 
   vpc_id            = local.vpc_id
   vpc_endpoint_type = "Gateway"
-  service_name      = "com.amazonaws.${data.aws_region.aft-management.name}.dynamodb"
+  service_name      = "com.amazonaws.${data.aws_region.aft-management.region}.dynamodb"
   route_table_ids   = local.vpc_route_table_ids
 }
 

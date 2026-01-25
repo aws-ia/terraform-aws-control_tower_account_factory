@@ -3,7 +3,7 @@
 #
 locals {
   lambda_managed_policies = [data.aws_iam_policy.AWSLambdaBasicExecutionRole.arn, data.aws_iam_policy.AWSLambdaVPCAccessExecutionRole.arn]
-  orgs_endpoint_supported = data.aws_region.aft-management.name == "us-east-1" ? true : false
+  orgs_endpoint_supported = data.aws_region.aft-management.region == "us-east-1" ? true : false
 
   vpc_private_route_table_ids = local.vpc_deployment ? try(data.aws_route_tables.aft_private_route_tables[0].ids, []) : []
   vpc_public_route_table_ids  = local.vpc_deployment ? try(data.aws_route_tables.aft_public_route_tables[0].ids, []) : []

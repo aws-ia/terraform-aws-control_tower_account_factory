@@ -21,6 +21,7 @@ class MetricsPayloadType(TypedDict):
     TimeStamp: str
     Version: Optional[str]
     UUID: Optional[str]
+    Account_id: Optional[str]
     Data: Dict[str, Any]
 
 
@@ -75,6 +76,11 @@ class AFTMetrics:
 
         config["region"] = utils.get_session_info(aft_management_session)["region"]
 
+        config["ct_management_account_id"] = get_ssm_parameter_value(
+            aft_management_session,
+            aft_common.constants.SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID,
+        )
+
         return config
 
     def wrap_event_for_api(
@@ -82,9 +88,10 @@ class AFTMetrics:
     ) -> MetricsPayloadType:
         payload: MetricsPayloadType = {
             "Solution": self.solution_id,
-            "TimeStamp": datetime.utcnow().isoformat(timespec="seconds"),
+            "TimeStamp": datetime.now(tz=None).isoformat(timespec="seconds"),
             "Version": None,
             "UUID": None,
+            "Account_id": None,
             "Data": {},
         }
         payload["Solution"] = self.solution_id
@@ -108,7 +115,14 @@ class AFTMetrics:
         except Exception as e:
             payload["UUID"] = None
             errors.append(str(e))
-
+        try:
+            payload["Account_id"] = get_ssm_parameter_value(
+                aft_management_session,
+                aft_common.constants.SSM_PARAM_ACCOUNT_AFT_MANAGEMENT_ACCOUNT_ID,
+            )
+        except Exception as e:
+            payload["Account_id"] = None
+            errors.append(str(e))
         try:
             data_body["config"] = self._get_aft_deployment_config(
                 aft_management_session

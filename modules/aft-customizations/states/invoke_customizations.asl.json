@@ -1,6 +1,14 @@
 {
-  "StartAt": "Identify Targets",
+  "StartAt": "Get Execution Id",
   "States": {
+    "Get Execution Id": {
+      "Type": "Pass",
+      "Parameters": {
+        "execution_id.$": "$$.Execution.Name"
+      },
+      "ResultPath": "$.get_execution_id",
+      "Next": "Identify Targets"
+    },
     "Identify Targets": {
       "Next": "Invoke Provisioning Framework",
       "Type": "Task",
@@ -8,21 +16,30 @@
       "ResultPath": "$.targets",
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "Notify Failure"
         }
       ]
     },
     "Invoke Provisioning Framework": {
       "Type": "Map",
-      "Next": "Get Pipeline Executions",
-      "MaxConcurrency": "${maximum_concurrent_customizations}",
-      "InputPath": "$.targets",
-      "ItemsPath": "$.target_accounts_info",
-      "Parameters": {
-        "info.$": "$$.Map.Item.Value"
+      "ItemReader": {
+        "ReaderConfig": {
+          "InputType": "JSON"
+        },
+        "Resource": "arn:aws:states:::s3:getObject",
+        "Parameters": {
+          "Bucket.$": "$.targets.target_accounts_info.bucket",
+          "Key.$": "$.targets.target_accounts_info.key"
+        }
       },
-      "Iterator": {
+      "ItemProcessor": {
+        "ProcessorConfig": {
+          "Mode": "DISTRIBUTED",
+          "ExecutionType": "STANDARD"
+        },
         "StartAt": "Invoke Account provisioning Step Function",
         "States": {
           "Invoke Account provisioning Step Function": {
@@ -30,12 +47,14 @@
             "Resource": "arn:${current_partition}:states:::states:startExecution.sync:2",
             "Parameters": {
               "StateMachineArn": "${invoke_account_provisioning_sfn_arn}",
-              "Input.$": "$.info" 
+              "Input.$": "$"
             },
             "End": true
           }
         }
       },
+      "Next": "Get Pipeline Executions",
+      "MaxConcurrency": "${maximum_concurrent_customizations}",
       "ResultPath": null
     },
     "Get Pipeline Executions": {
@@ -45,7 +64,9 @@
       "ResultPath": "$.running_executions",
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "Notify Failure"
         }
       ]
@@ -79,7 +100,9 @@
       "ResultPath": "$.targets",
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "Notify Failure"
         }
       ]

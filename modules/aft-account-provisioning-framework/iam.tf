@@ -20,7 +20,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework_cr
   role = aws_iam_role.aft_lambda_aft_account_provisioning_framework_create_role.id
   policy = templatefile("${path.module}/iam/role-policies/lambda-aft-account-provisioning-framework.tpl", {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft_management.name
+    data_aws_region_aft-management_name                = data.aws_region.aft_management.region
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
     aft_sns_topic_arn                                  = var.aft_sns_topic_arn
     aft_failure_sns_topic_arn                          = var.aft_failure_sns_topic_arn
@@ -45,7 +45,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework_ta
   role = aws_iam_role.aft_lambda_aft_account_provisioning_framework_tag_account.id
   policy = templatefile("${path.module}/iam/role-policies/lambda-aft-account-provisioning-framework.tpl", {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft_management.name
+    data_aws_region_aft-management_name                = data.aws_region.aft_management.region
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
     aft_sns_topic_arn                                  = var.aft_sns_topic_arn
     aft_failure_sns_topic_arn                          = var.aft_failure_sns_topic_arn
@@ -70,7 +70,7 @@ resource "aws_iam_role_policy" "aft_invoke_aft_account_provisioning_framework_pe
   role = aws_iam_role.aft_lambda_aft_account_provisioning_framework_persist_metadata.id
   policy = templatefile("${path.module}/iam/role-policies/lambda-aft-account-provisioning-framework.tpl", {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft_management.name
+    data_aws_region_aft-management_name                = data.aws_region.aft_management.region
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
     aft_sns_topic_arn                                  = var.aft_sns_topic_arn
     aft_failure_sns_topic_arn                          = var.aft_failure_sns_topic_arn
@@ -91,7 +91,9 @@ resource "aws_iam_role_policy" "aft_states" {
 
   policy = templatefile("${path.module}/iam/role-policies/iam-aft-states.tpl", {
     data_aws_partition_current_partition               = data.aws_partition.current.partition
-    data_aws_region_aft-management_name                = data.aws_region.aft_management.name
+    data_aws_region_aft-management_name                = data.aws_region.aft_management.region
     data_aws_caller_identity_aft-management_account_id = data.aws_caller_identity.aft_management.account_id
+    aws_kms_key_aft_arn                                = var.aft_kms_key_arn
+    sns_topic_enable_cmk_encryption                    = var.sns_topic_enable_cmk_encryption
   })
 }

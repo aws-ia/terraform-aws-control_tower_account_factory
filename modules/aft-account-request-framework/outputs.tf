@@ -2,23 +2,28 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 output "sns_topic_arn" {
-  description = "arn of aft notifications sns topic"
+  description = "ARN of aft notifications sns topic"
   value       = aws_sns_topic.aft_notifications.arn
 }
 
 output "failure_sns_topic_arn" {
-  description = "arn of failure_notifications sns topic"
+  description = "ARN of failure_notifications sns topic"
   value       = aws_sns_topic.aft_failure_notifications.arn
 }
 
 output "aft_kms_key_arn" {
-  description = "Arn for the AFT CMK Key"
+  description = "ARN for the AFT CMK Key"
   value       = aws_kms_key.aft.arn
 }
 
 output "aft_kms_key_id" {
   description = "ID for the AFT CMK Key"
   value       = aws_kms_key.aft.id
+}
+
+output "aft_kms_key_alias_arn" {
+  description = "ARN for the AFT CMK Key alias"
+  value       = aws_kms_alias.aft.id
 }
 
 output "request_action_trigger_function_arn" {

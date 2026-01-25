@@ -21,6 +21,21 @@
                     "aws:SourceAccount": "${aft_management_account_id}"
                 }
             }
+        },
+        {
+            "Sid": "AllowSSLRequestsOnly",
+            "Action": "s3:*",
+            "Effect": "Deny",
+            "Resource": [
+                "${aws_s3_bucket_aft_access_logs_arn}",
+                "${aws_s3_bucket_aft_access_logs_arn}/*"
+            ],
+            "Condition": {
+                "Bool": {
+                     "aws:SecureTransport": "false"
+                }
+            },
+           "Principal": "*"
         }
     ]
 }

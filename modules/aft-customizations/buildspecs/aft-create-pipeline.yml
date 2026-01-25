@@ -55,14 +55,23 @@ phases:
       # Install Python Dependencies
       - python3 -m venv ./venv
       - source ./venv/bin/activate
-      - pip install pip==22.1.2
+      - pip install -U pip
       - pip install jinja2-cli==0.7.0 Jinja2==3.0.1
 
   pre_build:
     on-failure: ABORT
     commands:
       - cd $DEFAULT_PATH/aws-aft-core-framework/sources/aft-customizations-common/templates/customizations_pipeline
-      - for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$TF_VERSION >> $(basename $f .jinja).tf; done
+      - |
+        if ls *.jinja >/dev/null 2>&1; then
+          for f in *.jinja; do
+            jinja2 "$f" -D timestamp="$TIMESTAMP" -D region="$TF_BACKEND_REGION" -D bucket="$TF_S3_BUCKET" \
+              -D key="$TF_S3_KEY" -D dynamodb_table="$TF_DDB_TABLE" -D kms_key_id="$TF_KMS_KEY_ID" \
+              -D tf_version="$TF_VERSION" >> "$(basename "$f" .jinja).tf"
+          done
+        else
+          echo "No Jinja2 templates found - skipping template processing"
+        fi
       - for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
   build:
     on-failure: ABORT

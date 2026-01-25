@@ -8,15 +8,21 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import jsonschema
 from aft_common.aft_utils import get_high_retry_botoconfig, sanitize_input_for_logging
-from aft_common.constants import SSM_PARAM_AFT_DDB_META_TABLE
+from aft_common.constants import (
+    SSM_PARAM_AFT_CODEPIPELINE_CUSTOMIZATIONS_BUCKET_ID,
+    SSM_PARAM_AFT_DDB_META_TABLE,
+)
 from aft_common.organizations import OrganizationsAgent
+from aft_common.s3 import put_target_account_info
 from aft_common.ssm import get_ssm_parameter_value
 from boto3.session import Session
 
 if TYPE_CHECKING:
+    from aft_common.aft_types import AftInvokeAccountCustomizationPayload
     from mypy_boto3_organizations import OrganizationsClient
 else:
     OrganizationsClient = object
+    AftInvokeAccountCustomizationPayload = object
 
 AFT_SHARED_ACCOUNT_NAMES = ["ct-management", "log-archive", "audit"]
 
@@ -232,3 +238,25 @@ def get_target_accounts(
             included_accounts.remove(i)
     logger.info("TARGET ACCOUNTS: " + str(included_accounts))
     return included_accounts
+
+
+def upload_target_account_info(
+    aft_management_session: Session,
+    target_account_info: List[AftInvokeAccountCustomizationPayload],
+    execution_id: str,
+) -> Dict[str, str]:
+    s3_bucket = get_ssm_parameter_value(
+        aft_management_session, SSM_PARAM_AFT_CODEPIPELINE_CUSTOMIZATIONS_BUCKET_ID
+    )
+    s3_key = f"sfn/{execution_id}/target_account_info.json"
+    put_target_account_info(
+        aft_management_session,
+        s3_bucket,
+        s3_key,
+        target_account_info,
+    )
+    s3_object = {
+        "bucket": s3_bucket,
+        "key": s3_key,
+    }
+    return s3_object
