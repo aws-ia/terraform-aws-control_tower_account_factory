@@ -148,6 +148,7 @@ module "aft_customizations" {
   codebuild_compute_type                            = var.aft_codebuild_compute_type
   sns_topic_enable_cmk_encryption                   = var.sns_topic_enable_cmk_encryption
   sfn_s3_bucket_object_expiration_days              = var.sfn_s3_bucket_object_expiration_days
+  aft_customizations_use_source_buildspec           = var.aft_customizations_use_source_buildspec
 }
 
 module "aft_feature_options" {
