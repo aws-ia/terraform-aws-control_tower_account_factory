@@ -200,6 +200,16 @@ variable "aft_feature_delete_default_vpcs_enabled" {
   }
 }
 
+variable "aft_customizations_use_source_buildspec" {
+  description = "When true, CodeBuild projects for global and account customizations will use buildspec.yml from the source repository instead of AFT defaults. Users must provide buildspec.yml in their customization repositories."
+  type        = bool
+  default     = false
+  validation {
+    condition     = contains([true, false], var.aft_customizations_use_source_buildspec)
+    error_message = "Valid values for var: aft_customizations_use_source_buildspec are (true, false)."
+  }
+}
+
 #########################################
 # AFT Customer VCS Variables
 #########################################
