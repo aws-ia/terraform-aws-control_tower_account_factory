@@ -5,12 +5,7 @@
 resource "aws_dynamodb_table" "aft_request_metadata" {
   name         = "aft-request-metadata"
   billing_mode = "PAY_PER_REQUEST"
-
-  key_schema {
-    attribute_name = "id"
-    key_type       = "HASH"
-  }
-
+  hash_key     = "id"
   attribute {
     name = "id"
     type = "S"
