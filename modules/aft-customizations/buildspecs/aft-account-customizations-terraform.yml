@@ -23,31 +23,277 @@ phases:
       - |
         CUSTOMIZATION=$(aws dynamodb get-item --table-name aft-request-metadata --key "{\"id\": {\"S\": \"$VENDED_ACCOUNT_ID\"}}" --attributes-to-get "account_customizations_name" | jq --raw-output ".Item.account_customizations_name.S")
 
-      # Check if customization directory exists       
+      # Parser Functions for External Repository References
+      # These functions must be embedded here because they run BEFORE aws-aft-core-framework is cloned
+      
+      # Function: is_repo_reference
+      # Determines if the customization name is a repository reference
+      # Input: customization_name (string)
+      # Output: 0 (true) if repo reference, 1 (false) if folder name
       - |
-        if [[ ! -z "$CUSTOMIZATION" ]]; then  
-          if [[ ! -d "$DEFAULT_PATH/$CUSTOMIZATION" ]]; then
-            echo "Error: ${CUSTOMIZATION} directory does not exist"
-            exit 1
+        is_repo_reference() {
+            local name="$1"
+            # Check for explicit repo markers
+            if [[ "$name" == repo::* ]] || [[ "$name" == https://* ]] || [[ "$name" == git@* ]]; then
+                return 0
+            fi
+            return 1
+        }
+
+      # Function: parse_repo_reference
+      # Parses repository reference into components
+      # Input: customization_name (string)
+      # Output: Sets REPO_OWNER, REPO_NAME, REPO_REF variables
+      - |
+        parse_repo_reference() {
+            local input="$1"
+            local ref=""
+            local repo_part=""
+            
+            # Extract @ref suffix if present (last @ in string)
+            if [[ "$input" == *"@"* ]]; then
+                # For URLs, we need to be careful - git@host has @ but it's not a ref
+                # The ref is always after the repo path
+                if [[ "$input" == git@* ]]; then
+                    # For SSH: git@host:owner/repo.git@ref
+                    local after_colon="${input#*:}"
+                    if [[ "$after_colon" == *"@"* ]]; then
+                        ref="${after_colon##*@}"
+                        repo_part="${input%@$ref}"
+                    else
+                        repo_part="$input"
+                        ref=""
+                    fi
+                else
+                    # For repo:: and https://, @ is unambiguous
+                    ref="${input##*@}"
+                    repo_part="${input%@*}"
+                fi
+            else
+                repo_part="$input"
+                ref=""
+            fi
+            
+            # Parse based on format
+            if [[ "$repo_part" == repo::* ]]; then
+                parse_repo_prefix "$repo_part"
+            elif [[ "$repo_part" == https://* ]]; then
+                parse_https_url "$repo_part"
+            elif [[ "$repo_part" == git@* ]]; then
+                parse_ssh_url "$repo_part"
+            fi
+            
+            REPO_REF="$ref"
+        }
+
+      # Function: parse_repo_prefix
+      # Parses repo::owner/repo format
+      - |
+        parse_repo_prefix() {
+            local input="$1"
+            # Remove repo:: prefix
+            local path="${input#repo::}"
+            # Remove .git suffix if present
+            path="${path%.git}"
+            REPO_OWNER="${path%%/*}"
+            REPO_NAME="${path#*/}"
+        }
+
+      # Function: parse_https_url
+      # Parses HTTPS URL format: https://github.com/owner/repo
+      - |
+        parse_https_url() {
+            local url="$1"
+            # Remove https:// prefix and host
+            local path="${url#https://*/}"
+            # Handle potential .git suffix
+            path="${path%.git}"
+            REPO_OWNER="${path%%/*}"
+            REPO_NAME="${path#*/}"
+        }
+
+      # Function: parse_ssh_url
+      # Parses SSH URL format: git@github.com:owner/repo.git
+      - |
+        parse_ssh_url() {
+            local url="$1"
+            # Extract the path after the colon
+            local path="${url#*:}"
+            # Remove .git suffix if present
+            path="${path%.git}"
+            REPO_OWNER="${path%%/*}"
+            REPO_NAME="${path#*/}"
+        }
+
+      # Function: format_repo_reference
+      # Formats parsed components back to canonical string
+      # Input: owner, repo, ref (optional)
+      # Output: Formatted string "repo::owner/repo[@ref]"
+      - |
+        format_repo_reference() {
+            local owner="$1"
+            local repo="$2"
+            local ref="$3"
+            
+            if [[ -n "$ref" ]]; then
+                echo "repo::${owner}/${repo}@${ref}"
+            else
+                echo "repo::${owner}/${repo}"
+            fi
+        }
+
+      # Function: validate_customization_structure
+      # Validates the customization directory structure
+      # Input: path to customization directory
+      # Output: 0 if valid, 1 if invalid
+      - |
+        validate_customization_structure() {
+            local path="$1"
+            
+            if [[ ! -d "$path/terraform" ]]; then
+                echo "Error: Missing terraform/ directory in customization at $path"
+                return 1
+            fi
+            
+            if [[ ! -d "$path/api_helpers" ]]; then
+                echo "Error: Missing api_helpers/ directory in customization at $path"
+                return 1
+            fi
+            
+            return 0
+        }
+
+      # Function: clone_external_repo
+      # Clones an external repository using CodeConnections
+      # Input: owner, repo, ref (optional), target_dir
+      # Output: Cloned repository in working directory
+      - |
+        clone_external_repo() {
+            local owner="$1"
+            local repo="$2"
+            local ref="$3"
+            local target_dir="$4"
+            
+            # Get VCS provider from SSM
+            local vcs_provider=$(aws ssm get-parameter \
+                --name "/aft/config/vcs/provider" \
+                --query "Parameter.Value" --output text 2>/dev/null || echo "")
+            
+            if [[ -z "$vcs_provider" ]]; then
+                echo "Error: VCS provider not configured in /aft/config/vcs/provider"
+                exit 1
+            fi
+            
+            # Construct repository URL based on VCS provider
+            local repo_url
+            case "$vcs_provider" in
+                "github")
+                    repo_url="https://github.com/${owner}/${repo}.git"
+                    ;;
+                "gitlab")
+                    repo_url="https://gitlab.com/${owner}/${repo}.git"
+                    ;;
+                "bitbucket")
+                    repo_url="https://bitbucket.org/${owner}/${repo}.git"
+                    ;;
+                "githubenterprise")
+                    local gh_enterprise_url=$(aws ssm get-parameter \
+                        --name "/aft/config/vcs/github-enterprise-url" \
+                        --query "Parameter.Value" --output text)
+                    repo_url="${gh_enterprise_url}/${owner}/${repo}.git"
+                    ;;
+                *)
+                    echo "Error: Unsupported VCS provider: $vcs_provider"
+                    exit 1
+                    ;;
+            esac
+            
+            echo "Cloning external repository: ${owner}/${repo}"
+            if [[ -n "$ref" ]]; then
+                echo "Using ref: $ref"
+            fi
+            
+            # Clone with optional ref
+            local clone_output
+            if [[ -n "$ref" ]]; then
+                clone_output=$(git clone --quiet -b "$ref" "$repo_url" "$target_dir" 2>&1)
+            else
+                clone_output=$(git clone --quiet "$repo_url" "$target_dir" 2>&1)
+            fi
+            
+            local clone_status=$?
+            if [[ $clone_status -ne 0 ]]; then
+                echo "Error: Failed to clone repository ${owner}/${repo}"
+                if [[ -n "$ref" ]]; then
+                    echo "Ref: $ref"
+                fi
+                echo "Details: $clone_output"
+                exit 1
+            fi
+            
+            echo "Successfully cloned repository to $target_dir"
+        }
+
+      # Determine customization path based on reference type
+      - |
+        if [[ ! -z "$CUSTOMIZATION" ]]; then
+          # Check if this is a repository reference or folder name
+          if is_repo_reference "$CUSTOMIZATION"; then
+            # External repository reference
+            echo "Detected external repository reference: $CUSTOMIZATION"
+            parse_repo_reference "$CUSTOMIZATION"
+            echo "Parsed: owner=$REPO_OWNER, repo=$REPO_NAME, ref=$REPO_REF"
+            
+            # Configure Development SSH Key (needed for cloning)
+            ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
+
+            if [[ $ssh_key_parameter != "None" ]]; then
+              ssh_key=$(jq --raw-output ".Parameter.Value" <<< $ssh_key_parameter)
+              mkdir -p ~/.ssh
+              echo "Host *" >> ~/.ssh/config
+              echo "StrictHostKeyChecking no" >> ~/.ssh/config
+              echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+              echo "$ssh_key" > ~/.ssh/ssh_key
+              echo -e "\n\n" >>  ~/.ssh/ssh_key
+              chmod 600 ~/.ssh/ssh_key
+              eval "$(ssh-agent -s)"
+              ssh-add ~/.ssh/ssh_key
+            fi
+            
+            clone_external_repo "$REPO_OWNER" "$REPO_NAME" "$REPO_REF" "$DEFAULT_PATH/external-customization"
+            
+            if ! validate_customization_structure "$DEFAULT_PATH/external-customization"; then
+              exit 1
+            fi
+            
+            CUSTOMIZATION_PATH="$DEFAULT_PATH/external-customization"
+          else
+            # Folder-based customization (existing behavior)
+            if [[ ! -d "$DEFAULT_PATH/$CUSTOMIZATION" ]]; then
+              echo "Error: Customization folder not found: $DEFAULT_PATH/$CUSTOMIZATION"
+              exit 1
+            fi
+            
+            CUSTOMIZATION_PATH="$DEFAULT_PATH/$CUSTOMIZATION"
+            
+            # Configure Development SSH Key
+            ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
+
+            if [[ $ssh_key_parameter != "None" ]]; then
+              ssh_key=$(jq --raw-output ".Parameter.Value" <<< $ssh_key_parameter)
+              mkdir -p ~/.ssh
+              echo "Host *" >> ~/.ssh/config
+              echo "StrictHostKeyChecking no" >> ~/.ssh/config
+              echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+              echo "$ssh_key" > ~/.ssh/ssh_key
+              echo -e "\n\n" >>  ~/.ssh/ssh_key
+              chmod 600 ~/.ssh/ssh_key
+              eval "$(ssh-agent -s)"
+              ssh-add ~/.ssh/ssh_key
+            fi
           fi
           
-          echo "Found customization" $CUSTOMIZATION
-
-          # Configure Development SSH Key
-          ssh_key_parameter=$(aws ssm get-parameter --name /aft/config/aft-ssh-key --with-decryption 2> /dev/null || echo "None")
-
-          if [[ $ssh_key_parameter != "None" ]]; then
-            ssh_key=$(jq --raw-output ".Parameter.Value" <<< $ssh_key_parameter)
-            mkdir -p ~/.ssh
-            echo "Host *" >> ~/.ssh/config
-            echo "StrictHostKeyChecking no" >> ~/.ssh/config
-            echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
-            echo "$ssh_key" > ~/.ssh/ssh_key
-            echo -e "\n\n" >>  ~/.ssh/ssh_key
-            chmod 600 ~/.ssh/ssh_key
-            eval "$(ssh-agent -s)"
-            ssh-add ~/.ssh/ssh_key
-          fi   
+          echo "Using customization path: $CUSTOMIZATION_PATH"
 
           # Clone AFT
           AWS_MODULE_SOURCE=$(aws ssm get-parameter --name "/aft/config/aft-pipeline-code-source/repo-url" --query "Parameter.Value" --output text)
@@ -63,11 +309,11 @@ phases:
 
           # Install API Helper Python Dependencies
           python3 -m venv $DEFAULT_PATH/api-helpers-venv
-          $DEFAULT_PATH/api-helpers-venv/bin/pip install -r $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/python/requirements.txt
+          $DEFAULT_PATH/api-helpers-venv/bin/pip install -r $CUSTOMIZATION_PATH/api_helpers/python/requirements.txt
 
           # Mark helper scripts as executable
-          chmod +x $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/pre-api-helpers.sh
-          chmod +x $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/post-api-helpers.sh
+          chmod +x $CUSTOMIZATION_PATH/api_helpers/pre-api-helpers.sh
+          chmod +x $CUSTOMIZATION_PATH/api_helpers/post-api-helpers.sh
 
           # Generate session profiles
           chmod +x $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
@@ -82,7 +328,7 @@ phases:
         if [[ ! -z "$CUSTOMIZATION" ]]; then 
           source $DEFAULT_PATH/api-helpers-venv/bin/activate
           export AWS_PROFILE=aft-target
-          $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/pre-api-helpers.sh || exit 1
+          $CUSTOMIZATION_PATH/api_helpers/pre-api-helpers.sh || exit 1
           unset AWS_PROFILE
         fi
 
@@ -108,7 +354,7 @@ phases:
             mv terraform /opt/aft/bin
             /opt/aft/bin/terraform -no-color --version
 
-            cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
+            cd $CUSTOMIZATION_PATH/terraform
             if ls *.jinja >/dev/null 2>&1; then
               for f in *.jinja; do
                 jinja2 "$f" -D timestamp="$TIMESTAMP" -D tf_distribution_type="$TF_DISTRIBUTION" \
@@ -122,7 +368,7 @@ phases:
             fi
             for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
             
-            cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
+            cd $CUSTOMIZATION_PATH/terraform
             export AWS_PROFILE=aft-management-admin
             /opt/aft/bin/terraform init -no-color
             /opt/aft/bin/terraform apply -no-color --auto-approve
@@ -135,7 +381,7 @@ phases:
             TF_WORKSPACE_NAME=$VENDED_ACCOUNT_ID-aft-account-customizations
             TF_CONFIG_PATH="./temp_configuration_file.tar.gz"
 
-            cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
+            cd $CUSTOMIZATION_PATH/terraform
             if ls *.jinja >/dev/null 2>&1; then
               for f in *.jinja; do
                 jinja2 "$f" -D timestamp="$TIMESTAMP" -D provider_region="$CT_MGMT_REGION" \
@@ -148,7 +394,7 @@ phases:
             fi
             for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
             
-            cd $DEFAULT_PATH/$CUSTOMIZATION
+            cd $CUSTOMIZATION_PATH
             tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
             python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py --operation "deploy" --organization_name $TF_ORG_NAME --workspace_name $TF_WORKSPACE_NAME --assume_role_arn $AFT_ADMIN_ROLE_ARN --assume_role_session_name $ROLE_SESSION_NAME --api_endpoint $TF_ENDPOINT --api_token $TF_TOKEN --terraform_version $TF_VERSION --config_file $TF_CONFIG_PATH --project_name "$TF_PROJECT_NAME"
           fi
@@ -171,5 +417,5 @@ phases:
         if [[ ! -z "$CUSTOMIZATION" ]]; then 
           source $DEFAULT_PATH/api-helpers-venv/bin/activate
           export AWS_PROFILE=aft-target
-          $DEFAULT_PATH/$CUSTOMIZATION/api_helpers/post-api-helpers.sh || exit 1
+          $CUSTOMIZATION_PATH/api_helpers/post-api-helpers.sh || exit 1
         fi

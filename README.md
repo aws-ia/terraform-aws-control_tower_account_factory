@@ -54,6 +54,113 @@ for more information.
 
 Now that you have configured and deployed AWS Control Tower Account Factory for Terraform, follow the steps outlined in [Post-deployment steps](https://docs.aws.amazon.com/controltower/latest/userguide/aft-post-deployment.html) and [Provision accounts with AWS Control Tower Account Factory for Terraform](https://docs.aws.amazon.com/controltower/latest/userguide/taf-account-provisioning.html) to begin using your environment.
 
+## External Repository References for Account Customizations
+
+AFT supports referencing external Git repositories for account customizations. This allows you to maintain account customizations in separate repositories with independent versioning and release cycles, rather than requiring all customizations to be folders within the `aft-account-customizations` repository.
+
+### Supported Formats
+
+External repository references can be specified in the `account_customizations_name` field using any of the following formats:
+
+#### 1. Repository Prefix Format (`repo::`)
+
+The simplest format uses the `repo::` prefix followed by `owner/repo`:
+
+```hcl
+account_customizations_name = "repo::acme/sandbox-customizations"
+```
+
+#### 2. HTTPS URL Format
+
+You can use full HTTPS URLs to reference repositories:
+
+```hcl
+account_customizations_name = "https://github.com/acme/sandbox-customizations"
+```
+
+#### 3. SSH URL Format
+
+SSH URLs are also supported:
+
+```hcl
+account_customizations_name = "git@github.com:acme/sandbox-customizations.git"
+```
+
+### Specifying Branches or Tags with `@ref`
+
+You can pin customizations to a specific branch or tag by appending `@ref` to any repository reference format:
+
+```hcl
+# Pin to a specific version tag
+account_customizations_name = "repo::acme/sandbox-customizations@v1.2.0"
+
+# Pin to a specific branch
+account_customizations_name = "repo::acme/sandbox-customizations@feature-branch"
+
+# HTTPS URL with tag
+account_customizations_name = "https://github.com/acme/sandbox-customizations@main"
+
+# SSH URL with tag
+account_customizations_name = "git@github.com:acme/sandbox-customizations.git@v2.0"
+```
+
+If no `@ref` suffix is provided, the repository's default branch will be used.
+
+### Usage Examples
+
+Here's an example of an account request using an external repository reference:
+
+```hcl
+module "sandbox_account" {
+  source = "./modules/aft-account-request"
+
+  control_tower_parameters = {
+    AccountEmail              = "sandbox@example.com"
+    AccountName               = "sandbox"
+    ManagedOrganizationalUnit = "Sandbox"
+    SSOUserEmail              = "admin@example.com"
+    SSOUserFirstName          = "Admin"
+    SSOUserLastName           = "User"
+  }
+
+  # Reference external repository with specific version
+  account_customizations_name = "repo::acme/sandbox-customizations@v1.0.0"
+
+  change_management_parameters = {
+    change_requested_by = "Admin"
+    change_reason       = "Initial account setup"
+  }
+}
+```
+
+### Backward Compatibility
+
+Existing folder-based customizations continue to work unchanged. If the `account_customizations_name` value does not start with `repo::`, `https://`, or `git@`, it is treated as a folder name within the `aft-account-customizations` repository:
+
+```hcl
+# This continues to work - looks for folder "sandbox" in aft-account-customizations repo
+account_customizations_name = "sandbox"
+
+# Folder paths with slashes also work as before
+account_customizations_name = "dev/sandbox"
+```
+
+### Repository Structure Requirements
+
+External repositories must follow the same structure as folder-based customizations:
+
+```
+your-customization-repo/
+├── terraform/
+│   └── ... (Terraform configurations)
+└── api_helpers/
+    └── ... (API helper scripts)
+```
+
+### Authentication
+
+External repositories are cloned using your existing VCS credentials configured in AFT. Ensure your CodeConnections are properly configured to access the external repositories.
+
 ## Collection of Operational Metrics
 As of version 1.6.0, AFT collects anonymous operational metrics to help AWS improve the quality and features of the solution. For more information, including how to disable this capability, please see the [documentation here](https://docs.aws.amazon.com/controltower/latest/userguide/aft-operational-metrics.html).
 
