@@ -28,7 +28,7 @@ dependencies = [
     "botocore == 1.39.3",
     "requests == 2.32.4",
     "jsonschema == 4.3.2",
-    "urllib3 >= 2.6.0"
+    "urllib3 >= 2.6.3"
 ]
 
 
