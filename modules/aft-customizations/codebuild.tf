@@ -43,7 +43,7 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = data.local_file.aft_global_customizations_terraform.content
+    buildspec = var.aft_customizations_use_source_buildspec ? "" : data.local_file.aft_global_customizations_terraform.content
   }
 
   dynamic "vpc_config" {
@@ -116,7 +116,7 @@ resource "aws_codebuild_project" "aft_account_customizations_terraform" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = data.local_file.aft_account_customizations_terraform.content
+    buildspec = var.aft_customizations_use_source_buildspec ? "" : data.local_file.aft_account_customizations_terraform.content
   }
 
   dynamic "vpc_config" {

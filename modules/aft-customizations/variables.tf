@@ -135,3 +135,9 @@ variable "sns_topic_enable_cmk_encryption" {
 variable "sfn_s3_bucket_object_expiration_days" {
   type = number
 }
+
+variable "aft_customizations_use_source_buildspec" {
+  description = "When true, use buildspec from source repository instead of AFT defaults"
+  type        = bool
+  default     = false
+}
