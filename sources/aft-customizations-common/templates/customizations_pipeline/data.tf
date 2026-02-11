@@ -9,6 +9,10 @@ data "aws_ssm_parameter" "aft_vcs_type" {
   name = "/aft/config/vcs/provider"
 }
 
+data "aws_ssm_parameter" "aft_tf_distribution" {
+  name = "/aft/config/terraform/distribution"
+}
+
 data "aws_ssm_parameter" "codeconnections_connection_arn" {
   name = "/aft/config/vcs/codeconnections-connection-arn"
 }
