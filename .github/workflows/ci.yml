@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  scan-sast:
+    name: Scan SAST
+    uses: Avodah-Inc/github-actions/.github/workflows/scan-sast.yml@1.0.0
+    permissions:
+      checks: write
+      contents: read
+    secrets:
+      GH_TOKEN: ${{ secrets.OPENTOFU_GH_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  scan-sca:
+    name: Scan SCA
+    uses: Avodah-Inc/github-actions/.github/workflows/scan-sca.yml@1.0.0
+    permissions:
+      checks: write
+      contents: read
+
+  scan-secrets:
+    name: Scan Secrets
+    uses: Avodah-Inc/github-actions/.github/workflows/scan-secrets.yml@1.0.0
+    permissions:
+      checks: write
+      contents: read
