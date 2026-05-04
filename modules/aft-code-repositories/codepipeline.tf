@@ -47,6 +47,43 @@ resource "aws_codepipeline" "codecommit_account_request" {
   ##############################################################
   # Apply Account Request
   ##############################################################
+  dynamic "stage" {
+    for_each = var.workflow_type == "apply-with-approval" ? [1] : []
+    content {
+      name = "Terraform-Plan"
+      action {
+        name             = "Plan"
+        category         = "Build"
+        owner            = "AWS"
+        provider         = "CodeBuild"
+        input_artifacts  = ["account-request"]
+        output_artifacts = ["account-request-plan-output"]
+        version          = "1"
+        configuration = {
+          ProjectName = "ct-aft-account-request-plan"
+        }
+      }
+    }
+  }
+
+  dynamic "stage" {
+    for_each = var.workflow_type == "apply-with-approval" ? [1] : []
+    content {
+      name = "Approval"
+      action {
+        name     = "ManualApproval"
+        category = "Approval"
+        owner    = "AWS"
+        provider = "Manual"
+        version  = "1"
+        configuration = merge(
+          { CustomData = "Approve to apply Terraform changes." },
+          var.approval_sns_topic_arn != null ? { NotificationArn = var.approval_sns_topic_arn } : {}
+        )
+      }
+    }
+  }
+
   stage {
     name = "terraform-apply"
 
@@ -159,6 +196,43 @@ resource "aws_codepipeline" "codeconnections_account_request" {
   ##############################################################
   # Apply Account Request
   ##############################################################
+  dynamic "stage" {
+    for_each = var.workflow_type == "apply-with-approval" ? [1] : []
+    content {
+      name = "Terraform-Plan"
+      action {
+        name             = "Plan"
+        category         = "Build"
+        owner            = "AWS"
+        provider         = "CodeBuild"
+        input_artifacts  = ["account-request"]
+        output_artifacts = ["account-request-plan-output"]
+        version          = "1"
+        configuration = {
+          ProjectName = "ct-aft-account-request-plan"
+        }
+      }
+    }
+  }
+
+  dynamic "stage" {
+    for_each = var.workflow_type == "apply-with-approval" ? [1] : []
+    content {
+      name = "Approval"
+      action {
+        name     = "ManualApproval"
+        category = "Approval"
+        owner    = "AWS"
+        provider = "Manual"
+        version  = "1"
+        configuration = merge(
+          { CustomData = "Approve to apply Terraform changes." },
+          var.approval_sns_topic_arn != null ? { NotificationArn = var.approval_sns_topic_arn } : {}
+        )
+      }
+    }
+  }
+
   stage {
     name = "terraform-apply"
 
@@ -224,6 +298,43 @@ resource "aws_codepipeline" "codecommit_account_provisioning_customizations" {
   ##############################################################
   # Account Provisioning Customizations - Terraform Apply
   ##############################################################
+  dynamic "stage" {
+    for_each = var.workflow_type == "apply-with-approval" ? [1] : []
+    content {
+      name = "Terraform-Plan"
+      action {
+        name             = "Plan"
+        category         = "Build"
+        owner            = "AWS"
+        provider         = "CodeBuild"
+        input_artifacts  = ["account-provisioning-customizations"]
+        output_artifacts = ["account-provisioning-customizations-plan-output"]
+        version          = "1"
+        configuration = {
+          ProjectName = "ct-aft-account-provisioning-customizations-plan"
+        }
+      }
+    }
+  }
+
+  dynamic "stage" {
+    for_each = var.workflow_type == "apply-with-approval" ? [1] : []
+    content {
+      name = "Approval"
+      action {
+        name     = "ManualApproval"
+        category = "Approval"
+        owner    = "AWS"
+        provider = "Manual"
+        version  = "1"
+        configuration = merge(
+          { CustomData = "Approve to apply Terraform changes." },
+          var.approval_sns_topic_arn != null ? { NotificationArn = var.approval_sns_topic_arn } : {}
+        )
+      }
+    }
+  }
+
   stage {
     name = "terraform-apply"
 
@@ -294,6 +405,43 @@ resource "aws_codepipeline" "codeconnections_account_provisioning_customizations
   ##############################################################
   # Account Provisioning Customizations - Terraform Apply
   ##############################################################
+  dynamic "stage" {
+    for_each = var.workflow_type == "apply-with-approval" ? [1] : []
+    content {
+      name = "Terraform-Plan"
+      action {
+        name             = "Plan"
+        category         = "Build"
+        owner            = "AWS"
+        provider         = "CodeBuild"
+        input_artifacts  = ["account-provisioning-customizations"]
+        output_artifacts = ["account-provisioning-customizations-plan-output"]
+        version          = "1"
+        configuration = {
+          ProjectName = "ct-aft-account-provisioning-customizations-plan"
+        }
+      }
+    }
+  }
+
+  dynamic "stage" {
+    for_each = var.workflow_type == "apply-with-approval" ? [1] : []
+    content {
+      name = "Approval"
+      action {
+        name     = "ManualApproval"
+        category = "Approval"
+        owner    = "AWS"
+        provider = "Manual"
+        version  = "1"
+        configuration = merge(
+          { CustomData = "Approve to apply Terraform changes." },
+          var.approval_sns_topic_arn != null ? { NotificationArn = var.approval_sns_topic_arn } : {}
+        )
+      }
+    }
+  }
+
   stage {
     name = "terraform-apply"
 

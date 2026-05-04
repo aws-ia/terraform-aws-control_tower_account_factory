@@ -267,3 +267,12 @@ variable "aft_metrics_reporting" {
 variable "aft_codepipeline_customizations_bucket_id" {
   type = string
 }
+
+variable "workflow_type" {
+  type = string
+}
+
+variable "approval_sns_topic_arn" {
+  type    = string
+  default = null
+}

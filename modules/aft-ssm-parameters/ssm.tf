@@ -406,3 +406,15 @@ resource "aws_ssm_parameter" "aft_metrics_reporting_uuid" {
   value = random_uuid.metrics_reporting_uuid.result
   type  = "String"
 }
+
+resource "aws_ssm_parameter" "aft_pipeline_workflow_type" {
+  name  = "/aft/config/pipeline/workflow-type"
+  type  = "String"
+  value = var.workflow_type
+}
+
+resource "aws_ssm_parameter" "aft_pipeline_approval_sns_topic_arn" {
+  name  = "/aft/config/pipeline/approval-notification-topic-arn"
+  type  = "String"
+  value = coalesce(var.approval_sns_topic_arn, "")
+}

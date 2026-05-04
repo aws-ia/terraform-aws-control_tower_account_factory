@@ -45,3 +45,11 @@ data "aws_s3_bucket" "aft_codepipeline_customizations_bucket" {
 data "aws_ssm_parameter" "vcs_provider" {
   name = "/aft/config/vcs/provider"
 }
+
+data "aws_ssm_parameter" "workflow_type" {
+  name = "/aft/config/pipeline/workflow-type"
+}
+
+data "aws_ssm_parameter" "approval_sns_topic_arn" {
+  name = "/aft/config/pipeline/approval-notification-topic-arn"
+}

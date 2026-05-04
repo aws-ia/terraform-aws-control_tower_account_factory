@@ -111,7 +111,11 @@ phases:
     commands:
       - |
         if [ $TF_DISTRIBUTION = "oss" ]; then
-          terraform apply -no-color --auto-approve
+          if [ "${TF_PLAN_ONLY:-false}" = "true" ]; then
+            terraform plan -no-color
+          else
+            terraform apply -no-color --auto-approve
+          fi
         fi
   post_build:
     commands:

@@ -109,6 +109,8 @@ module "aft_code_repositories" {
   global_codebuild_timeout                        = var.global_codebuild_timeout
   aft_enable_vpc                                  = module.aft_account_request_framework.vpc_deployment
   codebuild_compute_type                          = var.aft_codebuild_compute_type
+  workflow_type                                   = var.workflow_type
+  approval_sns_topic_arn                          = local.approval_sns_topic_arn
 }
 
 module "aft_customizations" {
@@ -149,6 +151,7 @@ module "aft_customizations" {
   codebuild_compute_type                            = var.aft_codebuild_compute_type
   sns_topic_enable_cmk_encryption                   = var.sns_topic_enable_cmk_encryption
   sfn_s3_bucket_object_expiration_days              = var.sfn_s3_bucket_object_expiration_days
+  workflow_type                                     = var.workflow_type
 }
 
 module "aft_feature_options" {
@@ -226,6 +229,44 @@ module "aft_lambda_layer" {
   cloudwatch_log_group_enable_cmk_encryption        = var.cloudwatch_log_group_enable_cmk_encryption
 }
 
+##############################################################
+# Optional SNS topic for pipeline approval notifications
+##############################################################
+
+resource "aws_sns_topic" "aft_pipeline_approval" {
+  count    = var.approval_notification_email != null ? 1 : 0
+  provider = aws.aft_management
+  name     = "aft-pipeline-approval-notifications"
+}
+
+resource "aws_sns_topic_subscription" "aft_pipeline_approval_email" {
+  count     = var.approval_notification_email != null ? 1 : 0
+  provider  = aws.aft_management
+  topic_arn = aws_sns_topic.aft_pipeline_approval[0].arn
+  protocol  = "email"
+  endpoint  = var.approval_notification_email
+}
+
+resource "aws_sns_topic_policy" "aft_pipeline_approval" {
+  count    = var.approval_notification_email != null ? 1 : 0
+  provider = aws.aft_management
+  arn      = aws_sns_topic.aft_pipeline_approval[0].arn
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "AllowCodePipelinePublish"
+      Effect    = "Allow"
+      Principal = { Service = "codepipeline.amazonaws.com" }
+      Action    = "sns:Publish"
+      Resource  = aws_sns_topic.aft_pipeline_approval[0].arn
+    }]
+  })
+}
+
+locals {
+  approval_sns_topic_arn = var.approval_notification_email != null ? aws_sns_topic.aft_pipeline_approval[0].arn : null
+}
+
 module "aft_ssm_parameters" {
   providers = {
     aws = aws.aft_management
@@ -298,4 +339,6 @@ module "aft_ssm_parameters" {
   gitlab_selfmanaged_url                                      = var.gitlab_selfmanaged_url
   aft_codepipeline_customizations_bucket_id                   = module.aft_customizations.aft_codepipeline_customizations_bucket_name
   aft_metrics_reporting                                       = var.aft_metrics_reporting
+  workflow_type                                               = var.workflow_type
+  approval_sns_topic_arn                                      = local.approval_sns_topic_arn
 }

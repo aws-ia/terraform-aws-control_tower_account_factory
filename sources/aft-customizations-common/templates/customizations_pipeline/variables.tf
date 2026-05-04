@@ -5,6 +5,13 @@ locals {
   vcs = {
     is_codecommit = lower(data.aws_ssm_parameter.vcs_provider.value) == "codecommit" ? true : false
   }
+  approval_sns_topic_arn = data.aws_ssm_parameter.approval_sns_topic_arn.value != "" ? data.aws_ssm_parameter.approval_sns_topic_arn.value : null
+}
+
+variable "aft_global_customizations_terraform_plan_codebuild_name" {
+  type        = string
+  description = "CodeBuild Project Name for the global customizations plan stage"
+  default     = "aft-global-customizations-terraform-plan"
 }
 variable "account_id" {
   type        = string

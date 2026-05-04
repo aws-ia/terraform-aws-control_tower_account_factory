@@ -525,3 +525,19 @@ variable "aft_metrics_reporting" {
     error_message = "Valid values for var: aft_metrics_reporting are (true, false)."
   }
 }
+
+variable "workflow_type" {
+  description = "Workflow type for AFT pipelines — 'apply' for auto-approve, 'apply-with-approval' for a manual gate before every terraform-apply stage"
+  type        = string
+  default     = "apply"
+  validation {
+    condition     = contains(["apply", "apply-with-approval"], var.workflow_type)
+    error_message = "Valid values for var: workflow_type are (apply, apply-with-approval)."
+  }
+}
+
+variable "approval_notification_email" {
+  description = "Email address to notify when a pipeline is awaiting manual approval. Only used when workflow_type is 'apply-with-approval'. Requires subscription confirmation after deployment."
+  type        = string
+  default     = null
+}

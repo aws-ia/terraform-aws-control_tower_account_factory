@@ -109,3 +109,13 @@ variable "aft_enable_vpc" {
 variable "codebuild_compute_type" {
   type = string
 }
+
+variable "workflow_type" {
+  type    = string
+  default = "apply"
+}
+
+variable "approval_sns_topic_arn" {
+  type    = string
+  default = null
+}

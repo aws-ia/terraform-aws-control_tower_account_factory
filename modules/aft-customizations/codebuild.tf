@@ -76,6 +76,79 @@ resource "aws_cloudwatch_log_group" "aft_global_customizations_terraform" {
 }
 
 #####################################################
+# AFT Global Customizations Terraform - Plan only
+#####################################################
+
+resource "aws_cloudwatch_log_group" "aft_global_customizations_terraform_plan" {
+  count             = var.workflow_type == "apply-with-approval" ? 1 : 0
+  name              = "/aws/codebuild/aft-global-customizations-terraform-plan"
+  retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? var.aft_kms_key_arn : null
+}
+
+resource "aws_codebuild_project" "aft_global_customizations_terraform_plan" {
+  count          = var.workflow_type == "apply-with-approval" ? 1 : 0
+  depends_on     = [aws_cloudwatch_log_group.aft_global_customizations_terraform_plan, time_sleep.wait_for_iam_eventual_consistency]
+  name           = "aft-global-customizations-terraform-plan"
+  description    = "Runs terraform plan for global customizations before manual approval"
+  build_timeout  = tostring(var.global_codebuild_timeout)
+  service_role   = aws_iam_role.aft_codebuild_customizations_role.arn
+  encryption_key = var.aft_kms_key_arn
+
+  artifacts {
+    type = "CODEPIPELINE"
+  }
+
+  environment {
+    compute_type                = var.codebuild_compute_type
+    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
+    type                        = "LINUX_CONTAINER"
+    image_pull_credentials_type = "CODEBUILD"
+
+    environment_variable {
+      name  = "AWS_PARTITION"
+      value = data.aws_partition.current.partition
+      type  = "PLAINTEXT"
+    }
+
+    environment_variable {
+      name  = "TF_PLAN_ONLY"
+      value = "true"
+      type  = "PLAINTEXT"
+    }
+  }
+
+  logs_config {
+    cloudwatch_logs {
+      group_name = aws_cloudwatch_log_group.aft_global_customizations_terraform_plan[0].name
+    }
+
+    s3_logs {
+      status   = "ENABLED"
+      location = "${aws_s3_bucket.aft_codepipeline_customizations_bucket.id}/aft-global-customizations-terraform-plan-logs"
+    }
+  }
+
+  source {
+    type      = "CODEPIPELINE"
+    buildspec = data.local_file.aft_global_customizations_terraform.content
+  }
+
+  dynamic "vpc_config" {
+    for_each = var.aft_enable_vpc ? [1] : []
+    content {
+      vpc_id             = var.aft_vpc_id
+      subnets            = var.aft_vpc_private_subnets
+      security_group_ids = var.aft_vpc_default_sg
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [project_visibility]
+  }
+}
+
+#####################################################
 # AFT Account Customizations Terraform
 #####################################################
 

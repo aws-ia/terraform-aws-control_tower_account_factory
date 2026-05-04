@@ -57,6 +57,49 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   ##############################################################
   # Apply-AFT-Global-Customizations
   ##############################################################
+  dynamic "stage" {
+    for_each = data.aws_ssm_parameter.workflow_type.value == "apply-with-approval" ? [1] : []
+    content {
+      name = "Terraform-Plan"
+      action {
+        name            = "Plan"
+        category        = "Build"
+        owner           = "AWS"
+        provider        = "CodeBuild"
+        input_artifacts = ["source-aft-global-customizations"]
+        output_artifacts = ["global-customizations-plan-output"]
+        version         = "1"
+        configuration = {
+          ProjectName = var.aft_global_customizations_terraform_plan_codebuild_name
+          EnvironmentVariables = jsonencode([
+            {
+              name  = "VENDED_ACCOUNT_ID",
+              value = var.account_id,
+              type  = "PLAINTEXT"
+            }
+          ])
+        }
+      }
+    }
+  }
+
+  dynamic "stage" {
+    for_each = data.aws_ssm_parameter.workflow_type.value == "apply-with-approval" ? [1] : []
+    content {
+      name = "Approval"
+      action {
+        name     = "ManualApproval"
+        category = "Approval"
+        owner    = "AWS"
+        provider = "Manual"
+        version  = "1"
+        configuration = merge(
+          { CustomData = "Approve to apply Terraform changes." },
+          local.approval_sns_topic_arn != null ? { NotificationArn = local.approval_sns_topic_arn } : {}
+        )
+      }
+    }
+  }
 
   stage {
     name = "Global-Customizations"
@@ -172,6 +215,49 @@ resource "aws_codepipeline" "aft_codeconnections_customizations_codepipeline" {
   ##############################################################
   # Apply-AFT-Global-Customizations
   ##############################################################
+  dynamic "stage" {
+    for_each = data.aws_ssm_parameter.workflow_type.value == "apply-with-approval" ? [1] : []
+    content {
+      name = "Terraform-Plan"
+      action {
+        name             = "Plan"
+        category         = "Build"
+        owner            = "AWS"
+        provider         = "CodeBuild"
+        input_artifacts  = ["source-aft-global-customizations"]
+        output_artifacts = ["global-customizations-plan-output"]
+        version          = "1"
+        configuration = {
+          ProjectName = var.aft_global_customizations_terraform_plan_codebuild_name
+          EnvironmentVariables = jsonencode([
+            {
+              name  = "VENDED_ACCOUNT_ID",
+              value = var.account_id,
+              type  = "PLAINTEXT"
+            }
+          ])
+        }
+      }
+    }
+  }
+
+  dynamic "stage" {
+    for_each = data.aws_ssm_parameter.workflow_type.value == "apply-with-approval" ? [1] : []
+    content {
+      name = "Approval"
+      action {
+        name     = "ManualApproval"
+        category = "Approval"
+        owner    = "AWS"
+        provider = "Manual"
+        version  = "1"
+        configuration = merge(
+          { CustomData = "Approve to apply Terraform changes." },
+          local.approval_sns_topic_arn != null ? { NotificationArn = local.approval_sns_topic_arn } : {}
+        )
+      }
+    }
+  }
 
   stage {
     name = "AFT-Global-Customizations"

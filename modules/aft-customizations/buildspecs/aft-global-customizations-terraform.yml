@@ -107,7 +107,11 @@ phases:
           cd $DEFAULT_PATH/terraform
           export AWS_PROFILE=aft-management-admin
           /opt/aft/bin/terraform init -no-color
-          /opt/aft/bin/terraform apply -no-color --auto-approve
+          if [ "${TF_PLAN_ONLY:-false}" = "true" ]; then
+            /opt/aft/bin/terraform plan -no-color
+          else
+            /opt/aft/bin/terraform apply -no-color --auto-approve
+          fi
         else
           TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
           TF_TOKEN=$(aws ssm get-parameter --name "/aft/config/terraform/token" --with-decryption --query "Parameter.Value" --output text)
@@ -159,6 +163,9 @@ phases:
         if [[ $CODEBUILD_BUILD_SUCCEEDING == 0 ]]; then
           exit 1
         fi
-      - source $DEFAULT_PATH/api-helpers-venv/bin/activate
-      - export AWS_PROFILE=aft-target
-      - . $DEFAULT_PATH/api_helpers/post-api-helpers.sh || exit 1
+      - |
+        if [ "${TF_PLAN_ONLY:-false}" != "true" ]; then
+          source $DEFAULT_PATH/api-helpers-venv/bin/activate
+          export AWS_PROFILE=aft-target
+          . $DEFAULT_PATH/api_helpers/post-api-helpers.sh || exit 1
+        fi
