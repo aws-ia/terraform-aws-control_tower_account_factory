@@ -242,6 +242,12 @@ def create_trail(session: Session, s3_bucket: str, kms_key: str) -> None:
     )
 
 
+def delete_trail(session: Session) -> None:
+    client = session.client("cloudtrail")
+    logger.info("Deleting trail " + CLOUDTRAIL_TRAIL_NAME)
+    client.delete_trail(Name=CLOUDTRAIL_TRAIL_NAME)
+
+
 def put_event_selectors(session: Session, log_bucket_arns: List[str]) -> None:
     client = session.client("cloudtrail")
     logger.info("Putting Event Selectors")

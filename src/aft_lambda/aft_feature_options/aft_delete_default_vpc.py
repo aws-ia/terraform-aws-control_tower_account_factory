@@ -9,6 +9,7 @@ import boto3
 from aft_common import constants as utils
 from aft_common import notifications
 from aft_common.account_provisioning_framework import ProvisionRoles
+from aft_common.aft_utils import get_region_connectivity_botoconfig
 from aft_common.auth import AuthClient
 from aft_common.feature_options import (
     delete_acls,
@@ -26,6 +27,17 @@ from aft_common.feature_options import (
     get_vpc_subnets,
 )
 from aft_common.logger import customization_request_logger
+from botocore.exceptions import (
+    ConnectTimeoutError,
+    EndpointConnectionError,
+    ReadTimeoutError,
+)
+
+UNREACHABLE_REGION_ERRORS = (
+    EndpointConnectionError,
+    ConnectTimeoutError,
+    ReadTimeoutError,
+)
 
 if TYPE_CHECKING:
     from aws_lambda_powertools.utilities.typing import LambdaContext
@@ -64,26 +76,38 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                     "Deleting default VPC for AFT management account in region "
                     + region
                 )
-                session = boto3.session.Session(region_name=region)
-                client = session.client("ec2")
-                vpc = get_default_vpc(client)
-                if vpc is not None:
-                    resource: EC2ServiceResource = boto3.resource(
-                        "ec2", region_name=region
+                try:
+                    session = boto3.session.Session(region_name=region)
+                    client = session.client(
+                        "ec2", config=get_region_connectivity_botoconfig()
                     )
-                    # Get Resources
-                    subnets = get_vpc_subnets(resource, vpc)
-                    route_tables = get_vpc_route_tables(resource, vpc)
-                    acls = get_vpc_acls(resource, vpc)
-                    security_groups = get_vpc_security_groups(resource, vpc)
-                    internet_gateways = get_vpc_internet_gateways(resource, vpc)
-                    # Delete Resources
-                    delete_internet_gateways(client, internet_gateways, vpc)
-                    delete_subnets(client, subnets)
-                    delete_route_tables(client, route_tables)
-                    delete_acls(client, acls)
-                    delete_security_groups(client, security_groups)
-                    delete_vpc(client, vpc)
+                    vpc = get_default_vpc(client)
+                    if vpc is not None:
+                        resource: EC2ServiceResource = boto3.resource(
+                            "ec2", region_name=region
+                        )
+                        # Get Resources
+                        subnets = get_vpc_subnets(resource, vpc)
+                        route_tables = get_vpc_route_tables(resource, vpc)
+                        acls = get_vpc_acls(resource, vpc)
+                        security_groups = get_vpc_security_groups(resource, vpc)
+                        internet_gateways = get_vpc_internet_gateways(resource, vpc)
+                        # Delete Resources
+                        delete_internet_gateways(client, internet_gateways, vpc)
+                        delete_subnets(client, subnets)
+                        delete_route_tables(client, route_tables)
+                        delete_acls(client, acls)
+                        delete_security_groups(client, security_groups)
+                        delete_vpc(client, vpc)
+                except UNREACHABLE_REGION_ERRORS as region_error:
+                    logger.warning(
+                        "Skipping default VPC deletion in region "
+                        + region
+                        + ": endpoint unreachable ("
+                        + type(region_error).__name__
+                        + ")"
+                    )
+                    continue
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(

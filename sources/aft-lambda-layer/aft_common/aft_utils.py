@@ -119,6 +119,10 @@ def get_high_retry_botoconfig() -> Config:
     )
 
 
+def get_region_connectivity_botoconfig() -> Config:
+    return Config(retries={"total_max_attempts": 5, "mode": "standard"})
+
+
 def emails_are_equal(first_email: str, second_email: str) -> bool:
     return first_email.lower() == second_email.lower()
 

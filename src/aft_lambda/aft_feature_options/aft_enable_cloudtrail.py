@@ -11,6 +11,7 @@ from aft_common.account_provisioning_framework import ProvisionRoles
 from aft_common.auth import AuthClient
 from aft_common.feature_options import (
     create_trail,
+    delete_trail,
     event_selectors_exists,
     get_log_bucket_arns,
     put_event_selectors,
@@ -69,6 +70,10 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
                 put_event_selectors(ct_session, log_bucket_arns)
             if not trail_is_logging(ct_session):
                 start_logging(ct_session)
+        else:
+            if trail_exists(ct_session):
+                logger.info("Disabling Cloudtrail")
+                delete_trail(ct_session)
 
     except Exception as error:
         notifications.send_lambda_failure_sns_message(
