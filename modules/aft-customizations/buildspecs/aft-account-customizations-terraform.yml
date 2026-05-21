@@ -23,7 +23,7 @@ phases:
       - |
         CUSTOMIZATION=$(aws dynamodb get-item --table-name aft-request-metadata --key "{\"id\": {\"S\": \"$VENDED_ACCOUNT_ID\"}}" --attributes-to-get "account_customizations_name" | jq --raw-output ".Item.account_customizations_name.S")
 
-      # Check if customization directory exists       
+      # Check if customization directory exists
       - |
         if [[ ! -z "$CUSTOMIZATION" ]]; then  
           if [[ ! -d "$DEFAULT_PATH/$CUSTOMIZATION" ]]; then
@@ -73,7 +73,6 @@ phases:
           chmod +x $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
           $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
         fi
-
 
   pre_build:
     on-failure: ABORT
@@ -125,7 +124,13 @@ phases:
             cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
             export AWS_PROFILE=aft-management-admin
             /opt/aft/bin/terraform init -no-color
-            /opt/aft/bin/terraform apply -no-color --auto-approve
+            if [[ "plan" == ${ACTION} ]] ; then
+              /opt/aft/bin/terraform plan -no-color
+            elif [[ "apply" == ${ACTION} ]] ; then
+              /opt/aft/bin/terraform apply -no-color --auto-approve
+            elif [[ -z "${ACTION}" ]] ; then
+              /opt/aft/bin/terraform apply -no-color --auto-approve
+            fi
           else
             TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
             TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
