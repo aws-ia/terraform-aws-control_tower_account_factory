@@ -6,7 +6,9 @@
       "Type": "Task",
       "Resource": "arn:${current_partition}:states:::lambda:invoke",
       "ResultPath": "$.persist_metadata",
-      "ResultSelector": {"StatusCode.$":"$.StatusCode"},
+      "ResultSelector": {
+        "StatusCode.$": "$.StatusCode"
+      },
       "Parameters": {
         "FunctionName": "${persist_metadata_function_name}",
         "Payload": {
@@ -17,7 +19,9 @@
       },
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "aft_account_provisioning_framework_notify_error"
         }
       ]
@@ -27,7 +31,9 @@
       "Type": "Task",
       "Resource": "arn:${current_partition}:states:::lambda:invoke",
       "ResultPath": "$.role",
-      "ResultSelector": {"Arn.$":"$.Payload"},
+      "ResultSelector": {
+        "Arn.$": "$.Payload"
+      },
       "Parameters": {
         "FunctionName": "${create_role_function_name}",
         "Payload": {
@@ -38,7 +44,9 @@
       },
       "Retry": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "BackoffRate": 1.5,
           "IntervalSeconds": 60,
           "MaxAttempts": 5
@@ -46,7 +54,9 @@
       ],
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "aft_account_provisioning_framework_notify_error"
         }
       ]
@@ -56,7 +66,9 @@
       "Type": "Task",
       "Resource": "arn:${current_partition}:states:::lambda:invoke",
       "ResultPath": "$.account_tags",
-      "ResultSelector": {"StatusCode.$":"$.StatusCode"},
+      "ResultSelector": {
+        "StatusCode.$": "$.StatusCode"
+      },
       "Parameters": {
         "FunctionName": "${tag_account_function_name}",
         "Payload": {
@@ -68,7 +80,9 @@
       },
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "aft_account_provisioning_framework_notify_error"
         }
       ]
@@ -78,7 +92,9 @@
       "Type": "Task",
       "Resource": "arn:${current_partition}:states:::lambda:invoke",
       "ResultPath": "$.account_metadata_ssm",
-      "ResultSelector": {"StatusCode.$":"$.StatusCode"},
+      "ResultSelector": {
+        "StatusCode.$": "$.StatusCode"
+      },
       "Parameters": {
         "FunctionName": "${account_metadata_ssm_function_name}",
         "Payload": {
@@ -90,7 +106,9 @@
       },
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "aft_account_provisioning_framework_notify_error"
         }
       ]
@@ -114,7 +132,9 @@
       },
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "run_create_pipeline?"
         }
       ]
@@ -141,6 +161,11 @@
             "Name": "VENDED_ACCOUNT_ID",
             "Type": "PLAINTEXT",
             "Value.$": "$.Input.account_info.account.id"
+          },
+          {
+            "Name": "WORKFLOW_TYPE",
+            "Type": "PLAINTEXT",
+            "Value.$": "$.Input.account_request.workflow_type"
           }
         ]
       },
@@ -152,7 +177,9 @@
       },
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "aft_account_provisioning_framework_notify_error"
         }
       ]
