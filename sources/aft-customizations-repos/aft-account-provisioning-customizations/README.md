@@ -1,4 +1,4 @@
-# AFT Account Provisioning Customizations Customizations
+# AFT Account Provisioning Customizations
 
 ## Problem Statement
 
