@@ -555,3 +555,11 @@ variable "aft_metrics_reporting" {
     error_message = "Valid values for var: aft_metrics_reporting are (true, false)."
   }
 }
+#########################################
+# SSM Regional Baseline Variables
+#########################################
+variable "create_ssm_block_public_sharing" {
+  description = "Whether to block public sharing of SSM documents in the AFT management account for the Control Tower home region. Addresses Security Hub control SSM.7."
+  type        = bool
+  default     = true
+}

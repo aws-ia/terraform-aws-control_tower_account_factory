@@ -64,6 +64,7 @@ module "aft_account_request_framework" {
   aft_customer_vpc_id                         = var.aft_customer_vpc_id
   aft_customer_private_subnets                = var.aft_customer_private_subnets
   sns_topic_enable_cmk_encryption             = var.sns_topic_enable_cmk_encryption
+  create_ssm_block_public_sharing             = var.create_ssm_block_public_sharing
 }
 
 module "aft_backend" {

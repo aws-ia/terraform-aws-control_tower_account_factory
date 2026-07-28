@@ -89,3 +89,6 @@ variable "aft_customer_private_subnets" {
 variable "sns_topic_enable_cmk_encryption" {
   type = bool
 }
+variable "create_ssm_block_public_sharing" {
+  type = bool
+}
