@@ -555,3 +555,23 @@ variable "aft_metrics_reporting" {
     error_message = "Valid values for var: aft_metrics_reporting are (true, false)."
   }
 }
+#########################################
+# SSM Regional Baseline Variables
+#########################################
+variable "create_ssm_block_public_sharing" {
+  description = "Whether to block public sharing of SSM documents in the AFT management account. Addresses Security Hub control SSM.7."
+  type        = bool
+  default     = true
+}
+variable "ssm_block_public_sharing_regions" {
+  description = "Control Tower governed regions in which to block public sharing of SSM documents in the AFT management account. The setting is account-level but evaluated per region, so list every governed region to fully remediate Security Hub control SSM.7. The Control Tower home region is always included."
+  type        = list(string)
+  default     = []
+  validation {
+    condition = alltrue([
+      for region in var.ssm_block_public_sharing_regions :
+      can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", region))
+    ])
+    error_message = "Variable var: ssm_block_public_sharing_regions contains a value that is not a valid region."
+  }
+}

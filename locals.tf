@@ -27,6 +27,9 @@ locals {
   enable_cloudtrail_lambda_function_name           = "aft-enable-cloudtrail"
   audit_trigger_lambda_function_name               = "aft-customizations-audit-trigger"
   aft_tags                                         = merge(var.tags, { managed_by = "AFT" })
+  # The Control Tower home region is always governed, so it is covered even if
+  # the caller does not list it explicitly.
+  ssm_block_public_sharing_regions = distinct(concat([var.ct_home_region], var.ssm_block_public_sharing_regions))
   ssm_paths = {
     aft_tf_aws_customizations_module_url_ssm_path     = "/aft/config/aft-pipeline-code-source/repo-url"
     aft_tf_aws_customizations_module_git_ref_ssm_path = "/aft/config/aft-pipeline-code-source/repo-git-ref"
