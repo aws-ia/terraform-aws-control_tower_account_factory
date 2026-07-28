@@ -6,8 +6,10 @@ terraform {
 
   required_providers {
     aws = {
-      source                = "hashicorp/aws"
-      version               = ">= 4.9.0"
+      source = "hashicorp/aws"
+      # >= 6.0.0 required for per-resource `region` support, used by
+      # aws_ssm_service_setting.block_public_sharing
+      version               = ">= 6.0.0, < 7.0.0"
       configuration_aliases = [aws.ct_management]
     }
   }

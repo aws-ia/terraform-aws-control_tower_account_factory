@@ -92,3 +92,6 @@ variable "sns_topic_enable_cmk_encryption" {
 variable "create_ssm_block_public_sharing" {
   type = bool
 }
+variable "ssm_block_public_sharing_regions" {
+  type = list(string)
+}
