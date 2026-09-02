@@ -16,6 +16,7 @@ phases:
       - TF_KMS_KEY_ID=$(aws ssm get-parameter --name $SSM_TF_KMS_KEY_ID --query "Parameter.Value" --output text)
       - TF_DDB_TABLE=$(aws ssm get-parameter --name $SSM_TF_DDB_TABLE --query "Parameter.Value" --output text)
       - TF_VERSION=$(aws ssm get-parameter --name $SSM_TF_VERSION --query "Parameter.Value" --output text)
+      - TF_DISTRIBUTION=$(aws ssm get-parameter --name "/aft/config/terraform/distribution" --query "Parameter.Value" --output text)
 
 
       # Configure Development SSH Key
@@ -45,12 +46,35 @@ phases:
       - chmod +x $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
       - $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/creds.sh
 
-      # Install Terraform
+      # Install Terraform / OpenTofu
       - cd /tmp
-      - echo "Installing Terraform"
-      - curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
-      - unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
-      - terraform --version
+      - |
+        if [ $TF_DISTRIBUTION = "tofu" ]; then
+          echo "Installing OpenTofu"
+          TOFU_ARCHIVE=tofu_${TF_VERSION}_linux_amd64.zip
+          TOFU_CHECKSUMS=tofu_${TF_VERSION}_SHA256SUMS
+          TOFU_RELEASE_URL=https://github.com/opentofu/opentofu/releases/download/v${TF_VERSION}
+          if ! curl -q --proto '=https' --tlsv1.2 -fsSL -o "$TOFU_ARCHIVE" "$TOFU_RELEASE_URL/$TOFU_ARCHIVE"; then
+            echo "Failed to download OpenTofu $TF_VERSION"
+            exit 1
+          fi
+          if ! curl -q --proto '=https' --tlsv1.2 -fsSL -o "$TOFU_CHECKSUMS" "$TOFU_RELEASE_URL/$TOFU_CHECKSUMS"; then
+            echo "Failed to download OpenTofu $TF_VERSION checksums"
+            exit 1
+          fi
+          if ! grep " $TOFU_ARCHIVE$" "$TOFU_CHECKSUMS" | sha256sum -c -; then
+            echo "OpenTofu $TF_VERSION checksum verification failed"
+            exit 1
+          fi
+          unzip -q -o "$TOFU_ARCHIVE" tofu && mv tofu /usr/bin
+          TF_BINARY=tofu
+        else
+          echo "Installing Terraform"
+          curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+          unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
+          TF_BINARY=terraform
+        fi
+      - $TF_BINARY --version
 
       # Install Python Dependencies
       - python3 -m venv ./venv
@@ -77,5 +101,5 @@ phases:
     on-failure: ABORT
     commands:
       - export AWS_PROFILE=aft-management-admin
-      - terraform init -no-color
-      - terraform apply -var="account_id=$VENDED_ACCOUNT_ID" -no-color --auto-approve
+      - $TF_BINARY init -no-color
+      - $TF_BINARY apply -var="account_id=$VENDED_ACCOUNT_ID" -no-color --auto-approve

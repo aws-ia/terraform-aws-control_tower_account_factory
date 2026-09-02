@@ -40,17 +40,39 @@ phases:
       - pip install -U pip
       - pip install jinja2-cli==0.7.0 Jinja2==3.0.1 MarkupSafe==2.0.1 boto3==1.18.56 requests==2.26.0
       - |
-        if [ $TF_DISTRIBUTION = "oss" ]; then
+        if [ $TF_DISTRIBUTION = "oss" ] || [ $TF_DISTRIBUTION = "tofu" ]; then
           TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
           TF_KMS_KEY_ID=$(aws ssm get-parameter --name "/aft/config/oss-backend/kms-key-id" --query "Parameter.Value" --output text)
           TF_DDB_TABLE=$(aws ssm get-parameter --name "/aft/config/oss-backend/table-id" --query "Parameter.Value" --output text)
           TF_S3_BUCKET=$(aws ssm get-parameter --name "/aft/config/oss-backend/bucket-id" --query "Parameter.Value" --output text)
           TF_S3_KEY=account-provisioning-customizations/terraform.tfstate
           cd /tmp
-          echo "Installing Terraform"
-          curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
-          unzip -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
-          terraform -no-color --version
+          if [ $TF_DISTRIBUTION = "tofu" ]; then
+            echo "Installing OpenTofu"
+            TOFU_ARCHIVE=tofu_${TF_VERSION}_linux_amd64.zip
+            TOFU_CHECKSUMS=tofu_${TF_VERSION}_SHA256SUMS
+            TOFU_RELEASE_URL=https://github.com/opentofu/opentofu/releases/download/v${TF_VERSION}
+            if ! curl -q --proto '=https' --tlsv1.2 -fsSL -o "$TOFU_ARCHIVE" "$TOFU_RELEASE_URL/$TOFU_ARCHIVE"; then
+              echo "Failed to download OpenTofu $TF_VERSION"
+              exit 1
+            fi
+            if ! curl -q --proto '=https' --tlsv1.2 -fsSL -o "$TOFU_CHECKSUMS" "$TOFU_RELEASE_URL/$TOFU_CHECKSUMS"; then
+              echo "Failed to download OpenTofu $TF_VERSION checksums"
+              exit 1
+            fi
+            if ! grep " $TOFU_ARCHIVE$" "$TOFU_CHECKSUMS" | sha256sum -c -; then
+              echo "OpenTofu $TF_VERSION checksum verification failed"
+              exit 1
+            fi
+            unzip -o "$TOFU_ARCHIVE" tofu && mv tofu /usr/bin
+            TF_BINARY=tofu
+          else
+            echo "Installing Terraform"
+            curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+            unzip -o terraform_${TF_VERSION}_linux_amd64.zip && mv terraform /usr/bin
+            TF_BINARY=terraform
+          fi
+          $TF_BINARY -no-color --version
           cd $DEFAULT_PATH/terraform
           if ls *.jinja >/dev/null 2>&1; then
             for f in *.jinja; do
@@ -68,7 +90,7 @@ phases:
           export AWS_ACCESS_KEY_ID=$(echo ${JSON} | jq --raw-output ".Credentials[\"AccessKeyId\"]")
           export AWS_SECRET_ACCESS_KEY=$(echo ${JSON} | jq --raw-output ".Credentials[\"SecretAccessKey\"]")
           export AWS_SESSION_TOKEN=$(echo ${JSON} | jq --raw-output ".Credentials[\"SessionToken\"]")
-          terraform init -no-color
+          $TF_BINARY init -no-color
         else
           TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
           TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
@@ -111,8 +133,8 @@ phases:
   build:
     commands:
       - |
-        if [ $TF_DISTRIBUTION = "oss" ]; then
-          terraform apply -no-color --auto-approve
+        if [ $TF_DISTRIBUTION = "oss" ] || [ $TF_DISTRIBUTION = "tofu" ]; then
+          $TF_BINARY apply -no-color --auto-approve
         fi
   post_build:
     commands:
