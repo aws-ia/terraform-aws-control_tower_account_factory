@@ -74,7 +74,7 @@ phases:
       # Apply customizations
       - source $DEFAULT_PATH/aft-venv/bin/activate
       - |
-        if [ $TF_DISTRIBUTION = "oss" ]; then
+        if [ $TF_DISTRIBUTION = "oss" ] || [ $TF_DISTRIBUTION = "tofu" ]; then
           TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
           TF_KMS_KEY_ID=$(aws ssm get-parameter --name "/aft/config/oss-backend/kms-key-id" --query "Parameter.Value" --output text)
           TF_DDB_TABLE=$(aws ssm get-parameter --name "/aft/config/oss-backend/table-id" --query "Parameter.Value" --output text)
@@ -82,12 +82,35 @@ phases:
           TF_S3_KEY=$VENDED_ACCOUNT_ID-aft-global-customizations/terraform.tfstate
 
           cd /tmp
-          echo "Installing Terraform"
-          curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
           mkdir -p /opt/aft/bin
-          unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip
-          mv terraform /opt/aft/bin
-          /opt/aft/bin/terraform -no-color --version
+          if [ $TF_DISTRIBUTION = "tofu" ]; then
+            echo "Installing OpenTofu"
+            TOFU_ARCHIVE=tofu_${TF_VERSION}_linux_amd64.zip
+            TOFU_CHECKSUMS=tofu_${TF_VERSION}_SHA256SUMS
+            TOFU_RELEASE_URL=https://github.com/opentofu/opentofu/releases/download/v${TF_VERSION}
+            if ! curl -q --proto '=https' --tlsv1.2 -fsSL -o "$TOFU_ARCHIVE" "$TOFU_RELEASE_URL/$TOFU_ARCHIVE"; then
+              echo "Failed to download OpenTofu $TF_VERSION"
+              exit 1
+            fi
+            if ! curl -q --proto '=https' --tlsv1.2 -fsSL -o "$TOFU_CHECKSUMS" "$TOFU_RELEASE_URL/$TOFU_CHECKSUMS"; then
+              echo "Failed to download OpenTofu $TF_VERSION checksums"
+              exit 1
+            fi
+            if ! grep " $TOFU_ARCHIVE$" "$TOFU_CHECKSUMS" | sha256sum -c -; then
+              echo "OpenTofu $TF_VERSION checksum verification failed"
+              exit 1
+            fi
+            unzip -q -o "$TOFU_ARCHIVE" tofu
+            mv tofu /opt/aft/bin
+            TF_BINARY=/opt/aft/bin/tofu
+          else
+            echo "Installing Terraform"
+            curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+            unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip
+            mv terraform /opt/aft/bin
+            TF_BINARY=/opt/aft/bin/terraform
+          fi
+          $TF_BINARY -no-color --version
 
           # Move back to customization module
           cd $DEFAULT_PATH/terraform
@@ -106,8 +129,8 @@ phases:
 
           cd $DEFAULT_PATH/terraform
           export AWS_PROFILE=aft-management-admin
-          /opt/aft/bin/terraform init -no-color
-          /opt/aft/bin/terraform apply -no-color --auto-approve
+          $TF_BINARY init -no-color
+          $TF_BINARY apply -no-color --auto-approve
         else
           TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
           TF_TOKEN=$(aws ssm get-parameter --name "/aft/config/terraform/token" --with-decryption --query "Parameter.Value" --output text)

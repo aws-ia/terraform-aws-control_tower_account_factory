@@ -61,7 +61,7 @@ resource "aws_iam_role_policy" "account_provisioning_customizations_codebuild_po
 }
 
 resource "aws_iam_role_policy" "terraform_oss_backend_account_provisioning_customizations_codebuild_policy" {
-  count = var.terraform_distribution == "oss" ? 1 : 0
+  count = contains(["oss", "tofu"], var.terraform_distribution) ? 1 : 0
   name  = "ct-aft-codebuild-terraform-oss-backend-policy"
   role  = aws_iam_role.account_provisioning_customizations_codebuild_role.id
 
@@ -95,7 +95,7 @@ resource "aws_iam_role_policy" "account_request_codebuild_policy" {
 }
 
 resource "aws_iam_role_policy" "terraform_oss_backend_account_request_codebuild_policy" {
-  count = var.terraform_distribution == "oss" ? 1 : 0
+  count = contains(["oss", "tofu"], var.terraform_distribution) ? 1 : 0
   name  = "ct-aft-codebuild-terraform-oss-backend-policy"
   role  = aws_iam_role.account_request_codebuild_role.id
 

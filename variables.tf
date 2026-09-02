@@ -330,22 +330,22 @@ variable "account_provisioning_customizations_repo_branch" {
 #########################################
 
 variable "terraform_version" {
-  description = "Terraform version being used for AFT"
+  description = "Terraform or OpenTofu version being used for AFT, without a leading v"
   type        = string
   default     = "1.6.1"
   validation {
-    condition     = can(regex("\\bv?\\d+(\\.\\d+)+[\\-\\w]*\\b", var.terraform_version))
+    condition     = can(regex("^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$", var.terraform_version))
     error_message = "Invalid value for var: terraform_version."
   }
 }
 
 variable "terraform_distribution" {
-  description = "Terraform distribution being used for AFT - valid values are oss, tfc, or tfe"
+  description = "Terraform distribution being used for AFT - valid values are oss, tfc, tfe, or tofu"
   type        = string
   default     = "oss"
   validation {
-    condition     = contains(["oss", "tfc", "tfe"], var.terraform_distribution)
-    error_message = "Valid values for var: terraform_distribution are (oss, tfc, tfe)."
+    condition     = contains(["oss", "tfc", "tfe", "tofu"], var.terraform_distribution)
+    error_message = "Valid values for var: terraform_distribution are (oss, tfc, tfe, tofu)."
   }
 }
 

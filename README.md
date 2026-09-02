@@ -28,9 +28,9 @@ To provision the AFT management account, see [Provisioning Account Factory Accou
 
 Note: It can take up to 30 minutes for the account to be fully provisioned. Validate that you have access to the AFT management account.
 
-**Step 4**: Ensure that the Terraform environment is available for deployment
+**Step 4**: Ensure that the Terraform or OpenTofu environment is available for deployment
 
-This step assumes that you are experienced with Terraform, and that you have procedures in place for executing Terraform. AFT supports Terraform Version 0.15.x or later.
+This step assumes that you are experienced with Terraform or OpenTofu, and that you have procedures in place for executing infrastructure changes. Use a CLI version that satisfies the constraint in the Requirements section.
 
 **Step 5**: Call the Account Factory for Terraform module to deploy AFT
 
@@ -49,6 +49,19 @@ Certain input variables may contain sensitive values, such as a private ssh key 
 for more information.
 
 > Note: Deploying AFT through the Terraform module requires several minutes. Initial deployment may require up to 30 minutes. As a best practice, use AWS Security Token Service (STS) credentials and ensure that the credentials have a timeout sufficient for a full deployment, because a timeout causes the deployment to fail. The minimum timeout for AWS STS credentials is 60 minutes or more. Alternatively, you can leverage any IAM user that has AdministratorAccess permissions in the AWS Control Tower management account.
+
+### Use OpenTofu for AFT pipelines
+
+Set the following module inputs to run AFT's account request, account provisioning, and customization configurations with OpenTofu:
+
+```hcl
+terraform_distribution = "tofu"
+terraform_version      = "1.12.6"
+```
+
+`terraform_version` must be an exact OpenTofu release without a leading `v`. The version shown above is an example, not a required version. CodeBuild requires outbound HTTPS access to `github.com` and `release-assets.githubusercontent.com` to download the OpenTofu CLI, plus `registry.opentofu.org` and any provider or module artifact hosts returned by the registry for the selected configuration.
+
+For an existing AFT deployment, treat changing `terraform_distribution` as a state migration. Back up each state, verify that Terraform has no pending changes, initialize with OpenTofu, and inspect the OpenTofu plan before applying. Follow the [OpenTofu migration guide](https://opentofu.org/docs/intro/migration/) for the source Terraform version.
 
 ## Next Steps:
 
@@ -187,14 +200,14 @@ If an account reaches its target OU through one of these paths, re-run customiza
 | <a name="input_sns_topic_enable_cmk_encryption"></a> [sns\_topic\_enable\_cmk\_encryption](#input\_sns\_topic\_enable\_cmk\_encryption) | Flag toggling SNS topics encryption by using the AFT Customer managed key stored in KMS. Additional charges apply. Otherwise the SNS topics are encrypted using the AWS-managed KMS key. | `bool` | `false` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Map of tags to apply to resources deployed by AFT. | `map(any)` | `null` | no |
 | <a name="input_terraform_api_endpoint"></a> [terraform\_api\_endpoint](#input\_terraform\_api\_endpoint) | API Endpoint for Terraform. Must be in the format of https://xxx.xxx. | `string` | `"https://app.terraform.io/api/v2/"` | no |
-| <a name="input_terraform_distribution"></a> [terraform\_distribution](#input\_terraform\_distribution) | Terraform distribution being used for AFT - valid values are oss, tfc, or tfe | `string` | `"oss"` | no |
+| <a name="input_terraform_distribution"></a> [terraform\_distribution](#input\_terraform\_distribution) | Terraform distribution being used for AFT - valid values are oss, tfc, tfe, or tofu | `string` | `"oss"` | no |
 | <a name="input_terraform_oidc_aws_audience"></a> [terraform\_oidc\_aws\_audience](#input\_terraform\_oidc\_aws\_audience) | The audience value to use in run identity tokens for HCP dynamic credentials (OIDC). var.aft\_feature\_hcp\_oidc must be set to true to enable OIDC. | `string` | `"aws.workload.identity"` | no |
 | <a name="input_terraform_oidc_hostname"></a> [terraform\_oidc\_hostname](#input\_terraform\_oidc\_hostname) | The hostname of the TFC or TFE instance to use with AWS when configuring dynamic credentials (OIDC). var.aft\_feature\_hcp\_oidc must be set to true to enable OIDC. | `string` | `"app.terraform.io"` | no |
 | <a name="input_terraform_oidc_integration"></a> [terraform\_oidc\_integration](#input\_terraform\_oidc\_integration) | Enable HCP Terraform’s native OpenID Connect integration with AWS to get dynamic credentials for the AWS provider in your HCP Terraform runs | `bool` | `false` | no |
 | <a name="input_terraform_org_name"></a> [terraform\_org\_name](#input\_terraform\_org\_name) | Organization name for Terraform Cloud or Enterprise | `string` | `"null"` | no |
 | <a name="input_terraform_project_name"></a> [terraform\_project\_name](#input\_terraform\_project\_name) | Project name for Terraform Cloud or Enterprise - project must exist before deployment | `string` | `"Default Project"` | no |
 | <a name="input_terraform_token"></a> [terraform\_token](#input\_terraform\_token) | Terraform token for Cloud or Enterprise | `string` | `"null"` | no |
-| <a name="input_terraform_version"></a> [terraform\_version](#input\_terraform\_version) | Terraform version being used for AFT | `string` | `"1.6.1"` | no |
+| <a name="input_terraform_version"></a> [terraform\_version](#input\_terraform\_version) | Terraform or OpenTofu version being used for AFT, without a leading v | `string` | `"1.6.1"` | no |
 | <a name="input_tf_backend_secondary_region"></a> [tf\_backend\_secondary\_region](#input\_tf\_backend\_secondary\_region) | AFT creates a backend for state tracking for its own state as well as OSS cases. The backend's primary region is the same as the AFT region, but this defines the secondary region to replicate to. | `string` | `""` | no |
 | <a name="input_vcs_provider"></a> [vcs\_provider](#input\_vcs\_provider) | Customer VCS Provider - valid inputs are codecommit, bitbucket, github, githubenterprise, gitlab, or gitLab self-managed | `string` | `"codecommit"` | no |
 
