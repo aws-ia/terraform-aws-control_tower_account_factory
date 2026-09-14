@@ -110,6 +110,7 @@ module "aft_code_repositories" {
   global_codebuild_timeout                        = var.global_codebuild_timeout
   aft_enable_vpc                                  = module.aft_account_request_framework.vpc_deployment
   codebuild_compute_type                          = var.aft_codebuild_compute_type
+  codebuild_host_kernel                           = var.aft_codebuild_host_kernel
 }
 
 module "aft_customizations" {
@@ -148,6 +149,7 @@ module "aft_customizations" {
   lambda_runtime_python_version                     = local.lambda_runtime_python_version
   aft_enable_vpc                                    = module.aft_account_request_framework.vpc_deployment
   codebuild_compute_type                            = var.aft_codebuild_compute_type
+  codebuild_host_kernel                             = var.aft_codebuild_host_kernel
   sns_topic_enable_cmk_encryption                   = var.sns_topic_enable_cmk_encryption
   sfn_s3_bucket_object_expiration_days              = var.sfn_s3_bucket_object_expiration_days
   customizations_audit_table_name                   = module.aft_account_request_framework.customizations_audit_table_name
@@ -228,6 +230,7 @@ module "aft_lambda_layer" {
   cloudwatch_log_group_retention                    = var.cloudwatch_log_group_retention
   aft_enable_vpc                                    = module.aft_account_request_framework.vpc_deployment
   codebuild_compute_type                            = var.aft_codebuild_compute_type
+  codebuild_host_kernel                             = var.aft_codebuild_host_kernel
   cloudwatch_log_group_enable_cmk_encryption        = var.cloudwatch_log_group_enable_cmk_encryption
 }
 
