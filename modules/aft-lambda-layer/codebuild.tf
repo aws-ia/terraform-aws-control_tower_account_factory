@@ -24,6 +24,7 @@ resource "aws_codebuild_project" "codebuild" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    host_kernel                 = var.codebuild_host_kernel
 
     environment_variable {
       name  = "PYTHON_VERSION"

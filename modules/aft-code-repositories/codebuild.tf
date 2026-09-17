@@ -26,6 +26,7 @@ resource "aws_codebuild_project" "account_request" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    host_kernel                 = var.codebuild_host_kernel
     environment_variable {
       name  = "AWS_PARTITION"
       value = data.aws_partition.current.partition
@@ -81,6 +82,7 @@ resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" 
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    host_kernel                 = var.codebuild_host_kernel
 
     environment_variable {
       name  = "AWS_PARTITION"

@@ -22,6 +22,7 @@ resource "aws_codebuild_project" "aft_global_customizations_terraform" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    host_kernel                 = var.codebuild_host_kernel
 
     environment_variable {
       name  = "AWS_PARTITION"
@@ -96,6 +97,7 @@ resource "aws_codebuild_project" "aft_account_customizations_terraform" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    host_kernel                 = var.codebuild_host_kernel
     environment_variable {
       name  = "AWS_PARTITION"
       value = data.aws_partition.current.partition
@@ -169,6 +171,7 @@ resource "aws_codebuild_project" "aft_create_pipeline" {
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
+    host_kernel                 = var.codebuild_host_kernel
 
     environment_variable {
       name  = "ACCOUNT_ID"
