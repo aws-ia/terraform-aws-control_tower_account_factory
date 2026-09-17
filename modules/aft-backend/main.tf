@@ -79,6 +79,11 @@ resource "aws_s3_bucket_replication_configuration" "primary-backend-bucket-repli
       }
     }
   }
+
+  depends_on = [
+    aws_s3_bucket_versioning.primary-backend-bucket-versioning,
+    aws_s3_bucket_versioning.secondary-backend-bucket-versioning,
+  ]
 }
 
 resource "aws_s3_bucket_versioning" "primary-backend-bucket-versioning" {

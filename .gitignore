@@ -354,3 +354,7 @@ typings/
 
 # zip aft-archives
 *.zip
+
+# Local terraform-docs binary (CI uses v0.16.0 from container image)
+terraform-docs
+terraform-docs-*.tar.gz

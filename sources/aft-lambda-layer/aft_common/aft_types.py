@@ -23,4 +23,6 @@ class AftInvokeAccountCustomizationPayload(TypedDict):
     control_tower_event: Dict[str, Any]
     account_provisioning: Dict[str, Any]
     customization_request_id: str
+    plan_only: NotRequired[bool]
+    enable_plan_notification: NotRequired[bool]
     customization_triggers: NotRequired[List[Any]]

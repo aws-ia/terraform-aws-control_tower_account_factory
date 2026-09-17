@@ -150,6 +150,7 @@ module "aft_customizations" {
   codebuild_compute_type                            = var.aft_codebuild_compute_type
   sns_topic_enable_cmk_encryption                   = var.sns_topic_enable_cmk_encryption
   sfn_s3_bucket_object_expiration_days              = var.sfn_s3_bucket_object_expiration_days
+  aft_plan_output_retention_days                    = var.aft_plan_output_retention_days
   customizations_audit_table_name                   = module.aft_account_request_framework.customizations_audit_table_name
   customizations_audit_table_arn                    = module.aft_account_request_framework.customizations_audit_table_arn
 }
@@ -306,5 +307,7 @@ module "aft_ssm_parameters" {
   github_enterprise_url                                       = var.github_enterprise_url
   gitlab_selfmanaged_url                                      = var.gitlab_selfmanaged_url
   aft_codepipeline_customizations_bucket_id                   = module.aft_customizations.aft_codepipeline_customizations_bucket_name
+  aft_plan_output_bucket_name                                 = module.aft_customizations.aft_plan_output_bucket_name
+  aft_plan_output_export_enabled                              = var.aft_plan_output_export_enabled
   aft_metrics_reporting                                       = var.aft_metrics_reporting
 }

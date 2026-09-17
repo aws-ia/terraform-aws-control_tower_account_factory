@@ -1,7 +1,6 @@
 # AWS Control Tower Account Factory for Terraform
 AWS Control Tower Account Factory for Terraform (AFT) follows a GitOps model to automate the processes of account provisioning and account updating in AWS Control Tower. You'll create an *account request* Terraform file, which provides the necessary input that triggers the AFT workflow for account provisioning.
 
-
 For more information on AFT, see [Overview of AWS Control Tower Account Factory for Terraform](https://docs.aws.amazon.com/controltower/latest/userguide/aft-overview.html)
 
 ## Getting started
@@ -161,6 +160,8 @@ If an account reaches its target OU through one of these paths, re-run customiza
 | <a name="input_aft_framework_repo_url"></a> [aft\_framework\_repo\_url](#input\_aft\_framework\_repo\_url) | Git repo URL where the AFT framework should be sourced from | `string` | `"https://github.com/aws-ia/terraform-aws-control_tower_account_factory.git"` | no |
 | <a name="input_aft_management_account_id"></a> [aft\_management\_account\_id](#input\_aft\_management\_account\_id) | AFT Management Account ID | `string` | n/a | yes |
 | <a name="input_aft_metrics_reporting"></a> [aft\_metrics\_reporting](#input\_aft\_metrics\_reporting) | Flag toggling reporting of operational metrics | `bool` | `true` | no |
+| <a name="input_aft_plan_output_export_enabled"></a> [aft\_plan\_output\_export\_enabled](#input\_aft\_plan\_output\_export\_enabled) | When true, plan-only runs on the HCP Terraform path export plan JSON output to the S3 plan output bucket. When false (default), plan output is only available in the HCP Terraform UI. | `bool` | `false` | no |
+| <a name="input_aft_plan_output_retention_days"></a> [aft\_plan\_output\_retention\_days](#input\_aft\_plan\_output\_retention\_days) | Number of days to retain plan output files in the plan output S3 bucket before automatic expiration | `number` | `30` | no |
 | <a name="input_aft_vpc_cidr"></a> [aft\_vpc\_cidr](#input\_aft\_vpc\_cidr) | CIDR Block to allocate to the AFT VPC | `string` | `"192.168.0.0/22"` | no |
 | <a name="input_aft_vpc_endpoints"></a> [aft\_vpc\_endpoints](#input\_aft\_vpc\_endpoints) | Flag turning VPC endpoints on/off for AFT VPC | `bool` | `true` | no |
 | <a name="input_aft_vpc_private_subnet_01_cidr"></a> [aft\_vpc\_private\_subnet\_01\_cidr](#input\_aft\_vpc\_private\_subnet\_01\_cidr) | CIDR Block to allocate to the Private Subnet 01 | `string` | `"192.168.0.0/24"` | no |

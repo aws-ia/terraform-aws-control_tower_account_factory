@@ -3,7 +3,7 @@
 #
 import logging
 import re
-from typing import Any, List
+from typing import Any, Dict, List
 
 import aft_common.aft_utils as utils
 from boto3.session import Session
@@ -73,12 +73,17 @@ def pipeline_is_running(session: Session, name: str) -> bool:
         return False
 
 
-def execute_pipeline(session: Session, account_id: str) -> None:
+def execute_pipeline(
+    session: Session, account_id: str, plan_only: bool = False
+) -> None:
     client = session.client("codepipeline")
     name = get_pipeline_for_account(session, account_id)
     if not pipeline_is_running(session, name):
         logger.info("Executing pipeline - " + name)
-        response = client.start_pipeline_execution(name=name)
+        start_params: Dict[str, Any] = {"name": name}
+        if plan_only:
+            start_params["variables"] = [{"name": "PLAN_ONLY", "value": "true"}]
+        response = client.start_pipeline_execution(**start_params)
         sanitized_response = utils.sanitize_input_for_logging(response)
         logger.info(sanitized_response)
     else:

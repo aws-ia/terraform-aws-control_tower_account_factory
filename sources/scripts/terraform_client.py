@@ -166,12 +166,17 @@ def update_environment_variable(
     __patch(endpoint, headers, payload)
 
 
-def create_run(workspace_id, cv_id, api_token):
+def create_run(workspace_id, cv_id, api_token, plan_only=False):
     endpoint = "{}/runs".format(TERRAFORM_API_ENDPOINT)
     headers = __build_standard_headers(api_token)
+    message = "Plan-only run created by AFT" if plan_only else "Run created by AFT"
     payload = {
         "data": {
-            "attributes": {"is-destroy": False, "message": "Run created by AFT"},
+            "attributes": {
+                "is-destroy": False,
+                "plan-only": plan_only,
+                "message": message,
+            },
             "type": "runs",
             "relationships": {
                 "workspace": {"data": {"type": "workspaces", "id": workspace_id}},
@@ -215,6 +220,16 @@ def delete_workspace(workspace_id, api_token):
             print(str(errors))
     else:
         print("Successfully deleted workspace {}".format(sanitized_workspace_id))
+
+
+def get_plan_json_output(run_id, api_token):
+    endpoint = "{}/runs/{}/plan/json-output".format(TERRAFORM_API_ENDPOINT, run_id)
+    headers = __build_standard_headers(api_token)
+    tf_dist = os.environ.get("TF_DISTRIBUTION")
+    response = requests.get(endpoint, headers=headers, verify=tf_dist != "tfe")
+    if response.status_code == 200:
+        return response.content
+    return None
 
 
 def wait_to_stabilize(entity_type, entity_id, target_states, api_token):

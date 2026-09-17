@@ -144,3 +144,7 @@ variable "customizations_audit_table_name" {
 variable "customizations_audit_table_arn" {
   type = string
 }
+
+variable "aft_plan_output_retention_days" {
+  type = number
+}

@@ -67,6 +67,7 @@ TRIGGER_TOKEN_ACCOUNT_MOVE = "account_move"  # nosec B105
 SSM_PARAM_AFT_DDB_CUSTOMIZATIONS_AUDIT_TABLE = (
     "/aft/resources/ddb/aft-customizations-audit-table-name"
 )
+SSM_PARAM_AFT_PLAN_OUTPUT_BUCKET_NAME = "/aft/resources/s3/aft-plan-output-bucket-name"
 SSM_PARAM_ACCOUNT_CT_MANAGEMENT_ACCOUNT_ID = "/aft/account/ct-management/account-id"
 SSM_PARAM_ACCOUNT_AUDIT_ACCOUNT_ID = "/aft/account/audit/account-id"
 SSM_PARAM_ACCOUNT_LOG_ARCHIVE_ACCOUNT_ID = "/aft/account/log-archive/account-id"

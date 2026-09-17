@@ -125,7 +125,19 @@ phases:
             cd $DEFAULT_PATH/$CUSTOMIZATION/terraform
             export AWS_PROFILE=aft-management-admin
             /opt/aft/bin/terraform init -no-color
-            /opt/aft/bin/terraform apply -no-color --auto-approve
+            /opt/aft/bin/terraform validate -no-color || exit 1
+            if [ "${PLAN_ONLY}" = "true" ]; then
+              /opt/aft/bin/terraform plan -no-color -out=tfplan
+              /opt/aft/bin/terraform show -json tfplan > plan.json
+              unset AWS_PROFILE
+              PLAN_BUCKET=$(aws ssm get-parameter --name "/aft/resources/s3/aft-plan-output-bucket-name" --query "Parameter.Value" --output text 2>/dev/null || echo "")
+              if [ -n "$PLAN_BUCKET" ]; then
+                aws s3 cp plan.json s3://${PLAN_BUCKET}/${VENDED_ACCOUNT_ID}/$(date +%Y%m%d-%H%M%S)/account/plan.json
+              fi
+              export AWS_PROFILE=aft-management-admin
+            else
+              /opt/aft/bin/terraform apply -no-color --auto-approve
+            fi
           else
             TF_BACKEND_REGION=$(aws ssm get-parameter --name "/aft/config/oss-backend/primary-region" --query "Parameter.Value" --output text)
             TF_ORG_NAME=$(aws ssm get-parameter --name "/aft/config/terraform/org-name" --query "Parameter.Value" --output text)
@@ -152,8 +164,18 @@ phases:
             
             cd $DEFAULT_PATH/$CUSTOMIZATION
             tar -czf temp_configuration_file.tar.gz -C terraform --exclude .git --exclude venv .
+            if [ "${PLAN_ONLY}" = "true" ]; then
+              WS_OPERATION="plan"
+              PLAN_EXPORT_TO_S3=$(aws ssm get-parameter --name "/aft/config/plan-output/export-to-s3" --query "Parameter.Value" --output text 2>/dev/null || echo "false")
+              PLAN_BUCKET=$(aws ssm get-parameter --name "/aft/resources/s3/aft-plan-output-bucket-name" --query "Parameter.Value" --output text 2>/dev/null || echo "")
+              export PLAN_EXPORT_TO_S3
+              export PLAN_OUTPUT_BUCKET=$PLAN_BUCKET
+              export CUSTOMIZATION_TYPE="account"
+            else
+              WS_OPERATION="deploy"
+            fi
             python3 $DEFAULT_PATH/aws-aft-core-framework/sources/scripts/workspace_manager.py \
-              --operation "deploy" \
+              --operation "$WS_OPERATION" \
               --organization_name $TF_ORG_NAME \
               --workspace_name $TF_WORKSPACE_NAME \
               --assume_role_arn $AFT_ADMIN_ROLE_ARN \

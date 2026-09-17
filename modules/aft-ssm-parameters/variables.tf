@@ -284,3 +284,11 @@ variable "aft_codepipeline_customizations_bucket_id" {
 variable "aft_customizations_audit_table_name" {
   type = string
 }
+
+variable "aft_plan_output_bucket_name" {
+  type = string
+}
+
+variable "aft_plan_output_export_enabled" {
+  type = bool
+}

@@ -416,6 +416,18 @@ resource "aws_ssm_parameter" "aft_codepipeline_customizations_bucket_id" {
   type  = "String"
 }
 
+resource "aws_ssm_parameter" "aft_plan_output_bucket_name" {
+  name  = "/aft/resources/s3/aft-plan-output-bucket-name"
+  value = var.aft_plan_output_bucket_name
+  type  = "String"
+}
+
+resource "aws_ssm_parameter" "aft_plan_output_export_to_s3" {
+  name  = "/aft/config/plan-output/export-to-s3"
+  value = var.aft_plan_output_export_enabled ? "true" : "false"
+  type  = "String"
+}
+
 resource "aws_ssm_parameter" "aft_metrics_reporting" {
   name  = "/aft/config/metrics-reporting"
   value = var.aft_metrics_reporting

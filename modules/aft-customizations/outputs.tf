@@ -24,3 +24,11 @@ output "aft_codepipeline_customizations_bucket_arn" {
 output "state_machine_arn" {
   value = aws_sfn_state_machine.aft_invoke_customizations_sfn.arn
 }
+
+output "aft_plan_output_bucket_name" {
+  value = aws_s3_bucket.aft_plan_output.id
+}
+
+output "aft_plan_output_bucket_arn" {
+  value = aws_s3_bucket.aft_plan_output.arn
+}

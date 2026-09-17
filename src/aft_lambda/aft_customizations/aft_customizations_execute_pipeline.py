@@ -34,9 +34,10 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
         running_pipelines = int(event["running_executions"]["running_pipelines"])
         pipelines_to_run = maximum_concurrent_pipelines - running_pipelines
         accounts = event["targets"]["pending_accounts"]
+        plan_only = str(event.get("plan_only", "false")).lower() == "true"
         logger.info("Accounts submitted for execution: " + str(len(accounts)))
         for account_id in accounts[:pipelines_to_run]:
-            execute_pipeline(session, str(account_id))
+            execute_pipeline(session, str(account_id), plan_only=plan_only)
             accounts.remove(account_id)
         logger.info("Accounts remaining to be executed - ")
         sanitized_accounts = sanitize_input_for_logging(accounts)

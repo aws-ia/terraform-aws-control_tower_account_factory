@@ -7,6 +7,12 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
   role_arn      = data.aws_iam_role.aft_codepipeline_customizations_role.arn
   pipeline_type = "V2"
 
+  variable {
+    name          = "PLAN_ONLY"
+    default_value = "false"
+    description   = "When true, run terraform plan instead of apply"
+  }
+
   artifact_store {
     location = data.aws_s3_bucket.aft_codepipeline_customizations_bucket.id
     type     = "S3"
@@ -75,6 +81,11 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
             type  = "PLAINTEXT"
+          },
+          {
+            name  = "PLAN_ONLY",
+            value = "#{variables.PLAN_ONLY}",
+            type  = "PLAINTEXT"
           }
         ])
       }
@@ -101,6 +112,11 @@ resource "aws_codepipeline" "aft_codecommit_customizations_codepipeline" {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
             type  = "PLAINTEXT"
+          },
+          {
+            name  = "PLAN_ONLY",
+            value = "#{variables.PLAN_ONLY}",
+            type  = "PLAINTEXT"
           }
         ])
       }
@@ -117,6 +133,12 @@ resource "aws_codepipeline" "aft_codeconnections_customizations_codepipeline" {
   name          = "${var.account_id}-customizations-pipeline"
   role_arn      = data.aws_iam_role.aft_codepipeline_customizations_role.arn
   pipeline_type = "V2"
+
+  variable {
+    name          = "PLAN_ONLY"
+    default_value = "false"
+    description   = "When true, run terraform plan instead of apply"
+  }
 
   artifact_store {
     location = data.aws_s3_bucket.aft_codepipeline_customizations_bucket.id
@@ -191,6 +213,11 @@ resource "aws_codepipeline" "aft_codeconnections_customizations_codepipeline" {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
             type  = "PLAINTEXT"
+          },
+          {
+            name  = "PLAN_ONLY",
+            value = "#{variables.PLAN_ONLY}",
+            type  = "PLAINTEXT"
           }
         ])
       }
@@ -217,6 +244,11 @@ resource "aws_codepipeline" "aft_codeconnections_customizations_codepipeline" {
           {
             name  = "VENDED_ACCOUNT_ID",
             value = var.account_id,
+            type  = "PLAINTEXT"
+          },
+          {
+            name  = "PLAN_ONLY",
+            value = "#{variables.PLAN_ONLY}",
             type  = "PLAINTEXT"
           }
         ])

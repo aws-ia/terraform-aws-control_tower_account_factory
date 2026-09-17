@@ -7,6 +7,7 @@ import argparse
 import io
 import os
 import time
+from datetime import datetime, timezone
 
 import boto3
 import terraform_client as terraform
@@ -74,7 +75,12 @@ def setup_workspace(
 
 
 def stage_run(
-    workspace_id, assume_role_arn, role_session_name, api_token, hcp_oidc_enabled
+    workspace_id,
+    assume_role_arn,
+    role_session_name,
+    api_token,
+    hcp_oidc_enabled,
+    plan_only=False,
 ):
     cv_id, upload_url = terraform.create_configuration_version(workspace_id, api_token)
     print("Successfully created a new configuration version: {}".format(cv_id))
@@ -99,21 +105,110 @@ def stage_run(
             )
         )
 
-    run_id = terraform.create_run(workspace_id, cv_id, api_token)
-    print("Successfully created run: {}".format(run_id))
+    run_id = terraform.create_run(workspace_id, cv_id, api_token, plan_only=plan_only)
+    print(
+        "Successfully created {}: {}".format(
+            "plan-only run" if plan_only else "run", run_id
+        )
+    )
+    # A plan-only run never applies, so "applied" is not a terminal state for it.
+    terminal_states = [
+        "planned_and_finished",
+        "errored",
+        "discarded",
+        "canceled",
+    ]
+    if not plan_only:
+        terminal_states = ["applied"] + terminal_states
     terraform.wait_to_stabilize(
         "runs",
         run_id,
-        [
-            "applied",
-            "planned_and_finished",
-            "errored",
-            "discarded",
-            "canceled",
-        ],
+        terminal_states,
         api_token,
     )
     return run_id
+
+
+def setup_and_plan_workspace(
+    organization_name,
+    workspace_name,
+    assume_role_arn,
+    role_session_name,
+    api_token,
+    project_name,
+    hcp_oidc_enabled,
+    hcp_oidc_audience,
+):
+    workspace_id = setup_workspace(
+        organization_name,
+        workspace_name,
+        assume_role_arn,
+        role_session_name,
+        api_token,
+        project_name,
+        hcp_oidc_enabled,
+        hcp_oidc_audience,
+    )
+    run_id = stage_run(
+        workspace_id,
+        assume_role_arn,
+        role_session_name,
+        api_token,
+        hcp_oidc_enabled,
+        plan_only=True,
+    )
+
+    plan_output_bucket = os.environ.get("PLAN_OUTPUT_BUCKET", "")
+    plan_export_enabled = os.environ.get("PLAN_EXPORT_TO_S3", "false").lower() == "true"
+    if plan_export_enabled and plan_output_bucket:
+        export_plan_to_s3(run_id, api_token, plan_output_bucket)
+
+    return run_id
+
+
+def export_plan_to_s3(run_id, api_token, plan_output_bucket):
+    vended_account_id = os.environ.get("VENDED_ACCOUNT_ID", "unknown")
+    customization_type = os.environ.get("CUSTOMIZATION_TYPE", "account")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    s3_key = "{}/{}/{}/plan.json".format(
+        vended_account_id, timestamp, customization_type
+    )
+
+    print("Retrieving plan JSON output from HCP Terraform for run: {}".format(run_id))
+    plan_json = terraform.get_plan_json_output(run_id, api_token)
+
+    if plan_json is None:
+        print(
+            "Plan JSON output not available for run {}. Skipping S3 export.".format(
+                run_id
+            )
+        )
+        return
+
+    print("Uploading plan output to s3://{}/{}".format(plan_output_bucket, s3_key))
+    s3_client = boto3.client("s3")
+    # Plan export is an opt-in, best-effort convenience: the plan already
+    # completed successfully in HCP Terraform (and is viewable in the TFC UI),
+    # so a failed S3 copy must NOT fail the build. Log loudly and continue,
+    # matching AFT's side-effect convention (e.g. metrics.py, the audit-trigger
+    # Lambda, and get_plan_json_output's graceful skip). Uses print() to match
+    # this script's existing logging style.
+    try:
+        s3_client.put_object(
+            Bucket=plan_output_bucket,
+            Key=s3_key,
+            Body=plan_json,
+            ContentType="application/json",
+        )
+        print("Successfully uploaded plan output to S3")
+    except Exception as e:
+        print(
+            "WARNING: Failed to upload plan output to "
+            "s3://{}/{}: {}. Plan output is still available in the HCP Terraform "
+            "run UI; continuing without failing the build.".format(
+                plan_output_bucket, s3_key, e
+            )
+        )
 
 
 def set_oidc_configuration(workspace_id, assume_role_arn, api_token, hcp_oidc_audience):
@@ -432,6 +527,17 @@ if __name__ == "__main__":
         )
     elif args.operation == "deploy":
         setup_and_run_workspace(
+            args.organization_name,
+            args.workspace_name,
+            args.assume_role_arn,
+            args.assume_role_session_name,
+            args.api_token,
+            args.project_name,
+            (args.hcp_oidc_enabled == "true"),
+            args.hcp_oidc_audience,
+        )
+    elif args.operation == "plan":
+        setup_and_plan_workspace(
             args.organization_name,
             args.workspace_name,
             args.assume_role_arn,
