@@ -68,8 +68,21 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
                 target_accounts = included_accounts
 
             target_account_info = []
+            final_target_accounts = list(target_accounts)
             for account_id in target_accounts:
                 sanitized_account_id = sanitize_input_for_logging(account_id)
+                try:
+                    account_details = orgs_agent.describe_account(account_id)
+                    if account_details["Status"] == "SUSPENDED":
+                        logger.info(
+                            f"Account with ID {sanitized_account_id} is SUSPENDED - ignoring"
+                        )
+                        final_target_accounts.remove(account_id)
+                        continue
+                except ClientError as error:
+                    logger.error(f"Failed to describe account {sanitized_account_id}: {error}")
+                    final_target_accounts.remove(account_id)
+                    continue
                 logger.info(
                     f"Building customization payload for {sanitized_account_id}"
                 )
@@ -80,7 +93,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
                         logger.info(
                             f"Account with ID {sanitized_account_id} does not exist or is suspended - ignoring"
                         )
-                        target_accounts.remove(account_id)
+                        final_target_accounts.remove(account_id)
                         continue
                     else:
                         raise error
@@ -100,8 +113,8 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
                 target_account_info.append(account_payload)
 
             return {
-                "number_pending_accounts": len(target_accounts),
-                "pending_accounts": target_accounts,
+                "number_pending_accounts": len(final_target_accounts),
+                "pending_accounts": final_target_accounts,
                 "target_accounts_info": upload_target_account_info(
                     aft_management_session, target_account_info, execution_id
                 ),
