@@ -28,6 +28,7 @@ dependencies = [
     "botocore == 1.43.39",
     "requests == 2.33.0",
     "jsonschema == 4.3.2",
+    "certifi >= 2026.10.19",
     "urllib3 >= 2.7.0"
 ]
 
@@ -46,4 +47,5 @@ dev = [
     "types-requests == 2.33.0.*",  # should match the installed requests version
     "pygments >= 2.20.0",
     "click >= 8.3.3",
+    "virtualenv >= 21.14.9",
 ]

@@ -23,7 +23,7 @@ resource "aws_codebuild_project" "account_request" {
 
   environment {
     compute_type                = var.codebuild_compute_type
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
+    image                       = "aws/codebuild/amazonlinux-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
     environment_variable {
@@ -78,7 +78,7 @@ resource "aws_codebuild_project" "account_provisioning_customizations_pipeline" 
 
   environment {
     compute_type                = var.codebuild_compute_type
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
+    image                       = "aws/codebuild/amazonlinux-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
 

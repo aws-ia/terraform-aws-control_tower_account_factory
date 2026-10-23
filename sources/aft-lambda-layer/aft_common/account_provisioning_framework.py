@@ -14,6 +14,7 @@ from aft_common import ddb
 from aft_common.aft_utils import sanitize_input_for_logging
 from aft_common.auth import AuthClient
 from aft_common.organizations import OrganizationsAgent
+from aft_common.premium_support import METADATA_SUPPORT_FIELD
 from boto3.session import Session
 from botocore.exceptions import ClientError
 
@@ -255,6 +256,12 @@ def persist_metadata(
         "vcs_information": {},
         "terraform_workspace": {},
     }
+
+    existing_item = ddb.get_ddb_item(
+        session, metadata_table_name, {"id": account_info["id"]}
+    )
+    if existing_item is not None and METADATA_SUPPORT_FIELD in existing_item:
+        item[METADATA_SUPPORT_FIELD] = existing_item[METADATA_SUPPORT_FIELD]
 
     logger.info("Writing item to " + metadata_table_name)
     logger.info(item)
