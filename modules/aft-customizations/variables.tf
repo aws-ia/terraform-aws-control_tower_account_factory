@@ -128,6 +128,11 @@ variable "codebuild_compute_type" {
   type = string
 }
 
+variable "codebuild_host_kernel" {
+  type    = string
+  default = null
+}
+
 variable "sns_topic_enable_cmk_encryption" {
   type = bool
 }
