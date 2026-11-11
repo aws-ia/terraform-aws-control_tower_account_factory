@@ -33,6 +33,11 @@ variable "aft_cleanup_resources_function_name" {
   type = string
 }
 
+variable "aft_organizations_account_provisioning_sfn_name" {
+  description = "Name of the Step Function that creates and updates accounts for the Organizations vending method."
+  type        = string
+}
+
 variable "aft_account_provisioning_framework_sfn_name" {
   type = string
 }
@@ -276,6 +281,30 @@ variable "aft_metrics_reporting" {
   type = string
 }
 
+variable "account_vending_method" {
+  description = "Method AFT uses to vend accounts (service_catalog or organizations). Written to SSM /aft/config/account-vending-method."
+  type        = string
+  default     = "service_catalog"
+}
+
+variable "aft_feature_governance_validation" {
+  description = "Organizations vending method only. Turns governance validation on or off. Written to SSM /aft/config/feature/governance-validation-enabled."
+  type        = bool
+  default     = true
+}
+
+variable "governance_validation_mode" {
+  description = "Organizations vending method only. Governance validation outcome (warn or fail). Written to SSM /aft/config/governance-validation-mode."
+  type        = string
+  default     = "warn"
+}
+
+variable "aft_feature_delete_vended_account_default_vpcs_enabled" {
+  description = "Organizations vending method only. When true, the default VPCs of each account AFT creates are deleted in the governed Regions. Written to SSM /aft/config/feature/delete-vended-account-default-vpcs-enabled."
+  type        = bool
+  default     = false
+}
+
 variable "aft_codepipeline_customizations_bucket_id" {
   type = string
 }
@@ -291,4 +320,9 @@ variable "aft_plan_output_bucket_name" {
 
 variable "aft_plan_output_export_enabled" {
   type = bool
+}
+
+variable "aft_from_ct_management_event_bus_name" {
+  description = "Name of the AFT event bus that receives Control Tower / aft.organizations lifecycle events."
+  type        = string
 }

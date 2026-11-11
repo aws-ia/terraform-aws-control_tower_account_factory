@@ -17,6 +17,17 @@ SSM_PARAM_AFT_EVENTS_TABLE = "/aft/resources/ddb/aft-controltower-events-table-n
 SSM_PARAM_AFT_SFN_NAME = (
     "/aft/account/aft-management/sfn/aft-account-provisioning-framework-sfn-name"
 )
+SSM_PARAM_AFT_ORGANIZATIONS_ACCOUNT_PROVISIONING_SFN_NAME = (
+    "/aft/account/aft-management/sfn/aft-organizations-account-provisioning-sfn-name"
+)
+SSM_PARAM_AFT_EVENTS_FROM_CT_MANAGEMENT_BUS_NAME = (
+    "/aft/account/aft-management/eventbridge/aft-events-from-ct-management-bus-name"
+)
+# Source and detail type of the lifecycle events the organizations provisioning
+# Step Function publishes; the aft-organizations-lifecycle-events rule matches
+# both (modules/aft-account-request-framework/eventbridge.tf).
+ORGANIZATIONS_LIFECYCLE_EVENT_SOURCE = "aft.organizations"
+ORGANIZATIONS_LIFECYCLE_EVENT_DETAIL_TYPE = "AFT Account Provisioning"
 SSM_PARAM_AFT_DDB_REQ_TABLE = "/aft/resources/ddb/aft-request-table-name"
 SSM_PARAM_AFT_DDB_AUDIT_TABLE = "/aft/resources/ddb/aft-request-audit-table-name"
 SSM_PARAM_AFT_REQUEST_ACTION_TRIGGER_FUNCTION_ARN = (
@@ -81,3 +92,23 @@ SSM_PARAM_AFT_CODEPIPELINE_CUSTOMIZATIONS_BUCKET_ID = (
 SSM_PARAM_AFT_METRICS_REPORTING = "/aft/config/metrics-reporting"
 SSM_PARAM_AFT_METRICS_REPORTING_UUID = "/aft/config/metrics-reporting-uuid"
 SSM_PARAMETER_PATH = "/aft/account-request/custom-fields/"
+
+# Account vending method (see Terraform var account_vending_method).
+SSM_PARAM_ACCOUNT_VENDING_METHOD = "/aft/config/account-vending-method"
+VENDING_METHOD_SERVICE_CATALOG = "service_catalog"
+VENDING_METHOD_ORGANIZATIONS = "organizations"
+
+# Governance validation (see Terraform vars aft_feature_governance_validation
+# and governance_validation_mode).
+SSM_PARAM_GOVERNANCE_VALIDATION_ENABLED = (
+    "/aft/config/feature/governance-validation-enabled"
+)
+SSM_PARAM_GOVERNANCE_VALIDATION_MODE = "/aft/config/governance-validation-mode"
+
+# Default VPC deletion in accounts created by the Organizations vending method
+# (see Terraform var aft_feature_delete_vended_account_default_vpcs_enabled).
+# Independent of SSM_PARAM_FEATURE_DEFAULT_VPCS_ENABLED, which covers only the
+# AFT management account.
+SSM_PARAM_FEATURE_VENDED_ACCOUNT_DEFAULT_VPCS_ENABLED = (
+    "/aft/config/feature/delete-vended-account-default-vpcs-enabled"
+)

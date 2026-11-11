@@ -171,8 +171,20 @@ def invoke_step_function(
     return response
 
 
+def count_running_executions(session: Session, sfn_name: str) -> int:
+    """Number of RUNNING executions of the state machine ``sfn_name``."""
+    client: SFNClient = session.client("stepfunctions")
+    paginator = client.get_paginator("list_executions")
+    return sum(
+        len(page["executions"])
+        for page in paginator.paginate(
+            stateMachineArn=build_sfn_arn(session, sfn_name), statusFilter="RUNNING"
+        )
+    )
+
+
 def is_aft_supported_controltower_event(event: Dict[str, Any]) -> bool:
-    if event.get("source", None) == "aws.controltower":
+    if event.get("source", None) in ("aws.controltower", "aft.organizations"):
         supported_events = ["CreateManagedAccount", "UpdateManagedAccount"]
         if event.get("detail", {}).get("eventName", None) in supported_events:
             logger.info("Received AFT supported Control Tower Event")

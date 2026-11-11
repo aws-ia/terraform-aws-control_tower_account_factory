@@ -24,6 +24,8 @@ Git push action will trigger ct-aft-account-request AWS CodePipeline in AFT mana
 
    Refer to https://docs.aws.amazon.com/controltower/latest/userguide/account-factory.html for more information.
 
+   With the Organizations vending method (`account_vending_method = "organizations"` in the AFT deployment), the request module still requires the SSO fields, but AFT does not use them to create the account: of these inputs, Organizations `CreateAccount` receives only `AccountEmail` and `AccountName`, and AFT moves the account into `ManagedOrganizationalUnit`.
+
 - **account_tags** captures user defined keys and values to tag AWS accounts by required business criteria. Refer to https://docs.aws.amazon.com/organizations/latest/userguide/orgs_tagging.html for more information on Account Tags.
 
 - **change_management_parameters** captures inputs listed below. As a customer you may want to capture reason for account request and who initiated the request.
@@ -43,5 +45,7 @@ AFT supports updating of all non control_tower_parameters inputs and ManagedOrga
 ### Submit Multiple Account Requests
 
 Although AWS Control Tower Account Factory can process single request at any given time, AFT pipeline allows you to submit multiple Account Requests and queues all the requests to be processed by AWS Control Tower Account Factory in FIFO order.
+
+With the Organizations vending method, AFT processes up to `concurrent_account_factory_actions` requests at once, each in its own execution of the `aft-organizations-account-provisioning` Step Function. The account request processor runs every 5 minutes and starts at most one queued request per run.
 
 You can create Account Request Terraform file per account or cascade multiple requests in a single Terraform file.

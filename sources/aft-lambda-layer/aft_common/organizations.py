@@ -11,13 +11,16 @@ from aft_common.aft_utils import (
     emails_are_equal,
     get_high_retry_botoconfig,
     resubmit_request_on_boto_throttle,
+    sanitize_input_for_logging,
 )
 from boto3.session import Session
+from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from mypy_boto3_organizations import OrganizationsClient
     from mypy_boto3_organizations.type_defs import (
         AccountTypeDef,
+        CreateAccountStatusTypeDef,
         DescribeAccountResponseTypeDef,
         OrganizationalUnitTypeDef,
         ParentTypeDef,
@@ -31,6 +34,7 @@ else:
     OrganizationalUnitTypeDef = object
     AccountTypeDef = object
     ParentTypeDef = object
+    CreateAccountStatusTypeDef = object
 
 logger = logging.getLogger("aft")
 
@@ -302,6 +306,95 @@ class OrganizationsAgent:
                 return account["Id"]
 
         raise Exception(f"Account email {email} not found in Organization")
+
+    def create_account(
+        self,
+        email: str,
+        account_name: str,
+        role_name: str = "AWSControlTowerExecution",
+    ) -> str:
+        """Create a new member account via Organizations CreateAccount.
+
+        Used by the Organizations vending method in place of Service Catalog
+        provisioning. ``role_name`` is the cross-account role
+        Organizations creates in the new account; it MUST be
+        "AWSControlTowerExecution" so AFT can assume it (and from there create
+        AWSAFTExecution), matching how Control Tower-created accounts behave.
+
+        This call is asynchronous: it returns a request Id to be polled with
+        :meth:`describe_create_account_status`. It does NOT wait for or
+        guarantee successful creation.
+
+        :return: the CreateAccountStatus request Id (``car-...``).
+        """
+        logger.info(f"Creating account {account_name} <{email}> role={role_name}")
+        response = self.orgs_client.create_account(
+            Email=email,
+            AccountName=account_name,
+            RoleName=role_name,
+        )
+        request_id = response["CreateAccountStatus"]["Id"]
+        logger.info(f"CreateAccount request submitted: {request_id}")
+        return request_id
+
+    def describe_create_account_status(
+        self, request_id: str
+    ) -> "CreateAccountStatusTypeDef":
+        """Return the status of an in-flight CreateAccount request.
+
+        Poll this with the Id returned by :meth:`create_account`. The returned
+        object's ``State`` is one of IN_PROGRESS | SUCCEEDED | FAILED; when
+        SUCCEEDED, ``AccountId`` holds the new account's Id, and when FAILED,
+        ``FailureReason`` explains why.
+        """
+        response = self.orgs_client.describe_create_account_status(
+            CreateAccountRequestId=request_id
+        )
+        return response["CreateAccountStatus"]
+
+    def list_create_account_requests(
+        self, states: List[str]
+    ) -> List["CreateAccountStatusTypeDef"]:
+        """Return the CreateAccount requests in the given states
+        (IN_PROGRESS | SUCCEEDED | FAILED)."""
+        requests: List["CreateAccountStatusTypeDef"] = []
+        paginator = self.orgs_client.get_paginator("list_create_account_status")
+        for page in paginator.paginate(States=states):  # type: ignore[arg-type]
+            requests.extend(page["CreateAccountStatuses"])
+        return requests
+
+    def move_account(
+        self, account_id: str, source_parent_id: str, destination_parent_id: str
+    ) -> None:
+        """Move an account from one parent (root or OU) to another.
+
+        Used after a successful CreateAccount to place the new account in its
+        managed OU (typically moving it out of the organization root). The
+        source parent MUST be the account's current parent; resolve it with
+        :meth:`get_parents_from_account_id` when it is not already known.
+        """
+        logger.info(
+            f"Moving account {account_id} from {source_parent_id} "
+            f"to {destination_parent_id}"
+        )
+        try:
+            self.orgs_client.move_account(
+                AccountId=account_id,
+                SourceParentId=source_parent_id,
+                DestinationParentId=destination_parent_id,
+            )
+        except ClientError as error:
+            # botocore retries a timed-out request; when the first one was
+            # applied, the retry finds the account already in the destination.
+            if error.response.get("Error", {}).get("Code") != (
+                "DuplicateAccountException"
+            ):
+                raise
+            logger.info(
+                f"Account {sanitize_input_for_logging(account_id)} is already in "
+                f"{sanitize_input_for_logging(destination_parent_id)}; "
+                "an earlier MoveAccount request was applied"
+            )
 
     def get_aft_account_info(self, account_id: str) -> AftAccountInfo:
         logger.info(f"Getting details for {account_id}")

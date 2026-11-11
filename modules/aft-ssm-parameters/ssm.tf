@@ -55,6 +55,34 @@ resource "aws_ssm_parameter" "aft_account_provisioning_framework_sfn_name" {
   value = var.aft_account_provisioning_framework_sfn_name
 }
 
+resource "aws_ssm_parameter" "aft_organizations_account_provisioning_sfn_name" {
+  count = var.account_vending_method == "organizations" ? 1 : 0
+  name  = "/aft/account/aft-management/sfn/aft-organizations-account-provisioning-sfn-name"
+  type  = "String"
+  value = var.aft_organizations_account_provisioning_sfn_name
+}
+
+resource "aws_ssm_parameter" "governance_validation_enabled" {
+  count = var.account_vending_method == "organizations" ? 1 : 0
+  name  = "/aft/config/feature/governance-validation-enabled"
+  type  = "String"
+  value = var.aft_feature_governance_validation ? "true" : "false"
+}
+
+resource "aws_ssm_parameter" "governance_validation_mode" {
+  count = var.account_vending_method == "organizations" ? 1 : 0
+  name  = "/aft/config/governance-validation-mode"
+  type  = "String"
+  value = var.governance_validation_mode
+}
+
+resource "aws_ssm_parameter" "vended_account_default_vpcs_enabled" {
+  count = var.account_vending_method == "organizations" ? 1 : 0
+  name  = "/aft/config/feature/delete-vended-account-default-vpcs-enabled"
+  type  = "String"
+  value = var.aft_feature_delete_vended_account_default_vpcs_enabled ? "true" : "false"
+}
+
 resource "aws_ssm_parameter" "aft_sns_topic_arn" {
   name  = "/aft/account/aft-management/sns/topic-arn"
   type  = "String"
@@ -441,4 +469,17 @@ resource "aws_ssm_parameter" "aft_metrics_reporting_uuid" {
   name  = "/aft/config/metrics-reporting-uuid"
   value = random_uuid.metrics_reporting_uuid.result
   type  = "String"
+}
+
+resource "aws_ssm_parameter" "account_provisioning_backend" {
+  name  = "/aft/config/account-vending-method"
+  type  = "String"
+  value = var.account_vending_method
+}
+
+resource "aws_ssm_parameter" "aft_from_ct_management_event_bus_name" {
+  count = var.account_vending_method == "organizations" ? 1 : 0
+  name  = "/aft/account/aft-management/eventbridge/aft-events-from-ct-management-bus-name"
+  type  = "String"
+  value = var.aft_from_ct_management_event_bus_name
 }

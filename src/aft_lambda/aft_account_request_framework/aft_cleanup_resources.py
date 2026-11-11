@@ -47,10 +47,16 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
         account_id = orgs_agent.get_account_id_from_email(email=account_email)
 
         logger.info(f"Deleting account customization pipeline for {account_id}")
-        codepipeline.delete_customization_pipeline(
-            aft_management_session=aft_management_session, account_id=account_id
-        )
-        logger.info(f"Customization pipeline deleted")
+        try:
+            codepipeline.delete_customization_pipeline(
+                aft_management_session=aft_management_session, account_id=account_id
+            )
+        except codepipeline.CustomizationPipelineNotFound:
+            logger.info(
+                f"No customization pipeline exists for {account_id}, nothing to delete"
+            )
+        else:
+            logger.info(f"Customization pipeline deleted")
 
         aft_request_metadata_table_name = get_ssm_parameter_value(
             aft_management_session,

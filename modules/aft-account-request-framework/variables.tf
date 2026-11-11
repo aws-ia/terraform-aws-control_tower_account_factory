@@ -5,12 +5,29 @@ variable "account_factory_product_name" {
   type = string
 }
 
+variable "account_vending_method" {
+  description = "Method AFT uses to vend accounts (service_catalog or organizations). Service Catalog resources are only created for service_catalog."
+  type        = string
+  default     = "service_catalog"
+}
+
 variable "cloudwatch_log_group_retention" {
   type = string
 }
 
 variable "cloudwatch_log_group_enable_cmk_encryption" {
   type = bool
+}
+
+variable "aft_organizations_account_provisioning_sfn_name" {
+  description = "Name of the Step Function that creates and updates accounts for the Organizations vending method."
+  type        = string
+}
+
+variable "aft_organizations_provisioning_timeout_seconds" {
+  description = "TimeoutSeconds of the organizations account-provisioning Step Function; the baseline poll ends its control wait before it."
+  type        = number
+  default     = 7200
 }
 
 variable "aft_account_provisioning_framework_sfn_name" {

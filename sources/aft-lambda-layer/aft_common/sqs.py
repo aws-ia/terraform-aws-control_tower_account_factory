@@ -23,8 +23,10 @@ logger = logging.getLogger("aft")
 
 
 def build_sqs_url(session: Session, queue_name: str) -> str:
+    client: SQSClient = session.client("sqs")
+    endpoint_url = client.meta.endpoint_url.rstrip("/")
     account_info = utils.get_session_info(session)
-    return f'https://sqs.{account_info["region"]}.amazonaws.com/{account_info["account"]}/{queue_name}'
+    return f'{endpoint_url}/{account_info["account"]}/{queue_name}'
 
 
 def receive_sqs_message(session: Session, sqs_queue: str) -> Optional[MessageTypeDef]:
@@ -46,6 +48,17 @@ def receive_sqs_message(session: Session, sqs_queue: str) -> Optional[MessageTyp
     else:
         logger.info("There are no messages pending processing")
         return None
+
+
+def count_pending_sqs_messages(session: Session, sqs_queue: str) -> int:
+    """Approximate number of messages waiting in the queue, without receiving
+    (and so without hiding) any of them."""
+    client: SQSClient = session.client("sqs")
+    response = client.get_queue_attributes(
+        QueueUrl=build_sqs_url(session, sqs_queue),
+        AttributeNames=["ApproximateNumberOfMessages"],
+    )
+    return int(response["Attributes"]["ApproximateNumberOfMessages"])
 
 
 def delete_sqs_message(session: Session, message: MessageTypeDef) -> None:

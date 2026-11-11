@@ -134,6 +134,23 @@ resource "aws_iam_role_policy" "aft_account_request_processor" {
   })
 }
 
+resource "aws_iam_role_policy" "aft_account_request_processor_organizations" {
+  count = local.service_catalog_backend ? 0 : 1
+  name  = "aft-account-request-processor-organizations"
+  role  = aws_iam_role.aft_account_request_processor.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["states:StartExecution", "states:ListExecutions"]
+        Resource = aws_sfn_state_machine.aft_organizations_account_provisioning[0].arn
+      }
+    ]
+  })
+}
+
 
 ######### invoke_aft_account_provisioning_framework #########
 
@@ -201,4 +218,54 @@ resource "aws_iam_role" "aft_aws_backup" {
 resource "aws_iam_role_policy_attachment" "aft_aws_backup_service_role" {
   role       = aws_iam_role.aft_aws_backup.name
   policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+}
+
+######### organizations_account_provisioning Lambdas #########
+# Shared execution role for the organizations account-provisioning Lambdas.
+# Mirrors the account-request-processor role: assume AWSAFTAdmin (to reach
+# AWSAFTService in CT management), read /aft/* SSM, KMS, and publish SNS.
+resource "aws_iam_role" "aft_organizations_account_provisioning_lambda" {
+  count              = local.service_catalog_backend ? 0 : 1
+  name               = "aft-lambda-organizations-account-provisioning"
+  assume_role_policy = templatefile("${path.module}/iam/trust-policies/lambda.tpl", { none = "none" })
+}
+
+resource "aws_iam_role_policy_attachment" "aft_organizations_account_provisioning_lambda" {
+  count      = local.service_catalog_backend ? 0 : length(local.lambda_managed_policies)
+  role       = aws_iam_role.aft_organizations_account_provisioning_lambda[0].name
+  policy_arn = local.lambda_managed_policies[count.index]
+}
+
+resource "aws_iam_role_policy" "aft_organizations_account_provisioning_lambda" {
+  count = local.service_catalog_backend ? 0 : 1
+  name  = "aft-organizations-account-provisioning"
+  role  = aws_iam_role.aft_organizations_account_provisioning_lambda[0].id
+
+  policy = templatefile("${path.module}/iam/role-policies/lambda-organizations-account-provisioning.tpl", {
+    data_aws_partition_current_partition                = data.aws_partition.current.partition
+    data_aws_region_aft-management_name                 = data.aws_region.aft-management.region
+    data_aws_caller_identity_aft-management_account_id  = data.aws_caller_identity.aft-management.account_id
+    aws_kms_key_aft_arn                                 = aws_kms_key.aft.arn
+    aws_sns_topic_aft_notifications_arn                 = aws_sns_topic.aft_notifications.arn
+    aws_sns_topic_aft_failure_notifications_arn         = aws_sns_topic.aft_failure_notifications.arn
+    aws_cloudwatch_event_bus_aft_from_ct_management_arn = aws_cloudwatch_event_bus.aft_from_ct_management.arn
+  })
+}
+
+# The Step Function invokes the organizations provisioning Lambdas above.
+resource "aws_iam_role_policy" "aft_organizations_account_provisioning_sfn_invoke" {
+  count = local.service_catalog_backend ? 0 : 1
+  name  = "aft-organizations-account-provisioning-sfn-invoke"
+  role  = aws_iam_role.aft_organizations_account_provisioning_sfn[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "lambda:InvokeFunction"
+        Resource = [for fn in aws_lambda_function.aft_organizations_account_provisioning : fn.arn]
+      }
+    ]
+  })
 }

@@ -13,8 +13,10 @@ data "aws_service" "home_region_validation" {
   service_id = "controltower"
   lifecycle {
     precondition {
-      condition     = try(contains(local.service_catalog_regional_availability.values, var.ct_home_region), true) == true
-      error_message = "AFT is not supported on Control Tower home region ${var.ct_home_region}. Refer to https://docs.aws.amazon.com/controltower/latest/userguide/limits.html for more information."
+      # The Organizations vending method does not use Service Catalog, so it is
+      # not bound to Service Catalog's regional availability.
+      condition     = var.account_vending_method == "organizations" || contains(local.service_catalog_regional_availability, var.ct_home_region)
+      error_message = "account_vending_method is \"service_catalog\" but Service Catalog is not available in Control Tower home region ${var.ct_home_region}. Set account_vending_method = \"organizations\" to vend accounts in this region, or refer to https://docs.aws.amazon.com/controltower/latest/userguide/limits.html for supported regions."
     }
   }
 }

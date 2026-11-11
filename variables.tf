@@ -62,7 +62,7 @@ variable "ct_home_region" {
   description = "The region from which this module will be executed. This MUST be the same region as Control Tower is deployed."
   type        = string
   validation {
-    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
+    condition     = can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af|il)-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region)) || can(regex("eusc-[a-z]{2}-(central|(north|south)?(east|west)?)-\\d", var.ct_home_region))
     error_message = "Variable var: region is not valid."
   }
 }
@@ -155,7 +155,7 @@ variable "aft_vpc_endpoints" {
 }
 
 variable "concurrent_account_factory_actions" {
-  description = "Maximum number of accounts that can be provisioned in parallel."
+  description = "Maximum number of accounts that can be provisioned in parallel. The account request processor runs every 5 minutes, starts at most one account request per run, and starts none while the limit is reached. With service_catalog, the limit applies to the Control Tower enabled baselines (AWSControlTowerBaseline) in UNDER_CHANGE status. With organizations, it applies to the running executions of the aft-organizations-account-provisioning Step Function."
   type        = number
   default     = 5
   validation {
@@ -207,7 +207,7 @@ variable "aft_feature_enterprise_support" {
 }
 
 variable "aft_feature_delete_default_vpcs_enabled" {
-  description = "Feature flag toggling deletion of default VPCs on/off"
+  description = "Feature flag toggling deletion of default VPCs on/off. Acts on the AFT management account only: when the account provisioning framework runs for an account, AFT deletes the AFT management account's default VPCs in the Regions enabled for that account. To delete the default VPCs of accounts created with the organizations vending method, use aft_feature_delete_vended_account_default_vpcs_enabled."
   type        = bool
   default     = false
   validation {
@@ -360,7 +360,7 @@ variable "tf_backend_secondary_region" {
   type        = string
   description = "AFT creates a backend for state tracking for its own state as well as OSS cases. The backend's primary region is the same as the AFT region, but this defines the secondary region to replicate to."
   validation {
-    condition     = var.tf_backend_secondary_region == "" || can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af)-(central|(north|south)?(east|west)?)-\\d", var.tf_backend_secondary_region))
+    condition     = var.tf_backend_secondary_region == "" || can(regex("(us(-gov)?|ap|ca|cn|eu|sa|me|af)-(central|(north|south)?(east|west)?)-\\d", var.tf_backend_secondary_region)) || can(regex("eusc-[a-z]{2}-(central|(north|south)?(east|west)?)-\\d", var.tf_backend_secondary_region))
     error_message = "Variable var: tf_backend_secondary_region is not valid."
   }
 }
@@ -566,4 +566,54 @@ variable "aft_plan_output_export_enabled" {
   description = "When true, plan-only runs on the HCP Terraform path export plan JSON output to the S3 plan output bucket. When false (default), plan output is only available in the HCP Terraform UI."
   type        = bool
   default     = false
+}
+
+#########################################
+# AFT Account Vending Method
+#########################################
+
+variable "account_vending_method" {
+  description = "Method AFT uses to vend accounts. \"service_catalog\" provisions and updates accounts through AWS Control Tower Account Factory in AWS Service Catalog; the plan fails if Service Catalog is not available in ct_home_region. \"organizations\" creates accounts with AWS Organizations, moves them into their managed OU and waits for Control Tower auto-enrollment to enroll them, in the aft-organizations-account-provisioning Step Function. It needs a landing zone that is ACTIVE with auto-enrollment on, and managed OUs registered with Control Tower. Written to SSM /aft/config/account-vending-method."
+  type        = string
+  default     = "service_catalog"
+  validation {
+    condition     = contains(["service_catalog", "organizations"], var.account_vending_method)
+    error_message = "Valid values for var: account_vending_method are (service_catalog, organizations)."
+  }
+}
+
+variable "aft_organizations_provisioning_timeout_seconds" {
+  description = "Organizations vending method only. TimeoutSeconds of the aft-organizations-account-provisioning Step Function: how long one account request may take, including the wait for Control Tower to enroll the account and apply its OU's controls. Raise it for organizations with many concurrent account moves, or OUs with many controls. Must be between 5400 and 86400."
+  type        = number
+  default     = 7200
+  validation {
+    condition     = var.aft_organizations_provisioning_timeout_seconds >= 5400 && var.aft_organizations_provisioning_timeout_seconds <= 86400 && floor(var.aft_organizations_provisioning_timeout_seconds) == var.aft_organizations_provisioning_timeout_seconds
+    error_message = "aft_organizations_provisioning_timeout_seconds must be a whole number of seconds between 5400 and 86400."
+  }
+}
+
+variable "aft_feature_governance_validation" {
+  description = "Organizations vending method only. When true, after the account is enrolled, a Step Function step compares the baselines and controls enabled on its OU with what the account inherited. Written to SSM /aft/config/feature/governance-validation-enabled."
+  type        = bool
+  default     = true
+}
+
+variable "governance_validation_mode" {
+  description = "Organizations vending method only. What happens when governance validation finds a gap: \"warn\" logs it, publishes it to the AFT notifications topic and provisioning continues, \"fail\" fails the account request. Written to SSM /aft/config/governance-validation-mode."
+  type        = string
+  default     = "warn"
+  validation {
+    condition     = contains(["warn", "fail"], var.governance_validation_mode)
+    error_message = "Valid values for var: governance_validation_mode are (warn, fail)."
+  }
+}
+
+variable "aft_feature_delete_vended_account_default_vpcs_enabled" {
+  description = "Organizations vending method only. When true, right after a new account is created and moved to its OU, before AFT waits for Control Tower to enroll it, a Step Function step deletes its default VPC in every Region the landing zone governs. Control Tower enables governed opt-in Regions for the account during enrollment: the step waits for them, up to 30 minutes after the Step Function execution started, and deletes their default VPCs once they are enabled. Regions it could not finish are named in a warning on the AFT notifications topic. Applies to newly created accounts only, not to updates of existing accounts. Independent of aft_feature_delete_default_vpcs_enabled, which covers the AFT management account. Written to SSM /aft/config/feature/delete-vended-account-default-vpcs-enabled."
+  type        = bool
+  default     = false
+  validation {
+    condition     = contains([true, false], var.aft_feature_delete_vended_account_default_vpcs_enabled)
+    error_message = "Valid values for var: aft_feature_delete_vended_account_default_vpcs_enabled are (true, false)."
+  }
 }

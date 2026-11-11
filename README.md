@@ -29,7 +29,7 @@ Note: It can take up to 30 minutes for the account to be fully provisioned. Vali
 
 **Step 4**: Ensure that the Terraform environment is available for deployment
 
-This step assumes that you are experienced with Terraform, and that you have procedures in place for executing Terraform. AFT supports Terraform Version 0.15.x or later.
+This step assumes that you are experienced with Terraform, and that you have procedures in place for executing Terraform. AFT supports Terraform versions 1.6.1 and later, up to but not including 2.0.0.
 
 **Step 5**: Call the Account Factory for Terraform module to deploy AFT
 
@@ -48,6 +48,41 @@ Certain input variables may contain sensitive values, such as a private ssh key 
 for more information.
 
 > Note: Deploying AFT through the Terraform module requires several minutes. Initial deployment may require up to 30 minutes. As a best practice, use AWS Security Token Service (STS) credentials and ensure that the credentials have a timeout sufficient for a full deployment, because a timeout causes the deployment to fail. The minimum timeout for AWS STS credentials is 60 minutes or more. Alternatively, you can leverage any IAM user that has AdministratorAccess permissions in the AWS Control Tower management account.
+
+## Organizations vending method
+
+AFT vends accounts with one of two methods, set by the `account_vending_method` input:
+
+- `service_catalog` (default): AFT provisions and updates accounts through AWS Control Tower Account Factory in AWS Service Catalog.
+- `organizations`: AFT creates accounts with AWS Organizations, moves them into their managed OU, and waits for AWS Control Tower auto-enrollment to enroll them.
+
+The Organizations vending method doesn't use Service Catalog, so AFT can vend accounts in an AWS Control Tower home Region where Service Catalog is not available. With `service_catalog`, the Terraform plan fails in such a Region.
+
+To use it, set `account_vending_method = "organizations"` when you call the AFT module in Step 5.
+
+### Prerequisites
+
+- The AWS Control Tower landing zone is `ACTIVE`, with automatic account enrollment turned on (the landing zone's `remediationTypes` includes `INHERITANCE_DRIFT`). While the landing zone is `PROCESSING` (an update or reset), AFT leaves account requests in the queue. In any other state, or with auto-enrollment off, the account request processor sends a notification to the AFT failure notifications topic and leaves the request in the queue.
+- The OU in each account request's `ManagedOrganizationalUnit` is registered with AWS Control Tower. The account request fails if its OU is not registered, is a controls-only OU, or has `BackupBaseline` without `AWSControlTowerBaseline`, like the Security OU.
+
+### How AFT provisions an account
+
+The account request processor starts one execution of the `aft-organizations-account-provisioning` Step Function for each account request. For a new account, the execution:
+
+1. Checks the managed OU, then calls Organizations `CreateAccount` and waits for it to finish.
+2. Checks the landing zone again, and moves the account from the organization root into its managed OU. AWS Control Tower auto-enrollment then enrolls the account.
+3. Deletes the account's default VPCs, when `aft_feature_delete_vended_account_default_vpcs_enabled` is `true`. If it can't delete them in every Region, AFT sends a warning to the AFT notifications topic and goes on. This step doesn't fail the request.
+4. Waits until the account's baselines are complete and the OU's controls are on the account. A failed baseline or control fails the request. If controls are still missing or `UNDER_CHANGE` 5 minutes before the execution times out, the wait ends, and step 5 reports them when `aft_feature_governance_validation` is `true`.
+5. Compares the baselines and controls enabled on the OU with those the account inherited, when `aft_feature_governance_validation` is `true`. `governance_validation_mode` sets whether a gap fails the request.
+6. Publishes an `aft.organizations` `CreateManagedAccount` event to the AFT event bus. AFT runs the account provisioning framework and the account customizations from this event, as it does from an AWS Control Tower event, and passes the event to your account provisioning customizations as `control_tower_event`.
+
+For an update, the execution looks up the account by its email and moves it into its managed OU if it is in another OU. It then runs steps 4 and 5, and publishes an `aft.organizations` `UpdateManagedAccount` event.
+
+When a step other than step 3 fails, or the execution runs longer than `aft_organizations_provisioning_timeout_seconds`, AFT sends one notification to the AFT failure notifications topic.
+
+### Inputs for the Organizations vending method
+
+These inputs apply to the Organizations vending method only: `aft_organizations_provisioning_timeout_seconds`, `aft_feature_governance_validation`, `governance_validation_mode` and `aft_feature_delete_vended_account_default_vpcs_enabled`. `concurrent_account_factory_actions` applies to both methods. The Inputs table below describes each of them.
 
 ## Next Steps:
 
@@ -81,15 +116,15 @@ When you enable the HCP Terraform or Terraform Enterprise OIDC integration (`ter
 
 ### Customization Triggers Concurrency
 
-When `aft_customization_triggers` is configured with `["account_move"]`, customization re-executions triggered by account moves bypass the `maximum_concurrent_customizations` throttle. Each account move generates a separate Control Tower event that invokes the provisioning framework independently. Moving many accounts between OUs simultaneously (e.g., a bulk reorganization) may result in concurrent customization executions exceeding the configured maximum. For environments where bulk account moves are expected, consider staggering the moves or implementing EventBridge-layer throttling.
+When `aft_customization_triggers` is configured with `["account_move"]`, customization re-executions triggered by account moves bypass the `maximum_concurrent_customizations` throttle. Each account move generates a separate Control Tower event (with the Organizations vending method, an `aft.organizations` event) that invokes the provisioning framework independently. Moving many accounts between OUs simultaneously (e.g., a bulk reorganization) may result in concurrent customization executions exceeding the configured maximum. For environments where bulk account moves are expected, consider staggering the moves or implementing EventBridge-layer throttling.
 
 ### Customization Triggers Supported Event Paths
 
-Customization triggers are detected from AWS Control Tower `UpdateManagedAccount` events only. When an account is moved to a different OU through Account Factory, the `account_move` trigger fires. This includes AFT-mediated moves, where you change the `ManagedOrganizationalUnit` value in an account request file.
+Customization triggers are detected from `UpdateManagedAccount` events only: AWS Control Tower's own events and, with the Organizations vending method, the `aft.organizations` events that AFT publishes. When an account is moved to a different OU through Account Factory, the `account_move` trigger fires. This includes AFT-mediated moves with the Service Catalog vending method, where you change the `ManagedOrganizationalUnit` value in an account request file. With the Organizations vending method, AFT makes that move through AWS Organizations and then publishes an `aft.organizations` `UpdateManagedAccount` event, from which the `account_move` trigger fires.
 
 The following paths do **not** emit an `UpdateManagedAccount` event and therefore do not trigger customization re-execution:
 
-- Moving an account directly in AWS Organizations (outside Account Factory). This also places the account out of sync with Control Tower governance until it is re-enrolled.
+- Moving an account directly in AWS Organizations (outside Account Factory and AFT). This also places the account out of sync with Control Tower governance until it is re-enrolled.
 - Enrolling an existing account via Auto Enroll (registering an OU that contains existing accounts). Enrollment is not an account move; accounts onboarded this way receive customizations through the normal AFT account request flow, not through `account_move`.
 
 If an account reaches its target OU through one of these paths, re-run customizations manually via the `aft-invoke-customizations` Step Function.
@@ -147,6 +182,7 @@ If an account reaches its target OU through one of these paths, re-run customiza
 | <a name="input_account_request_repo_branch"></a> [account\_request\_repo\_branch](#input\_account\_request\_repo\_branch) | Branch to source account request repo from | `string` | `"main"` | no |
 | <a name="input_account_request_repo_name"></a> [account\_request\_repo\_name](#input\_account\_request\_repo\_name) | Repository name for the account request files. For non-CodeCommit repos, name should be in the format of Org/Repo | `string` | `"aft-account-request"` | no |
 | <a name="input_account_request_workspace_name"></a> [account\_request\_workspace\_name](#input\_account\_request\_workspace\_name) | Workspace name to use for the account request operation in Terraform Cloud or Enterprise. Note: changing this value for an existing deployment creates a new workspace and orphans the old one - it is not an in-place rename. | `string` | `"ct-aft-account-request"` | no |
+| <a name="input_account_vending_method"></a> [account\_vending\_method](#input\_account\_vending\_method) | Method AFT uses to vend accounts. "service\_catalog" provisions and updates accounts through AWS Control Tower Account Factory in AWS Service Catalog; the plan fails if Service Catalog is not available in ct\_home\_region. "organizations" creates accounts with AWS Organizations, moves them into their managed OU and waits for Control Tower auto-enrollment to enroll them, in the aft-organizations-account-provisioning Step Function. It needs a landing zone that is ACTIVE with auto-enrollment on, and managed OUs registered with Control Tower. Written to SSM /aft/config/account-vending-method. | `string` | `"service_catalog"` | no |
 | <a name="input_aft_backend_bucket_access_logs_object_expiration_days"></a> [aft\_backend\_bucket\_access\_logs\_object\_expiration\_days](#input\_aft\_backend\_bucket\_access\_logs\_object\_expiration\_days) | Amount of days to keep the objects stored in the access logs bucket for AFT backend buckets | `number` | `365` | no |
 | <a name="input_aft_codebuild_compute_type"></a> [aft\_codebuild\_compute\_type](#input\_aft\_codebuild\_compute\_type) | The CodeBuild compute type that build projects will use. | `string` | `"BUILD_GENERAL1_MEDIUM"` | no |
 | <a name="input_aft_customer_private_subnets"></a> [aft\_customer\_private\_subnets](#input\_aft\_customer\_private\_subnets) | A list of private subnets to deploy AFT resources in, if customer is providing an existing VPC. Only supported for new deployments. | `list(string)` | `[]` | no |
@@ -154,12 +190,15 @@ If an account reaches its target OU through one of these paths, re-run customiza
 | <a name="input_aft_customization_triggers"></a> [aft\_customization\_triggers](#input\_aft\_customization\_triggers) | List of customization trigger tokens. When non-empty, matching events trigger customization re-execution with provisioning bypass. Valid tokens: account\_move. Per-account opt-out via account\_skip\_customization\_triggers attribute in aft-request. | `list(string)` | `[]` | no |
 | <a name="input_aft_enable_vpc"></a> [aft\_enable\_vpc](#input\_aft\_enable\_vpc) | Flag turning use of VPC on/off for AFT | `bool` | `true` | no |
 | <a name="input_aft_feature_cloudtrail_data_events"></a> [aft\_feature\_cloudtrail\_data\_events](#input\_aft\_feature\_cloudtrail\_data\_events) | Feature flag toggling CloudTrail data events on/off | `bool` | `false` | no |
-| <a name="input_aft_feature_delete_default_vpcs_enabled"></a> [aft\_feature\_delete\_default\_vpcs\_enabled](#input\_aft\_feature\_delete\_default\_vpcs\_enabled) | Feature flag toggling deletion of default VPCs on/off | `bool` | `false` | no |
+| <a name="input_aft_feature_delete_default_vpcs_enabled"></a> [aft\_feature\_delete\_default\_vpcs\_enabled](#input\_aft\_feature\_delete\_default\_vpcs\_enabled) | Feature flag toggling deletion of default VPCs on/off. Acts on the AFT management account only: when the account provisioning framework runs for an account, AFT deletes the AFT management account's default VPCs in the Regions enabled for that account. To delete the default VPCs of accounts created with the organizations vending method, use aft\_feature\_delete\_vended\_account\_default\_vpcs\_enabled. | `bool` | `false` | no |
+| <a name="input_aft_feature_delete_vended_account_default_vpcs_enabled"></a> [aft\_feature\_delete\_vended\_account\_default\_vpcs\_enabled](#input\_aft\_feature\_delete\_vended\_account\_default\_vpcs\_enabled) | Organizations vending method only. When true, right after a new account is created and moved to its OU, before AFT waits for Control Tower to enroll it, a Step Function step deletes its default VPC in every Region the landing zone governs. Control Tower enables governed opt-in Regions for the account during enrollment: the step waits for them, up to 30 minutes after the Step Function execution started, and deletes their default VPCs once they are enabled. Regions it could not finish are named in a warning on the AFT notifications topic. Applies to newly created accounts only, not to updates of existing accounts. Independent of aft\_feature\_delete\_default\_vpcs\_enabled, which covers the AFT management account. Written to SSM /aft/config/feature/delete-vended-account-default-vpcs-enabled. | `bool` | `false` | no |
 | <a name="input_aft_feature_enterprise_support"></a> [aft\_feature\_enterprise\_support](#input\_aft\_feature\_enterprise\_support) | Feature flag toggling Enterprise Support enrollment on/off | `bool` | `false` | no |
+| <a name="input_aft_feature_governance_validation"></a> [aft\_feature\_governance\_validation](#input\_aft\_feature\_governance\_validation) | Organizations vending method only. When true, after the account is enrolled, a Step Function step compares the baselines and controls enabled on its OU with what the account inherited. Written to SSM /aft/config/feature/governance-validation-enabled. | `bool` | `true` | no |
 | <a name="input_aft_framework_repo_git_ref"></a> [aft\_framework\_repo\_git\_ref](#input\_aft\_framework\_repo\_git\_ref) | Git branch from which the AFT framework should be sourced from | `string` | `null` | no |
 | <a name="input_aft_framework_repo_url"></a> [aft\_framework\_repo\_url](#input\_aft\_framework\_repo\_url) | Git repo URL where the AFT framework should be sourced from | `string` | `"https://github.com/aws-ia/terraform-aws-control_tower_account_factory.git"` | no |
 | <a name="input_aft_management_account_id"></a> [aft\_management\_account\_id](#input\_aft\_management\_account\_id) | AFT Management Account ID | `string` | n/a | yes |
 | <a name="input_aft_metrics_reporting"></a> [aft\_metrics\_reporting](#input\_aft\_metrics\_reporting) | Flag toggling reporting of operational metrics | `bool` | `true` | no |
+| <a name="input_aft_organizations_provisioning_timeout_seconds"></a> [aft\_organizations\_provisioning\_timeout\_seconds](#input\_aft\_organizations\_provisioning\_timeout\_seconds) | Organizations vending method only. TimeoutSeconds of the aft-organizations-account-provisioning Step Function: how long one account request may take, including the wait for Control Tower to enroll the account and apply its OU's controls. Raise it for organizations with many concurrent account moves, or OUs with many controls. Must be between 5400 and 86400. | `number` | `7200` | no |
 | <a name="input_aft_plan_output_export_enabled"></a> [aft\_plan\_output\_export\_enabled](#input\_aft\_plan\_output\_export\_enabled) | When true, plan-only runs on the HCP Terraform path export plan JSON output to the S3 plan output bucket. When false (default), plan output is only available in the HCP Terraform UI. | `bool` | `false` | no |
 | <a name="input_aft_plan_output_retention_days"></a> [aft\_plan\_output\_retention\_days](#input\_aft\_plan\_output\_retention\_days) | Number of days to retain plan output files in the plan output S3 bucket before automatic expiration | `number` | `30` | no |
 | <a name="input_aft_vpc_cidr"></a> [aft\_vpc\_cidr](#input\_aft\_vpc\_cidr) | CIDR Block to allocate to the AFT VPC | `string` | `"192.168.0.0/22"` | no |
@@ -173,7 +212,7 @@ If an account reaches its target OU through one of these paths, re-run customiza
 | <a name="input_backup_schedule"></a> [backup\_schedule](#input\_backup\_schedule) | Cron expression for the DynamoDB backup schedule. Default = hourly | `string` | `"cron(0 * * * ? *)"` | no |
 | <a name="input_cloudwatch_log_group_enable_cmk_encryption"></a> [cloudwatch\_log\_group\_enable\_cmk\_encryption](#input\_cloudwatch\_log\_group\_enable\_cmk\_encryption) | Flag toggling CloudWatch Log Groups encryption by using the AFT customer managed key stored in KMS. Additional charges apply. Otherwise, logs will use CloudWatch managed server-side encryption. | `bool` | `false` | no |
 | <a name="input_cloudwatch_log_group_retention"></a> [cloudwatch\_log\_group\_retention](#input\_cloudwatch\_log\_group\_retention) | Amount of days to keep CloudWatch Log Groups for Lambda functions. 0 = Never Expire | `string` | `"0"` | no |
-| <a name="input_concurrent_account_factory_actions"></a> [concurrent\_account\_factory\_actions](#input\_concurrent\_account\_factory\_actions) | Maximum number of accounts that can be provisioned in parallel. | `number` | `5` | no |
+| <a name="input_concurrent_account_factory_actions"></a> [concurrent\_account\_factory\_actions](#input\_concurrent\_account\_factory\_actions) | Maximum number of accounts that can be provisioned in parallel. The account request processor runs every 5 minutes, starts at most one account request per run, and starts none while the limit is reached. With service\_catalog, the limit applies to the Control Tower enabled baselines (AWSControlTowerBaseline) in UNDER\_CHANGE status. With organizations, it applies to the running executions of the aft-organizations-account-provisioning Step Function. | `number` | `5` | no |
 | <a name="input_ct_home_region"></a> [ct\_home\_region](#input\_ct\_home\_region) | The region from which this module will be executed. This MUST be the same region as Control Tower is deployed. | `string` | n/a | yes |
 | <a name="input_ct_management_account_id"></a> [ct\_management\_account\_id](#input\_ct\_management\_account\_id) | Control Tower Management Account Id | `string` | n/a | yes |
 | <a name="input_github_enterprise_url"></a> [github\_enterprise\_url](#input\_github\_enterprise\_url) | GitHub enterprise URL, if GitHub Enterprise is being used | `string` | `"null"` | no |
@@ -181,6 +220,7 @@ If an account reaches its target OU through one of these paths, re-run customiza
 | <a name="input_global_codebuild_timeout"></a> [global\_codebuild\_timeout](#input\_global\_codebuild\_timeout) | Codebuild build timeout | `number` | `60` | no |
 | <a name="input_global_customizations_repo_branch"></a> [global\_customizations\_repo\_branch](#input\_global\_customizations\_repo\_branch) | Branch to source global customizations repo from | `string` | `"main"` | no |
 | <a name="input_global_customizations_repo_name"></a> [global\_customizations\_repo\_name](#input\_global\_customizations\_repo\_name) | Repository name for the global customization files. For non-CodeCommit repos, name should be in the format of Org/Repo | `string` | `"aft-global-customizations"` | no |
+| <a name="input_governance_validation_mode"></a> [governance\_validation\_mode](#input\_governance\_validation\_mode) | Organizations vending method only. What happens when governance validation finds a gap: "warn" logs it, publishes it to the AFT notifications topic and provisioning continues, "fail" fails the account request. Written to SSM /aft/config/governance-validation-mode. | `string` | `"warn"` | no |
 | <a name="input_log_archive_account_id"></a> [log\_archive\_account\_id](#input\_log\_archive\_account\_id) | Log Archive Account Id | `string` | n/a | yes |
 | <a name="input_log_archive_bucket_object_expiration_days"></a> [log\_archive\_bucket\_object\_expiration\_days](#input\_log\_archive\_bucket\_object\_expiration\_days) | Amount of days to keep the objects stored in the AFT logging bucket | `number` | `365` | no |
 | <a name="input_maximum_concurrent_customizations"></a> [maximum\_concurrent\_customizations](#input\_maximum\_concurrent\_customizations) | Maximum number of customizations/pipelines to run at once | `number` | `5` | no |

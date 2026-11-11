@@ -40,7 +40,7 @@
         "ReaderConfig": {
           "InputType": "JSON"
         },
-        "Resource": "arn:aws:states:::s3:getObject",
+        "Resource": "arn:${current_partition}:states:::s3:getObject",
         "Parameters": {
           "Bucket.$": "$.targets.target_accounts_info.bucket",
           "Key.$": "$.targets.target_accounts_info.key"

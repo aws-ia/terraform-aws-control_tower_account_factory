@@ -296,6 +296,33 @@ def update_existing_account(
     logger.info(utils.sanitize_input_for_logging(update_response))
 
 
+def get_account_vending_method(session: Session) -> str:
+    return aft_common.ssm.get_ssm_parameter_value(
+        session, aft_common.constants.SSM_PARAM_ACCOUNT_VENDING_METHOD
+    )
+
+
+def start_organizations_account_provisioning(
+    session: Session, request: Dict[str, Any]
+) -> None:
+    """
+    Organizations vending method: hand an ADD or UPDATE account request to the
+    aft-organizations-account-provisioning Step Function instead of Service
+    Catalog.
+    """
+    sfn_name = aft_common.ssm.get_ssm_parameter_value(
+        session,
+        aft_common.constants.SSM_PARAM_AFT_ORGANIZATIONS_ACCOUNT_PROVISIONING_SFN_NAME,
+    )
+    logger.info(
+        f"Starting Organizations account provisioning ({utils.sanitize_input_for_logging(request['operation'])}) for parameters: "
+        + utils.sanitize_input_for_logging(str(request["control_tower_parameters"]))
+    )
+    utils.invoke_step_function(
+        session=session, sfn_name=sfn_name, input=json.dumps(request)
+    )
+
+
 def get_account_request_record(
     aft_management_session: Session, request_table_id: str
 ) -> Dict[str, Any]:
@@ -356,10 +383,6 @@ class AccountRequest:
             session=self.ct_management_session
         )
         self.aft_management_session = auth.get_aft_management_session()
-        self.account_factory_product_id = aft_common.service_catalog.get_ct_product_id(
-            session=self.aft_management_session,
-            ct_management_session=self.ct_management_session,
-        )
 
         self.partition = utils.get_aws_partition(self.ct_management_session)
 
@@ -421,7 +444,26 @@ class AccountRequest:
                 return True
         return False
 
-    def provisioning_threshold_reached(self, threshold: int) -> bool:
+    def provisioning_threshold_reached(
+        self, threshold: int, use_organizations: bool = False
+    ) -> bool:
+        if use_organizations:
+            # Every request in flight is a RUNNING execution of the
+            # organizations state machine, from CreateAccount or the lookup
+            # through the baseline wait.
+            sfn_name = aft_common.ssm.get_ssm_parameter_value(
+                self.aft_management_session,
+                aft_common.constants.SSM_PARAM_AFT_ORGANIZATIONS_ACCOUNT_PROVISIONING_SFN_NAME,
+            )
+            in_progress_count = utils.count_running_executions(
+                self.aft_management_session, sfn_name
+            )
+            logger.info(
+                f"Running {utils.sanitize_input_for_logging(sfn_name)} executions: {in_progress_count}, "
+                f"threshold: {threshold}"
+            )
+            return in_progress_count >= threshold
+
         logger.info(
             "Checking for account provisioning in progress via ListEnabledBaselines"
         )

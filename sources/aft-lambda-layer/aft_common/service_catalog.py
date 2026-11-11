@@ -16,21 +16,19 @@ from typing import (
 )
 
 from aft_common import aft_utils as utils
-from aft_common import ddb
-from aft_common.account_provisioning_framework import ProvisionRoles
-from aft_common.auth import AuthClient
 from aft_common.constants import SSM_PARAM_SC_PRODUCT_NAME
-from aft_common.organizations import OrganizationsAgent
 from aft_common.ssm import get_ssm_parameter_value
 from boto3.session import Session
 
 if TYPE_CHECKING:
+    from mypy_boto3_organizations.type_defs import AccountTypeDef
     from mypy_boto3_servicecatalog import ServiceCatalogClient
     from mypy_boto3_servicecatalog.type_defs import (
         ProvisionedProductAttributeTypeDef,
         SearchProvisionedProductsOutputTypeDef,
     )
 else:
+    AccountTypeDef = object
     ServiceCatalogClient = object
     SearchProvisionedProductsOutputTypeDef = object
     ProvisionedProductAttributeTypeDef = object
@@ -149,21 +147,11 @@ def email_exists_in_batch(
     return False
 
 
-def get_account_id_if_enrolled(record: Dict[str, Any]) -> Optional[str]:
-    auth = AuthClient()
-    ct_management_session = auth.get_ct_management_session(
-        role_name=ProvisionRoles.SERVICE_ROLE_NAME
-    )
-    account_email = ddb.unmarshal_ddb_item(record["dynamodb"]["NewImage"])[
-        "control_tower_parameters"
-    ]["AccountEmail"]
-
-    orgs_agent = OrganizationsAgent(ct_management_session=ct_management_session)
-    account = orgs_agent.get_account_by_email(account_email)
-    if account is None:
-        logger.info("Account not found in Organizations")
-        return None
-
+def get_account_id_if_healthy_product_exists(
+    ct_management_session: Session, account: "AccountTypeDef"
+) -> Optional[str]:
+    """Return the account id if ``account`` has a healthy Account Factory
+    provisioned product, else None."""
     sc_client: "ServiceCatalogClient" = ct_management_session.client(
         "servicecatalog", config=utils.get_high_retry_botoconfig()
     )

@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 import aft_common.constants
 from aft_common import aft_utils as utils
 from aft_common import ddb, ssm
+from aft_common.account_enrollment import get_account_enrollment
 from aft_common.account_request_framework import (
     build_account_customization_payload,
     build_aft_account_provisioning_framework_event,
@@ -16,7 +17,6 @@ from aft_common.account_request_framework import (
 )
 from aft_common.auth import AuthClient
 from aft_common.organizations import OrganizationsAgent
-from aft_common.service_catalog import get_account_id_if_enrolled
 from aft_common.shared_account import shared_account_request
 
 logger = logging.getLogger("aft")
@@ -125,13 +125,24 @@ class AccountRequestRecordHandler:
             self.handle_customization_request()
 
         elif self.is_create_action:
-            enrolled_account_id = get_account_id_if_enrolled(record=self.record)
-            if enrolled_account_id is None:
+            enrollment = get_account_enrollment(record=self.record)
+            if enrollment.enrolled:
+                if not self.control_tower_parameters_updated:
+                    logger.info(
+                        "Customization request received for existing CT account"
+                    )
+                    self.handle_customization_request(account_id=enrollment.account_id)
+            elif enrollment.awaiting_enrollment:
+                # The account exists, so it is never created again: the update
+                # waits for Control Tower to finish enrolling it.
+                logger.info(
+                    "Request received for an existing account that Control Tower "
+                    "has not finished enrolling"
+                )
+                self.handle_account_request(new_account=False)
+            else:
                 logger.info("New account request received")
                 self.handle_account_request(new_account=True)
-            elif not self.control_tower_parameters_updated:
-                logger.info("Customization request received for existing CT account")
-                self.handle_customization_request(account_id=enrolled_account_id)
 
         # Updating CT parameter for existing AFT account
         elif self.is_update_action and self.control_tower_parameters_updated:

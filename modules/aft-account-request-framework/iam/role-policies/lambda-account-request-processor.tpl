@@ -7,7 +7,8 @@
           "sqs:DeleteMessage",
           "sts:AssumeRole",
           "sns:Publish",
-          "sqs:ReceiveMessage"
+          "sqs:ReceiveMessage",
+          "sqs:GetQueueAttributes"
         ],
         "Resource" : [
           "${aws_sns_topic_aft_notifications_arn}",

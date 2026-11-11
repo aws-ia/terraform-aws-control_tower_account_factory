@@ -5,10 +5,10 @@ import logging
 from typing import TYPE_CHECKING
 
 from aft_common import ddb
-from aft_common.aft_utils import sanitize_input_for_logging
+from aft_common.aft_utils import get_aws_partition, sanitize_input_for_logging
 from boto3.session import Session
 from botocore.config import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, UnknownRegionError
 
 if TYPE_CHECKING:
     from mypy_boto3_support import SupportClient
@@ -18,6 +18,7 @@ else:
 logger = logging.getLogger("aft")
 
 SUPPORT_API_REGION = "us-east-1"
+_SUPPORT_API_LEADER_REGIONS = {"aws-cn": "cn-north-1", "aws-eusc": "eusc-de-east-1"}
 METADATA_SUPPORT_FIELD = "enterprise_support_case_created"
 
 THROTTLING_ERROR_CODES = [
@@ -27,9 +28,24 @@ THROTTLING_ERROR_CODES = [
 ]
 
 _SUPPORT_BOTOCONFIG = Config(
-    region_name=SUPPORT_API_REGION,
     retries={"total_max_attempts": 3, "mode": "standard"},
 )
+
+
+def _support_api_region(session: Session) -> str:
+    if session.region_name is None:
+        return SUPPORT_API_REGION
+    try:
+        partition = get_aws_partition(session)
+    except UnknownRegionError:
+        return SUPPORT_API_REGION
+    return _SUPPORT_API_LEADER_REGIONS.get(partition, SUPPORT_API_REGION)
+
+
+def _support_client(session: Session) -> SupportClient:
+    return session.client(
+        "support", region_name=_support_api_region(session), config=_SUPPORT_BOTOCONFIG
+    )
 
 
 def is_enrollment_flagged_in_metadata(
@@ -75,9 +91,7 @@ def account_enrollment_requested(
 ) -> bool:
     submitted_enroll_case_title = f"Add Account {account_id} to Enterprise Support"
 
-    client: SupportClient = ct_management_session.client(
-        "support", config=_SUPPORT_BOTOCONFIG
-    )
+    client = _support_client(ct_management_session)
     paginator = client.get_paginator("describe_cases")
     pages = paginator.paginate(
         includeResolvedCases=True,
@@ -93,7 +107,7 @@ def account_enrollment_requested(
 
 
 def generate_case(session: Session, account_id: str) -> None:
-    support: SupportClient = session.client("support", config=_SUPPORT_BOTOCONFIG)
+    support = _support_client(session)
     support.create_case(
         issueType="customer-service",
         serviceCode="account-management",

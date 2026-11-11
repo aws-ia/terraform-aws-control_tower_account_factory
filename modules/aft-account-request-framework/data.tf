@@ -163,12 +163,12 @@ data "aws_subnets" "codepipeline" {
 #### servicecatalog ####
 
 data "aws_vpc_endpoint_service" "servicecatalog" {
-  count   = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
+  count   = local.vpc_deployment && var.aft_vpc_endpoints && local.service_catalog_backend ? 1 : 0
   service = "servicecatalog"
 }
 
 data "aws_subnets" "servicecatalog" {
-  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints && local.service_catalog_backend ? 1 : 0
   filter {
     name   = "vpc-id"
     values = [local.vpc_id]

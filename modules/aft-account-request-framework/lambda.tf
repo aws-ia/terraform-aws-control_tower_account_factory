@@ -255,3 +255,59 @@ resource "aws_cloudwatch_log_group" "aft_cleanup_resources" {
   retention_in_days = var.cloudwatch_log_group_retention
   kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? aws_kms_key.aft.arn : null
 }
+
+###  ORGANIZATIONS ACCOUNT PROVISIONING FUNCTIONS
+# Lambdas backing the aft-organizations-account-provisioning Step Function.
+# Only created for the Organizations vending method. They ride the
+# request-framework archive (handlers live in
+# src/aft_lambda/aft_account_request_framework/).
+#tfsec:ignore:aws-lambda-enable-tracing
+resource "aws_lambda_function" "aft_organizations_account_provisioning" {
+  for_each = local.service_catalog_backend ? {} : local.orgs_provisioning_lambda_function_names
+
+  filename         = var.request_framework_archive_path
+  function_name    = each.value
+  description      = "AFT organizations account provisioning - ${each.key}"
+  role             = aws_iam_role.aft_organizations_account_provisioning_lambda[0].arn
+  handler          = "aft_organizations_${each.key}.lambda_handler"
+  source_code_hash = var.request_framework_archive_hash
+  memory_size      = 1024
+  runtime          = var.lambda_runtime_python_version
+  timeout          = 300
+  layers           = [var.aft_common_layer_arn]
+
+  dynamic "vpc_config" {
+    for_each = local.vpc_deployment ? [1] : []
+    content {
+      subnet_ids         = local.vpc_private_subnet_ids
+      security_group_ids = tolist([aws_security_group.aft_vpc_default_sg[0].id])
+    }
+  }
+}
+
+resource "aws_cloudwatch_log_group" "aft_organizations_account_provisioning" {
+  for_each = local.service_catalog_backend ? {} : local.orgs_provisioning_lambda_function_names
+
+  name              = "/aws/lambda/${aws_lambda_function.aft_organizations_account_provisioning[each.key].function_name}"
+  retention_in_days = var.cloudwatch_log_group_retention
+  kms_key_id        = var.cloudwatch_log_group_enable_cmk_encryption ? aws_kms_key.aft.arn : null
+}
+
+# Allow the organizations lifecycle-events rule to invoke the two consumers.
+resource "aws_lambda_permission" "aft_organizations_event_logger" {
+  count         = local.service_catalog_backend ? 0 : 1
+  statement_id  = "AllowExecutionFromOrganizationsLifecycleRule"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.aft_controltower_event_logger.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.aft_organizations_lifecycle_events[0].arn
+}
+
+resource "aws_lambda_permission" "aft_organizations_invoke_provisioning_framework" {
+  count         = local.service_catalog_backend ? 0 : 1
+  statement_id  = "AllowExecutionFromOrganizationsLifecycleRule"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.aft_invoke_aft_account_provisioning_framework.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.aft_organizations_lifecycle_events[0].arn
+}

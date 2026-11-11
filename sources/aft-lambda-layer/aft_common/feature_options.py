@@ -16,7 +16,6 @@ else:
     EC2ServiceResource = object
     CloudTrailClient = object
 
-SUPPORT_API_REGION = "us-east-1"
 CLOUDTRAIL_TRAIL_NAME = "aws-aft-CustomizationsCloudTrail"
 
 logger = logging.getLogger("aft")

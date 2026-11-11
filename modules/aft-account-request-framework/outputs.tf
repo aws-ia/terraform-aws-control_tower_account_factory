@@ -73,6 +73,12 @@ output "aft_cleanup_resources_function_name" {
 output "aft_account_provisioning_framework_sfn_name" {
   value = var.aft_account_provisioning_framework_sfn_name
 }
+output "aft_organizations_account_provisioning_sfn_name" {
+  value = var.aft_organizations_account_provisioning_sfn_name
+}
+output "aft_from_ct_management_event_bus_name" {
+  value = aws_cloudwatch_event_bus.aft_from_ct_management.name
+}
 output "aft_sns_topic_arn" {
   value = aws_sns_topic.aft_notifications.arn
 }

@@ -13,6 +13,10 @@ logger = logging.getLogger("aft")
 AFT_CUSTOMIZATIONS_PIPELINE_NAME_PATTERN = r"^\d\d\d\d\d\d\d\d\d\d\d\d-.*$"
 
 
+class CustomizationPipelineNotFound(Exception):
+    """No AFT-managed customizations pipeline exists for the account."""
+
+
 def get_pipeline_for_account(session: Session, account_id: str) -> str:
     current_account = session.client("sts").get_caller_identity()["Account"]
     current_region = session.region_name
@@ -43,7 +47,7 @@ def get_pipeline_for_account(session: Session, account_id: str) -> str:
                 if t["key"] == "managed_by" and t["value"] == "AFT":
                     pipeline_name: str = p["name"]
                     return pipeline_name
-    raise Exception(
+    raise CustomizationPipelineNotFound(
         "Pipelines for account id " + sanitized_account_id + " was not found"
     )
 

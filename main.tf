@@ -42,28 +42,31 @@ module "aft_account_request_framework" {
     aws               = aws.aft_management
     aws.ct_management = aws.ct_management
   }
-  source                                      = "./modules/aft-account-request-framework"
-  account_factory_product_name                = local.account_factory_product_name
-  aft_account_provisioning_framework_sfn_name = local.aft_account_provisioning_framework_sfn_name
-  aft_common_layer_arn                        = module.aft_lambda_layer.layer_version_arn
-  cloudwatch_log_group_retention              = var.cloudwatch_log_group_retention
-  cloudwatch_log_group_enable_cmk_encryption  = var.cloudwatch_log_group_enable_cmk_encryption
-  aft_enable_vpc                              = var.aft_enable_vpc
-  aft_vpc_cidr                                = var.aft_vpc_cidr
-  aft_vpc_private_subnet_01_cidr              = var.aft_vpc_private_subnet_01_cidr
-  aft_vpc_private_subnet_02_cidr              = var.aft_vpc_private_subnet_02_cidr
-  aft_vpc_public_subnet_01_cidr               = var.aft_vpc_public_subnet_01_cidr
-  aft_vpc_public_subnet_02_cidr               = var.aft_vpc_public_subnet_02_cidr
-  aft_vpc_endpoints                           = var.aft_vpc_endpoints
-  concurrent_account_factory_actions          = var.concurrent_account_factory_actions
-  request_framework_archive_path              = module.packaging.request_framework_archive_path
-  request_framework_archive_hash              = module.packaging.request_framework_archive_hash
-  lambda_runtime_python_version               = local.lambda_runtime_python_version
-  backup_recovery_point_retention             = var.backup_recovery_point_retention
-  backup_schedule                             = var.backup_schedule
-  aft_customer_vpc_id                         = var.aft_customer_vpc_id
-  aft_customer_private_subnets                = var.aft_customer_private_subnets
-  sns_topic_enable_cmk_encryption             = var.sns_topic_enable_cmk_encryption
+  source                                          = "./modules/aft-account-request-framework"
+  account_factory_product_name                    = local.account_factory_product_name
+  account_vending_method                          = var.account_vending_method
+  aft_account_provisioning_framework_sfn_name     = local.aft_account_provisioning_framework_sfn_name
+  aft_organizations_account_provisioning_sfn_name = local.aft_organizations_account_provisioning_sfn_name
+  aft_organizations_provisioning_timeout_seconds  = var.aft_organizations_provisioning_timeout_seconds
+  aft_common_layer_arn                            = module.aft_lambda_layer.layer_version_arn
+  cloudwatch_log_group_retention                  = var.cloudwatch_log_group_retention
+  cloudwatch_log_group_enable_cmk_encryption      = var.cloudwatch_log_group_enable_cmk_encryption
+  aft_enable_vpc                                  = var.aft_enable_vpc
+  aft_vpc_cidr                                    = var.aft_vpc_cidr
+  aft_vpc_private_subnet_01_cidr                  = var.aft_vpc_private_subnet_01_cidr
+  aft_vpc_private_subnet_02_cidr                  = var.aft_vpc_private_subnet_02_cidr
+  aft_vpc_public_subnet_01_cidr                   = var.aft_vpc_public_subnet_01_cidr
+  aft_vpc_public_subnet_02_cidr                   = var.aft_vpc_public_subnet_02_cidr
+  aft_vpc_endpoints                               = var.aft_vpc_endpoints
+  concurrent_account_factory_actions              = var.concurrent_account_factory_actions
+  request_framework_archive_path                  = module.packaging.request_framework_archive_path
+  request_framework_archive_hash                  = module.packaging.request_framework_archive_hash
+  lambda_runtime_python_version                   = local.lambda_runtime_python_version
+  backup_recovery_point_retention                 = var.backup_recovery_point_retention
+  backup_schedule                                 = var.backup_schedule
+  aft_customer_vpc_id                             = var.aft_customer_vpc_id
+  aft_customer_private_subnets                    = var.aft_customer_private_subnets
+  sns_topic_enable_cmk_encryption                 = var.sns_topic_enable_cmk_encryption
 }
 
 module "aft_backend" {
@@ -246,6 +249,8 @@ module "aft_ssm_parameters" {
   aft_invoke_aft_account_provisioning_framework_function_name = module.aft_account_request_framework.invoke_aft_account_provisioning_framework_lambda_function_name
   aft_cleanup_resources_function_name                         = module.aft_account_request_framework.aft_cleanup_resources_function_name
   aft_account_provisioning_framework_sfn_name                 = module.aft_account_request_framework.aft_account_provisioning_framework_sfn_name
+  aft_organizations_account_provisioning_sfn_name             = module.aft_account_request_framework.aft_organizations_account_provisioning_sfn_name
+  aft_from_ct_management_event_bus_name                       = module.aft_account_request_framework.aft_from_ct_management_event_bus_name
   aft_sns_topic_arn                                           = module.aft_account_request_framework.sns_topic_arn
   aft_failure_sns_topic_arn                                   = module.aft_account_request_framework.failure_sns_topic_arn
   request_action_trigger_function_arn                         = module.aft_account_request_framework.request_action_trigger_function_arn
@@ -310,4 +315,8 @@ module "aft_ssm_parameters" {
   aft_plan_output_bucket_name                                 = module.aft_customizations.aft_plan_output_bucket_name
   aft_plan_output_export_enabled                              = var.aft_plan_output_export_enabled
   aft_metrics_reporting                                       = var.aft_metrics_reporting
+  account_vending_method                                      = var.account_vending_method
+  aft_feature_governance_validation                           = var.aft_feature_governance_validation
+  governance_validation_mode                                  = var.governance_validation_mode
+  aft_feature_delete_vended_account_default_vpcs_enabled      = var.aft_feature_delete_vended_account_default_vpcs_enabled
 }

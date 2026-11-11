@@ -320,7 +320,7 @@ resource "aws_vpc_endpoint" "codepipeline" {
 }
 
 resource "aws_vpc_endpoint" "servicecatalog" {
-  count = local.vpc_deployment && var.aft_vpc_endpoints ? 1 : 0
+  count = local.vpc_deployment && var.aft_vpc_endpoints && local.service_catalog_backend ? 1 : 0
 
   vpc_id            = local.vpc_id
   service_name      = data.aws_vpc_endpoint_service.servicecatalog[0].service_name

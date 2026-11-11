@@ -6,6 +6,7 @@ locals {
   aft_framework_repo_git_ref                       = var.aft_framework_repo_git_ref == null || var.aft_framework_repo_git_ref == "" ? local.aft_version : var.aft_framework_repo_git_ref
   aft_account_provisioning_customizations_sfn_name = "aft-account-provisioning-customizations"
   aft_account_provisioning_framework_sfn_name      = "aft-account-provisioning-framework"
+  aft_organizations_account_provisioning_sfn_name  = "aft-organizations-account-provisioning"
   trigger_customizations_sfn_name                  = "aft-invoke-customizations"
   aft_features_sfn_name                            = "aft-feature-options"
   aft_execution_role_name                          = "AWSAFTExecution"
@@ -36,6 +37,10 @@ locals {
     aft_tf_ddb_table_ssm_path                         = "/aft/config/oss-backend/table-id"
     aft_tf_version_ssm_path                           = "/aft/config/terraform/version"
   }
+  # Regions with AWS Service Catalog, for the service_catalog home region check
+  # in data.tf. Source: https://docs.aws.amazon.com/general/latest/gr/servicecatalog.html
+  # (the Control Tower limits page can lag behind it); the China Regions are
+  # documented separately.
   service_catalog_regional_availability = [
     "ca-central-1",
     "cn-north-1",
@@ -68,6 +73,8 @@ locals {
     "il-central-1",
     "us-west-1",
     "ap-northeast-1",
-    "eu-central-2"
+    "eu-central-2",
+    "ca-west-1",
+    "ap-southeast-6"
   ]
 }
