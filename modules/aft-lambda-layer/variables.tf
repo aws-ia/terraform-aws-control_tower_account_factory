@@ -87,3 +87,8 @@ variable "aft_enable_vpc" {
 variable "codebuild_compute_type" {
   type = string
 }
+
+variable "codebuild_host_kernel" {
+  type    = string
+  default = null
+}

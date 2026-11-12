@@ -542,6 +542,16 @@ variable "aft_codebuild_compute_type" {
   }
 }
 
+variable "aft_codebuild_host_kernel" {
+  type        = string
+  description = "Host kernel for AFT CodeBuild projects. One of LINUX_KERNEL_4, LINUX_KERNEL_6, or LINUX_KERNEL_LATEST. Defaults to null, which preserves CodeBuild's implicit default of Amazon Linux 2 / kernel 4.14 (EOL 2026-06-30). Set to LINUX_KERNEL_6 for an Amazon Linux 2023 host."
+  default     = null
+  validation {
+    condition     = var.aft_codebuild_host_kernel == null || contains(["LINUX_KERNEL_4", "LINUX_KERNEL_6", "LINUX_KERNEL_LATEST"], var.aft_codebuild_host_kernel)
+    error_message = "aft_codebuild_host_kernel must be one of LINUX_KERNEL_4, LINUX_KERNEL_6, or LINUX_KERNEL_LATEST."
+  }
+}
+
 variable "sns_topic_enable_cmk_encryption" {
   type        = bool
   description = "Flag toggling SNS topics encryption by using the AFT Customer managed key stored in KMS. Additional charges apply. Otherwise the SNS topics are encrypted using the AWS-managed KMS key."
